@@ -13,6 +13,7 @@ PM Hub(저장소 `ioagent2`)의 자매 프로그램이라 화면 색(Slate · Ob
 | 엑셀 시트 구성 (v4 와 같은 시트) | `js/workbook.js` |
 | 폴더 저장 (File System Access API) · 백업 · 지우기 | `js/store.js` |
 | 탭 화면 | `js/views.js` (`TABS`) |
+| 엑셀처럼 쓰는 표 (키보드 이동 · 붙여넣기 · 새 줄 · 오른쪽 채우기) | `js/grid.js` — 열 정의는 `views.js` 의 `laborGrid` 열 배열 한 곳 (머리글 · 칸 · 붙여넣기 함께) |
 | 흐름 (입력 반영 · 저장 · 열기 · 단축키) | `js/app.js` |
 | 알림 · 확인 창 | `js/ui.js` |
 | 꾸밈 (색 변수) | `assets/app.css` |

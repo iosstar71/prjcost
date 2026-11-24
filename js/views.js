@@ -22,8 +22,9 @@
   }
   function sel(path, value, options, o = {}) {
     const opts = options.map(x => (typeof x === "object" ? x : { v: x, t: x }));
-    if (value !== undefined && value !== "" && !opts.some(x => String(x.v) === String(value))) opts.unshift({ v: value, t: `${value} (목록에 없음)` });
-    return `<select data-bind="${esc(path)}" data-type="${o.kind || "text"}"${o.label ? ` aria-label="${esc(o.label)}"` : ""}>${opts.map(x => `<option value="${esc(x.v)}"${String(x.v) === String(value) ? " selected" : ""}>${esc(x.t)}</option>`).join("")}</select>`;
+    const unknown = value !== undefined && value !== "" && !opts.some(x => String(x.v) === String(value));
+    if (unknown) opts.unshift({ v: value, t: `${value} (목록에 없음)` });
+    return `<select data-bind="${esc(path)}" data-type="${o.kind || "text"}"${unknown ? ` class="invalid" title="기준정보에 없는 값입니다"` : ""}${o.label ? ` aria-label="${esc(o.label)}"` : ""}>${opts.map(x => `<option value="${esc(x.v)}"${String(x.v) === String(value) ? " selected" : ""}>${esc(x.t)}</option>`).join("")}</select>`;
   }
   const chk = (path, on, label) => `<input type="checkbox" data-bind="${esc(path)}" data-type="bool"${on ? " checked" : ""}${label ? ` aria-label="${esc(label)}"` : ""}>`;
   const field = (label, control, o = {}) => `<label class="field${o.full ? " full" : ""}"><span>${esc(label)}</span>${control}${o.help ? `<small class="help">${esc(o.help)}</small>` : ""}</label>`;
@@ -54,56 +55,50 @@
     </div>`;
   }
 
-  // ---------------- 내부 인력 ----------------
+  // ---------------- 인력 표 (내부 · 외주 공통) ----------------
+  //  열 정의 한 곳에서 머리글 · 칸 · 붙여넣기 대응(data-cols)을 함께 만듦 — 열을 바꿀 때는 여기만
+  //  t: 붙여넣을 때 값 읽는 방법 (text · num · blank-num · bool · month), l: 머리글 이름 (머리글째 붙여넣을 때 맞추는 이름)
+  function laborGrid(list, p, c, cols, o) {
+    const months = c.months, rows = c.details[list];
+    const all = cols.concat(months.map(m => ({ b: `mm.${m}`, t: "num", l: m, th: `<th>${esc(m)}</th>`,
+      cell: (r, base) => `<td>${inp(`${base}.mm.${m}`, r.calc[m].mm || "", { type: "number", step: "0.1", cls: "mm", ph: "0", label: `${m} MM` })}<span class="cell-cost">${man(r.calc[m].cost)}만</span></td>` })));
+    const meta = all.map(x => ({ b: x.b, t: x.t, l: x.l }));
+    const body = rows.map((r, i) => `<tr data-row="${i}"><td class="c">${del(list, i)}</td>${all.map(x => x.cell(r, `${list}.${i}`, i)).join("")}
+        <td class="num"><b>${won(r.total_cost)}</b><span class="cell-cost">${r.total_mm} MM</span></td></tr>`).join("");
+    const newRow = `<tr class="new-row"><td></td><td class="l"><input type="text" class="w-md" data-new="${list}" placeholder="＋ 이름 입력" aria-label="새 인력 이름"></td><td class="l hint-cell" colspan="${all.length}">이름을 넣으면 한 줄이 추가됩니다 · 엑셀에서 복사한 영역을 붙여 넣어도 됩니다</td></tr>`;
+    const foot = rows.length ? `<tr class="total"><td colspan="${cols.length + 1}" class="l">합계 · ${sumBy(rows, r => r.total_mm).toFixed(2)} MM</td>${months.map(m => `<td class="num">${won(sumBy(rows, r => r.calc[m].cost))}</td>`).join("")}<td class="num">${won(o.total)}</td></tr>` : "";
+    return head(o.title, "화살표 · Enter 이동 · 엑셀 붙여넣기 · Ctrl+R 오른쪽 채우기 · Ctrl+Z 되돌리기", btn(o.addLabel, "addRow", [list], "primary sm"))
+      + `<div class="tbl-wrap"><table class="grid" data-list="${list}" data-cols="${esc(JSON.stringify(meta))}"><thead><tr><th></th>${all.map(x => x.th).join("")}<th>합계(원)</th></tr></thead>
+        <tbody>${body}${newRow}${foot}</tbody></table></div>`;
+  }
+  const mmTarget = (list, r, base, i) => `<td class="c">${inp(`${base}.target_mm`, r.target_mm !== undefined ? r.target_mm : r.total_mm, { type: "number", step: "0.1", cls: "mm", label: "총 MM" })} ${btn("배분", "distribute", [list, i], "sm", "총 MM 을 기간에 고르게 나눔")}</td>`;
+
   function internal(p, c) {
-    const months = c.months, rows = c.details.internal_labor;
     const grades = (p.settings.internal_grades || []).map(g => g.grade);
-    const body = rows.map((r, i) => {
-      const p0 = (r.promotions && r.promotions[0]) || {};
-      const base = `internal_labor.${i}`;
-      return `<tr>
-        <td class="c">${del("internal_labor", i)}</td>
-        <td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>
-        <td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "PM/개발", label: "역할" })}</td>
-        <td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>
-        <td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>
-        <td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례 포함")}</td>
-        <td>${inp(`${base}.promotions.0.effective_ym`, p0.effective_ym, { type: "month", label: "승진월" })}</td>
-        <td>${inp(`${base}.promotions.0.rate`, p0.rate, { money: true, kind: "blank-num", cls: "w-md", ph: "승진단가", label: "승진단가" })}</td>
-        <td class="c">${inp(`${base}.target_mm`, r.target_mm !== undefined ? r.target_mm : r.total_mm, { type: "number", step: "0.1", cls: "mm", label: "총 MM" })} ${btn("배분", "distribute", ["internal_labor", i], "sm", "총 MM 을 기간에 고르게 나눔")}</td>
-        ${months.map(m => `<td>${inp(`${base}.mm.${m}`, r.calc[m].mm || "", { type: "number", step: "0.1", cls: "mm", ph: "0", label: `${m} MM` })}<span class="cell-cost">${man(r.calc[m].cost)}만</span></td>`).join("")}
-        <td class="num"><b>${won(r.total_cost)}</b><span class="cell-cost">${r.total_mm} MM</span></td>
-      </tr>`;
-    }).join("");
-    const foot = rows.length ? `<tr class="total"><td colspan="9" class="l">합계 · ${sumBy(rows, r => r.total_mm).toFixed(2)} MM</td>${months.map(m => `<td class="num">${won(sumBy(rows, r => r.calc[m].cost))}</td>`).join("")}<td class="num">${won(c.summary.breakdown.internal_labor)}</td></tr>` : "";
-    return head("내부 인력 투입 계획", "칸에는 MM, 아래 작은 글씨는 그 달 금액(만 원)", btn("＋ 내부 인력", "addRow", ["internal_labor"], "primary sm"))
-      + `<div class="tbl-wrap"><table><thead><tr><th></th><th class="l">성명</th><th class="l">역할</th><th>등급</th><th>기준단가</th><th>인비례</th><th>승진월</th><th>승진단가</th><th>총MM · 배분</th>${monthHead(months)}<th>합계(원)</th></tr></thead>
-        <tbody>${body || empty(months.length + 10, "등록된 내부 인력이 없습니다. [＋ 내부 인력]으로 추가하세요.")}${foot}</tbody></table></div>`;
+    const p0 = r => (r.promotions && r.promotions[0]) || {};
+    return laborGrid("internal_labor", p, c, [
+      { b: "name", t: "text", l: "성명", th: `<th class="l">성명</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
+      { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "PM/개발", label: "역할" })}</td>` },
+      { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>` },
+      { b: "base_rate", t: "blank-num", l: "기준단가", th: `<th>기준단가</th>`, cell: (r, base) => `<td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>` },
+      { b: "overhead_eligible", t: "bool", l: "인비례", th: `<th>인비례</th>`, cell: (r, base) => `<td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례")}</td>` },
+      { b: "promotions.0.effective_ym", t: "month", l: "승진월", th: `<th>승진월</th>`, cell: (r, base) => `<td>${inp(`${base}.promotions.0.effective_ym`, p0(r).effective_ym, { type: "month", label: "승진월" })}</td>` },
+      { b: "promotions.0.rate", t: "blank-num", l: "승진단가", th: `<th>승진단가</th>`, cell: (r, base) => `<td>${inp(`${base}.promotions.0.rate`, p0(r).rate, { money: true, kind: "blank-num", cls: "w-md", ph: "승진단가", label: "승진단가" })}</td>` },
+      { b: "target_mm", t: "num", l: "총MM", th: `<th>총MM · 배분</th>`, cell: (r, base, i) => mmTarget("internal_labor", r, base, i) }
+    ], { title: "내부 인력 투입 계획", addLabel: "＋ 내부 인력", total: c.summary.breakdown.internal_labor });
   }
 
-  // ---------------- 외주 인력 ----------------
   function external(p, c) {
-    const months = c.months, rows = c.details.external_labor;
     const vendors = [...new Set((p.settings.vendor_rates || []).map(v => v.vendor))];
     const grades = p.settings.external_grades || [];
-    const body = rows.map((r, i) => {
-      const base = `external_labor.${i}`;
-      return `<tr>
-        <td class="c">${del("external_labor", i)}</td>
-        <td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명/구분" })}</td>
-        <td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "개발/디자인", label: "역할" })}</td>
-        <td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체" })}</td>
-        <td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>
-        <td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>
-        <td class="c">${inp(`${base}.target_mm`, r.target_mm !== undefined ? r.target_mm : r.total_mm, { type: "number", step: "0.1", cls: "mm", label: "총 MM" })} ${btn("배분", "distribute", ["external_labor", i], "sm", "총 MM 을 기간에 고르게 나눔")}</td>
-        ${months.map(m => `<td>${inp(`${base}.mm.${m}`, r.calc[m].mm || "", { type: "number", step: "0.1", cls: "mm", ph: "0", label: `${m} MM` })}<span class="cell-cost">${man(r.calc[m].cost)}만</span></td>`).join("")}
-        <td class="num"><b>${won(r.total_cost)}</b><span class="cell-cost">${r.total_mm} MM</span></td>
-      </tr>`;
-    }).join("");
-    const foot = rows.length ? `<tr class="total"><td colspan="7" class="l">합계 · ${sumBy(rows, r => r.total_mm).toFixed(2)} MM</td>${months.map(m => `<td class="num">${won(sumBy(rows, r => r.calc[m].cost))}</td>`).join("")}<td class="num">${won(c.summary.breakdown.external_labor)}</td></tr>` : "";
-    return head("외주 인력 투입 계획", "적용단가를 비워 두면 업체 · 등급의 기준단가", btn("＋ 외주 인력", "addRow", ["external_labor"], "primary sm"))
-      + `<div class="tbl-wrap"><table><thead><tr><th></th><th class="l">성명/구분</th><th class="l">역할</th><th>외주업체</th><th>등급</th><th>적용단가</th><th>총MM · 배분</th>${monthHead(months)}<th>합계(원)</th></tr></thead>
-        <tbody>${body || empty(months.length + 8, "등록된 외주 인력이 없습니다. [＋ 외주 인력]으로 추가하세요.")}${foot}</tbody></table></div>`;
+    return laborGrid("external_labor", p, c, [
+      { b: "name", t: "text", l: "성명", th: `<th class="l">성명/구분</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
+      { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "개발/디자인", label: "역할" })}</td>` },
+      { b: "vendor", t: "text", l: "외주업체", th: `<th>외주업체</th>`, cell: (r, base) => `<td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체" })}</td>` },
+      { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>` },
+      { b: "custom_rate", t: "blank-num", l: "적용단가", th: `<th>적용단가</th>`, cell: (r, base) => `<td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>` },
+      { b: "target_mm", t: "num", l: "총MM", th: `<th>총MM · 배분</th>`, cell: (r, base, i) => mmTarget("external_labor", r, base, i) }
+    ], { title: "외주 인력 투입 계획", addLabel: "＋ 외주 인력", total: c.summary.breakdown.external_labor });
   }
 
   // ---------------- 경비 · 기타 ----------------

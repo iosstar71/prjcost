@@ -16,23 +16,35 @@
     saved: "",                     // 마지막으로 저장 · 불러온 자료 (바뀌었는지 비교)
     calc: null,
     tab: "info",
-    list: []
+    list: [],
+    past: [], future: []           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
   };
+  const UNDO_KEEP = 100;
   const $ = id => document.getElementById(id);
   const isDirty = () => JSON.stringify(S.proj) !== S.saved;
   const markSaved = () => { S.saved = JSON.stringify(S.proj); };
+  // 자료를 바꾸기 직전에 부름 (같은 상태를 두 번 쌓지 않음)
+  function pushUndo() {
+    const cur = JSON.stringify(S.proj);
+    if (S.past[S.past.length - 1] !== cur) { S.past.push(cur); if (S.past.length > UNDO_KEEP) S.past.shift(); }
+    S.future = [];
+  }
+  function undo() { if (!S.past.length) return; S.future.push(JSON.stringify(S.proj)); S.proj = JSON.parse(S.past.pop()); render(); }
+  function redo() { if (!S.future.length) return; S.past.push(JSON.stringify(S.proj)); S.proj = JSON.parse(S.future.pop()); render(); }
 
   // ---------------- 그리기 ----------------
-  function render() {
+  function render(focusBind) {
     S.calc = Calc.calculateProjectCost(S.proj, S.master);
-    const focus = captureFocus();
+    const focus = focusBind ? { bind: focusBind } : captureFocus();
     renderKpis();
     renderTabs();
     const tab = Views.TABS.find(t => t.id === S.tab) || Views.TABS[0];
     $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file });
     renderSaveState();
+    renderUndo();
     restoreFocus(focus);
   }
+  function renderUndo() { $("btnUndo").disabled = !S.past.length; $("btnRedo").disabled = !S.future.length; }
   function renderKpis() {
     const s = S.calc.summary, b = s.breakdown, est = S.calc.estimate;
     $("kRev").textContent = `${won(s.revenue)}원`;
@@ -137,6 +149,9 @@
     const el = e.target.closest("[data-bind]");
     if (!el) return;
     const v = valueOf(el);
+    const cur = el.dataset.bind.split(".").reduce((o, k) => (o === undefined || o === null ? undefined : o[k]), S.proj);
+    if (cur === v || (cur === undefined && (v === "" || v === 0 || v === false))) return;   // 값이 그대로 (다시 그리며 사라진 칸의 늦은 change 등)
+    pushUndo();
     setPath(S.proj, el.dataset.bind, v);
     afterBind(el.dataset.bind, v);
     // Tab · 클릭으로 다음 칸에 갈 때: 포커스가 옮겨진 뒤에 다시 그려야 그 칸을 잃지 않음
@@ -174,14 +189,17 @@
     showTab(id) { S.tab = id; render(); },
     addRow(list) {
       if (list === "phases" && S.proj.phases.length >= 5) return UI.toast("분할계약은 5회차까지 넣을 수 있습니다.", "error");
+      pushUndo();
       listAt(list).push(ROW[list](S.proj));
       render();
     },
-    removeRow(list, i) { listAt(list).splice(i, 1); render(); },
+    removeRow(list, i) { pushUndo(); listAt(list).splice(i, 1); render(); },
+    undo, redo,
     // 총 MM 을 기간에 고르게 (끝자리는 마지막 달에)
     distribute(list, i) {
       const row = S.proj[list][i], months = S.calc.months, total = num(row.target_mm);
       if (!months.length) return;
+      pushUndo();
       const per = Math.floor((total / months.length) * 100) / 100;
       const rest = Math.round((total - per * months.length) * 100) / 100;
       row.mm = Object.fromEntries(months.map((m, k) => [m, k === months.length - 1 ? Math.round((per + rest) * 100) / 100 : per]));
@@ -190,6 +208,7 @@
     applyEstimate() {
       const sup = S.calc.estimate.supply_total;
       if (sup <= 0) return UI.toast("견적 공급가액이 0원입니다. 품목을 먼저 넣으세요.", "error");
+      pushUndo();
       S.proj.contract_revenue = sup;
       S.proj.estimate.applied_to_revenue = true;
       render();
@@ -197,6 +216,7 @@
     },
     async loadDemo() {
       if (!(await UI.confirm("데모 채우기", "지금 화면의 내용을 예시 자료로 바꿉니다. 계속할까요?", "채우기"))) return;
+      pushUndo();
       const keepFile = S.file;
       S.proj = M.demoProject(S.master);
       S.file = keepFile;
@@ -204,6 +224,7 @@
     },
     async resetSettings() {
       if (!(await UI.confirm("기준정보 바꾸기", "이 프로젝트의 기준정보를 폴더의 기본값(master_rates.xlsx)으로 바꿉니다.", "바꾸기"))) return;
+      pushUndo();
       S.proj.settings = clone(S.master);
       render();
     },
@@ -254,6 +275,7 @@
   // ---------------- 열기 · 저장 ----------------
   function setProject(p, file, mtime) {
     S.proj = p; S.file = file; S.mtime = mtime;
+    S.past = []; S.future = [];
     markSaved();
     render();
     renderList();
@@ -353,8 +375,23 @@
     });
     // Enter = 칸 확정 (다음 계산), Ctrl+S = 저장
     document.addEventListener("keydown", e => {
+      const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+      // 되돌리기: 칸에 치던 중(아직 확정 전)이면 브라우저의 글자 되돌리기, 아니면 자료 되돌리기
+      if (mod && (k === "z" || k === "y")) {
+        const a = document.activeElement, typing = a && a.matches && a.matches("input[data-bind], textarea[data-bind], input[data-new]") && a.value !== a.defaultValue;
+        if (!typing) { e.preventDefault(); if (k === "y" || e.shiftKey) redo(); else undo(); }
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); const a = document.activeElement; if (a && a.dataset && a.dataset.bind) a.blur(); save(false); }
       else if (e.key === "Enter" && e.target.matches("input[data-bind]")) e.target.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    PC.Grid.init({
+      proj: () => S.proj, pushUndo, render,
+      newRow: list => { S.proj[list].push(ROW[list](S.proj)); return S.proj[list].length - 1; },
+      setValue: (path, v) => { setPath(S.proj, path, v); afterBind(path, v); },
+      known: (list, key, v) => !v || (key === "grade"
+        ? (list === "internal_labor" ? (S.proj.settings.internal_grades || []).some(g => g.grade === v) : (S.proj.settings.external_grades || []).includes(v))
+        : (S.proj.settings.vendor_rates || []).some(r => r.vendor === v))
     });
     window.addEventListener("beforeunload", e => { if (isDirty()) { e.preventDefault(); e.returnValue = ""; } });
     render();
@@ -372,6 +409,6 @@
       : `프로젝트 엑셀을 저장할 <b>폴더를 연결</b>하세요. 예전 버전에서 쓰던 <b>data</b> 폴더를 고르면 그 프로젝트들을 그대로 씁니다. <button class="btn sm primary" data-act="connectFolder">📁 폴더 연결</button>`);
   }
 
-  PC.App = { S, A, render, save, openFile, afterConnect, setProject };
+  PC.App = { S, A, render, save, openFile, afterConnect, setProject, undo, redo };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })(window);

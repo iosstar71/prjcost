@@ -22,6 +22,8 @@
       <select id="projectSelect" data-act="openSelected" aria-label="프로젝트 목록"></select>
       <button class="btn" data-act="newProject">＋ 새 프로젝트</button>
       <label class="btn file-btn" title="이 프로그램으로 저장한 엑셀 또는 업로드 양식을 엽니다">⬆ 엑셀 열기<input type="file" accept=".xlsx" id="uploadInput" /></label>
+      <button class="btn icon" data-act="undo" id="btnUndo" title="되돌리기 (Ctrl+Z)" aria-label="되돌리기">↶</button>
+      <button class="btn icon" data-act="redo" id="btnRedo" title="다시 하기 (Ctrl+Y)" aria-label="다시 하기">↷</button>
       <span class="save-state" id="saveState"></span>
       <button class="btn primary" data-act="save" title="Ctrl+S">💾 저장</button>
       <button class="btn" data-act="toggleTheme" id="btnTheme" title="밝게 / 어둡게 바꾸기">어둡게</button>
@@ -52,6 +54,7 @@
   <script src="js/store.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/views.js"></script>
+  <script src="js/grid.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

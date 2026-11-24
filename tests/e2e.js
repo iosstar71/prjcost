@@ -96,6 +96,44 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     const typed = await page.evaluate(() => ({ v: PC.App.S.proj.contract_revenue, shown: document.querySelector('input[data-bind="contract_revenue"]').value }));
     check("Money fields show thousands separators and accept typed commas", shown === "240,000,000" && typed.v === 250000000 && typed.shown === "250,000,000", JSON.stringify({ shown, typed }));
     await rev.fill("240000000"); await rev.press("Tab");
+
+    // ---- 인력 표를 엑셀처럼 ----
+    await page.click('[data-act="showTab"][data-args*="internal"]');
+    const B = b => `[data-bind="${b}"]`, focused = () => page.evaluate(() => document.activeElement.dataset.bind || document.activeElement.dataset.new || document.activeElement.tagName);
+    await page.focus(B("internal_labor.0.mm.2026-01"));
+    await page.keyboard.press("ArrowDown"); const f1 = await focused();
+    await page.keyboard.press("ArrowRight"); const f2 = await focused();
+    await page.keyboard.press("Enter"); const f3 = await focused();
+    check("Arrow keys and Enter move between cells like a spreadsheet (Enter on the last person goes to the blank new row)", f1 === "internal_labor.1.mm.2026-01" && f2 === "internal_labor.1.mm.2026-02" && f3 === "internal_labor", JSON.stringify([f1, f2, f3]));   // 마지막 사람 줄에서 Enter → 새 줄(이름 칸)
+    const paste = (sel, text) => page.evaluate(([s2, t]) => { const el = document.querySelector(s2); el.focus(); const dt = new DataTransfer(); dt.setData("text/plain", t); el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, [sel, text]);
+    // 엑셀에서 복사한 여러 줄 (성명 · 역할 · 등급) 을 새 줄에 붙여넣기 → 인력 2명 추가, 없는 등급은 빨갛게
+    await paste('input[data-new="internal_labor"]', "박신규\t개발\t책임\r\n최추가\tQA\t없는등급\r\n");
+    await page.waitForFunction(() => PC.App.S.proj.internal_labor.length === 4, null, { timeout: 3000 }).catch(() => {});
+    const pv = await page.evaluate(() => ({ rows: PC.App.S.proj.internal_labor.map(r => [r.name, r.role, r.grade, r.base_rate]), invalid: document.querySelectorAll("select.invalid").length }));
+    check("Pasting rows copied from Excel adds people (grade sets the rate; unknown grade shown in red)", pv.rows.length === 4 && pv.rows[2].join() === "박신규,개발,책임,7200000" && pv.rows[3][2] === "없는등급" && pv.invalid === 1, JSON.stringify(pv));
+    // 머리글째 붙여넣기: 머리글 이름(성명 · 월)으로 열을 맞춤
+    await paste(B("internal_labor.2.name"), "성명\t2026-02\t2026-03\n박신규\t0.5\t0.75");
+    await page.waitForFunction(() => PC.App.S.proj.internal_labor[2].mm["2026-03"] === 0.75, null, { timeout: 3000 }).catch(() => {});
+    const hv = await page.evaluate(() => PC.App.S.proj.internal_labor[2].mm);
+    check("Pasting with a header row maps columns by header name (month columns)", hv["2026-02"] === 0.5 && hv["2026-03"] === 0.75, JSON.stringify(hv));
+    // Ctrl+R 오른쪽 채우기 → Ctrl+Z 되돌리기 → Ctrl+Y 다시
+    const before = await page.evaluate(() => JSON.stringify(PC.App.S.proj.internal_labor[3].mm));
+    await page.fill(B("internal_labor.3.mm.2026-02"), "0.3");
+    await page.keyboard.press("Control+r");
+    await page.waitForFunction(() => PC.App.S.proj.internal_labor[3].mm["2026-06"] === 0.3, null, { timeout: 3000 }).catch(() => {});
+    const filled = await page.evaluate(() => PC.App.S.proj.internal_labor[3].mm);
+    await page.evaluate(() => document.activeElement.blur());
+    await page.keyboard.press("Control+z");
+    const undone = await page.evaluate(() => JSON.stringify(PC.App.S.proj.internal_labor[3].mm));
+    await page.keyboard.press("Control+y");
+    const redone = await page.evaluate(() => PC.App.S.proj.internal_labor[3].mm["2026-06"]);
+    check("Ctrl+R fills the month to the right; Ctrl+Z undoes it, Ctrl+Y redoes", ["2026-02", "2026-03", "2026-04", "2026-05", "2026-06"].every(m => filled[m] === 0.3) && undone === before && redone === 0.3, JSON.stringify({ filled, undone, before, redone }));
+    // 새 줄에 이름을 치고 Enter → 한 줄 추가, 그 줄의 역할 칸으로
+    await page.fill('input[data-new="internal_labor"]', "정신입");
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => PC.App.S.proj.internal_labor.length === 5, null, { timeout: 3000 }).catch(() => {});
+    check("Typing a name in the blank last row adds a person and moves to the role cell", (await page.evaluate(() => PC.App.S.proj.internal_labor[4].name)) === "정신입" && (await focused()) === "internal_labor.4.role", await focused());
+    await page.evaluate(() => { while (PC.App.S.proj.internal_labor.length > 2) PC.App.S.proj.internal_labor.pop(); PC.App.render(); });
     if (shotDir) {
       fs.mkdirSync(shotDir, { recursive: true });
       await page.screenshot({ path: path.join(shotDir, "light_info.png") });
