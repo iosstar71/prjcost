@@ -18,12 +18,15 @@
 | estimate | estimate_no · estimate_date · note · applied_to_revenue · items[{item_name, spec, qty, unit_price, memo}] |
 
 ## settings
-internal_overhead_ratio · external_overhead_ratio (0.15 = 15%) · default_promotion_month("03") ·
+default_promotion_month("03") ·
 internal_grades[{grade, rate}] · external_grades["특급", …] · vendor_rates[{vendor, grade, rate}] · external_rates{"업체|등급": 단가}(예전 형식) ·
-expense_accounts[{account, category: general|custom, desc}]
+expense_accounts[{account, category, unit_amount, desc}] — category: `general` 일반경비 · `custom` 기타경비 · `mm_internal` 인비례(내부) · `mm_external` 인비례(외주), unit_amount = 인비례 기준금액(원/MM)
+- 예전 internal_overhead_ratio · external_overhead_ratio(인건비의 %)는 더 쓰지 않음 — 열 때 알리고, 저장할 때 지움
 
-## 계산 (js/calc.js — v4 와 같음)
-- 내부 인건비 = MM × 그 달 단가 (승진월이 지나면 승진 단가). 내부 인비례 = 인비례 대상 인력 인건비 × 내부 비율
-- 외주 인건비 = MM × 적용단가. 외주 인비례 = 외주 인건비 × 외주 비율
+## 계산 (js/calc.js)
+- 내부 인건비 = MM × 그 달 단가 (승진월이 지나면 승진 단가)
+- 외주 인건비 = MM × 적용단가
+- 인비례 경비 = 계정마다 (내부: 인비례 대상 인력 MM 합 / 외주: 외주 인력 MM 합) × 기준금액 — 달마다
+- 원가 구성(summary.composition) = 내부 · 외주 인건비, 일반경비(이름별), 인비례(계정별), 기타경비(이름별)의 금액 · 총 원가 대비 비중
 - 이익률 = (매출 − 총 원가) ÷ 매출 × 100. 반올림은 파이썬 round(…, 2) 와 같음 (한가운데는 짝수 쪽)
 - 견적: 금액 = 수량 × 단가, 부가세 10%

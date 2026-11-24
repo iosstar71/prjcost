@@ -1,7 +1,6 @@
 // =============================================================================
-// 원가 계산 — 원본 backend/calculator.py (v4) 를 줄 단위로 옮김. 화면 · 저장과 무관한 순수 계산
-//  결과는 원본과 1원 단위까지 같아야 함: tests/run.js 가 tests/golden.json(원본 파이썬 계산 결과)과 비교
-//  계산 규칙을 바꾸면 tests/reference/calculator_v4.py 도 같이 고치고 `python tools/make_golden.py` 로 기준을 다시 만든다
+// 원가 계산 — v4 calculator.py 를 옮기고, 인비례 경비를 계정별 MM × 기준금액으로 바꿈. 화면 · 저장과 무관한 순수 계산
+//  회귀 시험: tests/run.js 가 tests/golden.json(저장해 둔 결과)과 비교. 규칙을 일부러 바꾸면 `node tools/make_golden.js` 로 기준을 다시 만든다
 // =============================================================================
 (function (root) {
   "use strict";
@@ -73,7 +72,8 @@
     const settings = (project.settings && Object.keys(project.settings).length ? project.settings : null) || (fallbackSettings && Object.keys(fallbackSettings).length ? fallbackSettings : null) || {};
     const months = monthRange(String(project.start_date || project.start_ym || "2026-01"), String(project.end_date || project.end_ym || "2026-06"));
     const zero = () => Object.fromEntries(months.map(m => [m, 0]));
-    const intRatio = num(settings.internal_overhead_ratio), extRatio = num(settings.external_overhead_ratio);
+    // 인비례 경비 계정: 내부(인비례 대상 인력 MM) · 외주(외주 인력 MM) × 계정별 기준금액(원/MM)
+    const mmAccounts = (settings.expense_accounts || []).filter(a => a && (a.category === "mm_internal" || a.category === "mm_external"));
 
     // 외주 업체|등급 → 단가
     const extRate = new Map();
@@ -84,7 +84,7 @@
     Object.entries(settings.external_rates || {}).forEach(([k, v]) => { if (!extRate.has(k)) extRate.set(k, num(v)); });
 
     // 1. 내부 인건비
-    const internalMonthly = zero(), eligibleMonthly = zero();
+    const internalMonthly = zero(), eligibleMm = zero();
     const internalDetails = (project.internal_labor || []).map(mem => {
       const mmMap = mem.mm || {}, eligible = !!mem.overhead_eligible, calc = {};
       let rowTotal = 0, totalMm = 0;
@@ -94,7 +94,7 @@
         const cost = pyRound(mm * rate, 2);
         calc[m] = { mm, rate, cost };
         internalMonthly[m] = pyRound(internalMonthly[m] + cost, 2);
-        if (eligible) eligibleMonthly[m] = pyRound(eligibleMonthly[m] + cost, 2);
+        if (eligible) eligibleMm[m] = pyRound(eligibleMm[m] + mm, 4);
         rowTotal = pyRound(rowTotal + cost, 2);
         totalMm = pyRound(totalMm + mm, 4);
       });
@@ -102,7 +102,7 @@
     });
 
     // 2. 외주 인건비 (적용단가를 직접 넣으면 그 값, 아니면 업체 · 등급 단가)
-    const externalMonthly = zero();
+    const externalMonthly = zero(), externalMm = zero();
     const externalDetails = (project.external_labor || []).map(ext => {
       const key = `${String(ext.vendor || "").trim()}|${String(ext.grade || "").trim()}`;
       const defaultRate = extRate.has(key) ? num(extRate.get(key)) : num(ext.base_rate);
@@ -115,13 +115,14 @@
         const cost = pyRound(mm * applied, 2);
         calc[m] = { mm, rate: applied, cost };
         externalMonthly[m] = pyRound(externalMonthly[m] + cost, 2);
+        externalMm[m] = pyRound(externalMm[m] + mm, 4);
         rowTotal = pyRound(rowTotal + cost, 2);
         totalMm = pyRound(totalMm + mm, 4);
       });
       return Object.assign({}, ext, { default_rate: pyRound(defaultRate, 2), applied_rate: applied, is_overridden: hasCustom, calc, total_mm: pyRound(totalMm, 2), total_cost: rowTotal });
     });
 
-    // 3. 일반경비 · 인비례경비(내부: 대상 인력만, 외주: 전체) · 기타비용
+    // 3. 일반경비 · 인비례경비(계정별 MM × 기준금액) · 기타비용
     const expenseRows = (list, monthly) => (list || []).map(exp => {
       const mMap = distributeMonthly(exp, months);
       months.forEach(m => { monthly[m] = pyRound(monthly[m] + mMap[m], 2); });
@@ -129,8 +130,15 @@
     });
     const generalMonthly = zero();
     const generalDetails = expenseRows(project.general_expenses, generalMonthly);
-    const intOvh = Object.fromEntries(months.map(m => [m, pyRound(eligibleMonthly[m] * intRatio, 2)]));
-    const extOvh = Object.fromEntries(months.map(m => [m, pyRound(externalMonthly[m] * extRatio, 2)]));
+    const intOvh = zero(), extOvh = zero();
+    const mmOverheads = mmAccounts.map(acc => {
+      const internal = acc.category === "mm_internal", base = internal ? eligibleMm : externalMm, unit = num(acc.unit_amount);
+      const mMap = Object.fromEntries(months.map(m => [m, pyRound(base[m] * unit, 2)]));
+      const target = internal ? intOvh : extOvh;
+      months.forEach(m => { target[m] = pyRound(target[m] + mMap[m], 2); });
+      return { account: String(acc.account || ""), category: acc.category, unit_amount: pyRound(unit, 2),
+        mm_monthly: Object.fromEntries(months.map(m => [m, pyRound(base[m], 2)])), calc_monthly: mMap, total_cost: pyRound(sumValues(mMap), 2) };
+    });
     const customMonthly = zero();
     const customDetails = expenseRows(project.custom_costs, customMonthly);
 
@@ -143,6 +151,22 @@
     const margin = revenue > 0 ? pyRound((profit / revenue) * 100.0, 2) : 0;
     const hurdle = pyRound(num(project.target_hurdle_rate), 2);
     const monthCost = m => (internalMonthly[m] || 0) + (externalMonthly[m] || 0) + (generalMonthly[m] || 0) + (intOvh[m] || 0) + (extOvh[m] || 0) + (customMonthly[m] || 0);
+
+    // 원가 구성: 항목별 금액 · 총 원가 대비 비중(%) — 경비는 같은 이름끼리 합침
+    const share = v => (totalCost > 0 ? pyRound((v / totalCost) * 100.0, 2) : 0);
+    const byName = (rows, key) => {
+      const acc = new Map();
+      rows.forEach(r => { const n = String(r[key] || "").trim() || "(이름 없음)"; acc.set(n, pyRound((acc.get(n) || 0) + r.total_cost, 2)); });
+      return [...acc].map(([name, amount]) => ({ name, amount, share: share(amount) }));
+    };
+    const mmTotal = pyRound(tIntOvh + tExtOvh, 2);
+    const composition = [
+      { key: "internal_labor", label: "내부 인건비", amount: tInternal, share: share(tInternal), items: [] },
+      { key: "external_labor", label: "외주 인건비", amount: tExternal, share: share(tExternal), items: [] },
+      { key: "general_expense", label: "일반경비", amount: tGeneral, share: share(tGeneral), items: byName(generalDetails, "name") },
+      { key: "mm_overhead", label: "인비례 경비", amount: mmTotal, share: share(mmTotal), items: byName(mmOverheads, "account") },
+      { key: "custom_cost", label: "기타경비", amount: tCustom, share: share(tCustom), items: byName(customDetails, "name") }
+    ];
 
     // 4. 분할계약 (최대 5회차): 별도 원가를 넣지 않으면 그 기간 달의 원가 합
     let cumRev = 0, cumCost = 0;
@@ -165,12 +189,12 @@
       months,
       summary: {
         revenue, total_cost: totalCost, profit, margin_rate: margin, hurdle_rate: hurdle,
-        hurdle_gap: pyRound(margin - hurdle, 2), hurdle_met: margin >= hurdle,
+        hurdle_gap: pyRound(margin - hurdle, 2), hurdle_met: margin >= hurdle, composition,
         breakdown: { internal_labor: tInternal, external_labor: tExternal, general_expense: tGeneral, internal_overhead: tIntOvh, external_overhead: tExtOvh, custom_cost: tCustom }
       },
       details: {
         internal_labor: internalDetails, external_labor: externalDetails, general_expenses: generalDetails,
-        internal_overhead_monthly: intOvh, external_overhead_monthly: extOvh, custom_costs: customDetails
+        internal_overhead_monthly: intOvh, external_overhead_monthly: extOvh, mm_overheads: mmOverheads, custom_costs: customDetails
       },
       phases,
       estimate: calculateEstimate(project.estimate || {}),

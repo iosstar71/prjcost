@@ -36,7 +36,7 @@
         const hasData = await sub.getDirectoryHandle("projects").then(() => true, () => false) || await sub.getDirectoryHandle("master").then(() => true, () => false);
         if (hasData) dir = sub;
       } catch (e) { /* data 하위 폴더 없음 → 고른 폴더를 그대로 */ }
-      for (const name of ["master", "projects", "backups", "templates"]) await dir.getDirectoryHandle(name, { create: true });
+      for (const name of ["master", "projects", "backups", "templates", "reports"]) await dir.getDirectoryHandle(name, { create: true });
       await (await dir.getDirectoryHandle("backups")).getDirectoryHandle("deleted", { create: true });
       this.dir = dir;
       this.label = dir === handle ? handle.name : `${handle.name}/data`;
@@ -150,6 +150,8 @@
       await dir.removeEntry(file);
       return `backups/deleted/${dest}`;
     },
+
+    async saveReport(blob, name) { await this._write(await this._sub("reports"), name, blob); },
 
     // ---- 올리기 (폴더 밖의 엑셀): 이 프로그램이 저장한 파일 또는 업로드 양식 ----
     async readUpload(fileObj, master) {

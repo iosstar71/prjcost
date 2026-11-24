@@ -1,7 +1,7 @@
 // =============================================================================
 // 단위 시험 (Node, 1초) — node tests/run.js
-//  1) 계산: JS 계산(js/calc.js)이 원본 파이썬 계산(tests/golden.json)과 1원 단위까지 같은지
-//  2) 반올림: 파이썬 round() 와 같은지 (한가운데는 짝수 쪽)
+//  1) 계산 회귀: 저장해 둔 기준 결과(tests/golden.json, 42가지 경우)와 1원 단위까지 같은지 — 규칙을 일부러 바꾸면 node tools/make_golden.js
+//  2) 반올림: 한가운데는 짝수 쪽 (v4 파일과 같은 금액이 나오도록)
 //  3) 엑셀: 만든 xlsx 를 다시 읽으면 같은 자료인지 (큰 JSON 은 여러 칸으로 나눠 저장)
 // =============================================================================
 "use strict";
@@ -18,7 +18,7 @@ const eq = (name, got, want) => {
   else { fail++; console.log(`  [FAIL] ${name}\n     got  ${a.slice(0, 300)}\n     want ${b.slice(0, 300)}`); }
 };
 
-// 숫자 비교: 파이썬 JSON 은 정수형 float 을 1.0 으로 씀 → 값으로 비교
+// 숫자는 값으로 비교
 function deepDiff(a, b, p = "") {
   if (typeof a === "number" && typeof b === "number") return a === b ? null : `${p}: ${a} != ${b}`;
   if (Array.isArray(a) && Array.isArray(b)) {
@@ -41,7 +41,7 @@ golden.forEach((g, i) => {
   const got = PC.Calc.calculateProjectCost(JSON.parse(JSON.stringify(g.input)), g.fallback);
   delete got.computed_at;
   const d = deepDiff(got, g.expected);
-  eq(`calc case ${i} (${g.input.project_id}) matches the v4 Python result${d ? " — " + d : ""}`, !d, true);
+  eq(`calc case ${i} (${g.input.project_id}) matches the saved baseline${d ? " — " + d : ""}`, !d, true);
 });
 
 // 2) 반올림 (파이썬 round 값)

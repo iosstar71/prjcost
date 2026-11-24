@@ -7,11 +7,16 @@
   const PC = root.PC || require("./util.js");
   const { clone, num } = PC;
 
-  // 기준정보가 하나도 없을 때(새 폴더) 쓰는 값 — 원본 v4 의 default_settings 와 같음
+  // 경비 계정 구분: 일반경비 · 기타경비 (금액을 직접 넣음) / 인비례 (인력 MM × 기준금액으로 자동)
+  const CATEGORIES = [
+    { v: "general", t: "일반경비" }, { v: "custom", t: "기타경비" },
+    { v: "mm_internal", t: "인비례 · 내부" }, { v: "mm_external", t: "인비례 · 외주" }
+  ];
+  const isMmCategory = c => c === "mm_internal" || c === "mm_external";
+
+  // 기준정보가 하나도 없을 때(새 폴더) 쓰는 값. 인비례 기준금액(원/MM)은 회사 기준으로 넣어 쓰도록 0
   function defaultSettings() {
     return {
-      internal_overhead_ratio: 0.15,
-      external_overhead_ratio: 0.05,
       default_promotion_month: "03",
       internal_grades: [{ grade: "수석", rate: 8500000 }, { grade: "책임", rate: 7200000 }, { grade: "선임", rate: 6000000 }, { grade: "전임", rate: 4800000 }],
       external_grades: ["특급", "고급", "중급", "초급"],
@@ -24,9 +29,20 @@
         { account: "회의·식대", category: "general", desc: "프로젝트 회의 및 업무추진비" },
         { account: "장비·SW임차", category: "general", desc: "개발장비 및 라이선스" },
         { account: "사전심의·인증비", category: "custom", desc: "외부 심의 및 보안인증 수수료" },
-        { account: "예비비", category: "custom", desc: "리스크 대응 예비 비용" }
+        { account: "예비비", category: "custom", desc: "리스크 대응 예비 비용" },
+        { account: "복리후생비", category: "mm_internal", unit_amount: 0, desc: "인비례 대상 내부 인력 MM × 기준금액" },
+        { account: "외주 관리비", category: "mm_external", unit_amount: 0, desc: "외주 인력 MM × 기준금액" }
       ]
     };
+  }
+
+  // 인비례 계정이 없는 기준정보(예전 v4 파일 등)에 기본 인비례 계정(기준금액 0)을 넣음 — 화면에서 바로 채울 수 있게
+  function ensureMmAccounts(settings) {
+    const accs = settings.expense_accounts = Array.isArray(settings.expense_accounts) ? settings.expense_accounts : [];
+    defaultSettings().expense_accounts.filter(a => isMmCategory(a.category)).forEach(a => {
+      if (!accs.some(x => x.category === a.category)) accs.push(Object.assign({}, a));
+    });
+    return settings;
   }
 
   const emptyEstimate = () => ({ estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, items: [] });
@@ -36,7 +52,7 @@
     return {
       project_id: id || `PRJ-${y}-NEW`, project_name: "신규 프로젝트", client_name: "", pm_name: "", sales_rep: "", description: "",
       date_mode: "month", start_date: `${y}-01`, end_date: `${y}-06`, contract_revenue: 0, target_hurdle_rate: 18.0,
-      settings: clone(settings || defaultSettings()),
+      settings: ensureMmAccounts(clone(settings || defaultSettings())),
       internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate()
     };
   }
@@ -44,6 +60,8 @@
   // 화면 확인 · 교육용 예시 (원본의 [데모 채우기]와 같은 자료)
   function demoProject(settings) {
     const p = newProject(settings, "PRJ-2026-01");
+    // 데모는 인비례 기준금액을 채워 자동 계산이 보이게
+    p.settings.expense_accounts.forEach(a => { if (a.category === "mm_internal" && !num(a.unit_amount)) a.unit_amount = 300000; if (a.category === "mm_external" && !num(a.unit_amount)) a.unit_amount = 100000; });
     Object.assign(p, {
       project_name: "차세대 원가·공정 시스템 구축", client_name: "대한정밀(주)", pm_name: "김철수 PM", sales_rep: "박영희 매니저",
       description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행",
@@ -73,10 +91,19 @@
     const out = Object.assign(base, p || {});
     if (!out.settings || !Object.keys(out.settings).length) out.settings = clone(master || defaultSettings());
     out.settings = Object.assign(defaultSettings(), out.settings);
+    ensureMmAccounts(out.settings);
     ["internal_labor", "external_labor", "general_expenses", "custom_costs", "phases"].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
     out.estimate = Object.assign(emptyEstimate(), out.estimate || {});
     if (!Array.isArray(out.estimate.items)) out.estimate.items = [];
     return out;
+  }
+
+  // 예전(v4) 비율 방식 인비례 경비가 있던 자료인지 — 열 때 한 번 알림 (이제는 계정별 MM × 기준금액)
+  function legacyRatioNote(p) {
+    const st = (p && p.settings) || {};
+    const ratios = [["내부", st.internal_overhead_ratio], ["외주", st.external_overhead_ratio]].filter(([, r]) => num(r) > 0);
+    const hasUnit = (st.expense_accounts || []).some(a => isMmCategory(a.category) && num(a.unit_amount) > 0);
+    return ratios.length && !hasUnit ? `이 프로젝트는 예전 방식(인건비의 ${ratios.map(([k, r]) => `${k} ${(num(r) * 100).toFixed(1)}%`).join(" · ")})으로 인비례 경비를 계산했습니다. 이제는 [기준정보 > 경비 계정]의 인비례 계정에 기준금액(원/MM)을 넣어야 계산됩니다.` : "";
   }
 
   // 업로드 양식(Project_Upload_Template): 첫 시트의 A열 = 키, B열 = 값
@@ -94,6 +121,6 @@
     return p;
   }
 
-  PC.Model = { defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate };
+  PC.Model = { CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyRatioNote };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Model;
 })(typeof window !== "undefined" ? window : globalThis);

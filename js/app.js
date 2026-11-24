@@ -17,7 +17,8 @@
     calc: null,
     tab: "info",
     list: [],
-    past: [], future: []           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
+    past: [], future: [],
+    noted: new Set()               // 이번에 이미 알린 '예전 비율 방식' 파일           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
   };
   const UNDO_KEEP = 100;
   const $ = id => document.getElementById(id);
@@ -68,7 +69,7 @@
   function renderTabs() {
     $("tabs").innerHTML = Views.TABS.map(t => {
       const n = t.count ? t.count(S.proj) : 0;
-      return `<button class="tab${t.id === S.tab ? " active" : ""}" role="tab" aria-selected="${t.id === S.tab}" data-act="showTab" data-args="${esc(JSON.stringify([t.id]))}">${esc(t.label)}${n ? `<span class="cnt">${n}</span>` : ""}</button>`;
+      return `<button class="tab${t.id === S.tab ? " active" : ""}" role="tab" aria-selected="${t.id === S.tab}" data-act="showTab" data-args="${esc(JSON.stringify([t.id]))}">${PC.icon(t.icon)}${esc(t.label)}${n ? `<span class="cnt">${n}</span>` : ""}</button>`;
     }).join("");
   }
   function renderSaveState() {
@@ -78,11 +79,10 @@
     document.title = `${dirty ? "● " : ""}${S.proj.project_name || S.proj.project_id} — ${APP_NAME}`;
   }
   function renderFolder() {
-    const chip = $("folderChip"), btn = $("btnFolder");
+    const chip = $("folderChip");
     chip.classList.toggle("off", !Store.dir);
-    chip.querySelector(".name").textContent = Store.dir ? Store.label : "폴더 연결 전";
-    btn.textContent = Store.dir ? "📁 폴더 바꾸기" : "📁 폴더 연결";
-    btn.hidden = !Store.supported;
+    chip.querySelector(".name").textContent = Store.dir ? Store.label : "폴더 연결";
+    chip.hidden = !Store.supported;
   }
   function renderList() {
     const sel = $("projectSelect");
@@ -93,7 +93,8 @@
     sel.value = S.file || "";
     sel.disabled = !Store.dir;
   }
-  const renderTheme = () => { $("btnTheme").textContent = document.documentElement.dataset.theme === "dark" ? "밝게" : "어둡게"; };
+  // 지금 테마의 반대로 바꾸는 버튼: 밝을 때 [Dark], 어두울 때 [Light]
+  const renderTheme = () => { const dark = document.documentElement.dataset.theme === "dark"; $("btnTheme").innerHTML = `${PC.icon(dark ? "sun" : "moon")}${dark ? "Light" : "Dark"}`; };
   function notice(html) { const n = $("noticeBox"); n.hidden = !html; n.innerHTML = html || ""; }
 
   // 다시 그려도 입력 중이던 칸을 잃지 않게
@@ -124,6 +125,7 @@
     if (t === "bool") return el.checked;
     const v = el.value;
     if (t === "num") return v === "" ? 0 : num(v);
+    if (t === "mm") return v === "" ? 0 : PC.pyRound(num(v), 2);   // MM 은 소수 둘째 자리까지
     if (t === "blank-num") return v === "" ? "" : num(v);
     if (t === "pct") return num(v) / 100;
     if (t === "month2") return String(v || "03").replace(/\D/g, "").padStart(2, "0").slice(-2);
@@ -139,6 +141,9 @@
     } else if ((m = /^internal_labor\.(\d+)\.promotions\.0\./.exec(path))) {   // 승진월 · 단가가 모두 비면 승진 없음
       const mem = p.internal_labor[+m[1]], p0 = mem.promotions[0] || {};
       if (!p0.effective_ym && (p0.rate === "" || p0.rate === undefined)) mem.promotions = [];
+    } else if ((m = /^(general_expenses|custom_costs)\.(\d+)\.dist_mode$/.exec(path)) && value === "manual") {   // 월별 직접 입력으로: 지금 달별 금액에서 시작
+      const r = p[m[1]][+m[2]], prev = S.calc && S.calc.details[m[1]][+m[2]];
+      if (prev && !Object.values(r.monthly || {}).some(v => num(v))) r.monthly = Object.assign({}, prev.calc_monthly);
     } else if (path === "date_mode") {   // 월 ↔ 일자: 값 모양만 바꿈
       const toDate = (v, end) => (String(v || "").length === 7 ? `${v}-${end ? "28" : "01"}` : v);
       p.start_date = value === "date" ? toDate(p.start_date, false) : String(p.start_date || "").slice(0, 7);
@@ -269,7 +274,16 @@
         await refreshList();
       } catch (e) { UI.toast(e.message, "error"); }
     },
-    save: () => save(false)
+    save: () => save(false),
+    // 보고서: 통합보고 · 항목별 상세 2시트 엑셀 — 내려받고, 폴더가 연결돼 있으면 reports 폴더에도 남김
+    async exportReport() {
+      const calc = Calc.calculateProjectCost(S.proj, S.master);
+      const blob = X.build(W.reportSheets(S.proj, calc));
+      const name = `${safeId(S.proj.project_id)}_원가보고서_${PC.stamp()}.xlsx`;
+      UI.download(blob, name);
+      if (Store.dir) { try { await Store.saveReport(blob, name); } catch (e) { console.warn("[App] report copy", e); } }
+      UI.toast(`보고서를 내려받았습니다 — ${name}${Store.dir ? " (reports 폴더에도 저장)" : ""}`, "ok");
+    }
   };
 
   // ---------------- 열기 · 저장 ----------------
@@ -284,7 +298,10 @@
     try {
       const r = await Store.loadProject(file, S.master);
       setProject(r.project, file, r.mtime);
-      UI.toast(`${r.project.project_id} 을(를) 열었습니다.`);
+      const note = S.noted.has(file) ? "" : M.legacyRatioNote(r.project);
+      S.noted.add(file);
+      if (note) UI.choose("인비례 경비 계산 방식이 바뀌었습니다", note, [{ id: "ok", label: "확인", cls: "primary" }]);
+      else UI.toast(`${r.project.project_id} 을(를) 열었습니다.`);
     } catch (e) { UI.toast(e.message, "error"); await refreshList(); }
   }
   async function refreshList() {
@@ -320,6 +337,8 @@
       const ok = await UI.confirm("같은 ID 의 파일이 있습니다", `projects/${file} 이(가) 이미 있습니다. 덮어쓸까요?\n지금 파일은 backups 폴더에 남습니다. 다른 프로젝트라면 [취소] 후 프로젝트 ID 를 바꾸세요.`, "덮어쓰기", true);
       if (!ok) return false;
     }
+    // 더 쓰지 않는 예전 비율 방식 인비례 값은 저장할 때 지움 (열 때 이미 알림)
+    ["internal_overhead_ratio", "external_overhead_ratio"].forEach(k => { delete S.proj.settings[k]; });
     try {
       S.mtime = await Store.saveProject(S.proj, Calc.calculateProjectCost(S.proj, S.master), file, force ? null : S.mtime);
     } catch (e) {
@@ -360,6 +379,7 @@
   // ---------------- 시작 ----------------
   async function start() {
     $("verBadge").textContent = VERSION;
+    PC.fillIcons();
     S.proj = M.newProject(S.master);
     markSaved();
     document.addEventListener("change", e => {
@@ -389,6 +409,18 @@
       proj: () => S.proj, pushUndo, render,
       newRow: list => { S.proj[list].push(ROW[list](S.proj)); return S.proj[list].length - 1; },
       setValue: (path, v) => { setPath(S.proj, path, v); afterBind(path, v); },
+      // 표의 한 칸에 값: 경비의 입력 금액(@amount)은 분배 방식에 따라 총액 · 한 달 금액으로, 달별 금액을 넣으면 '월별 직접 입력'으로
+      setCell: (list, row, b, v) => {
+        const r = S.proj[list][row];
+        if (b === "@amount") { if (r.dist_mode === "manual") return; b = r.dist_mode === "fill_all" ? "unit_input" : "total_input"; }
+        if (/^monthly\./.test(b) && r.dist_mode !== "manual") {
+          const calc = Calc.calculateProjectCost(S.proj, S.master).details[list][row].calc_monthly;
+          r.monthly = Object.assign({}, calc);
+          r.dist_mode = "manual";
+        }
+        setPath(S.proj, `${list}.${row}.${b}`, v);
+        afterBind(`${list}.${row}.${b}`, v);
+      },
       known: (list, key, v) => !v || (key === "grade"
         ? (list === "internal_labor" ? (S.proj.settings.internal_grades || []).some(g => g.grade === v) : (S.proj.settings.external_grades || []).includes(v))
         : (S.proj.settings.vendor_rates || []).some(r => r.vendor === v))
