@@ -3,3 +3,4 @@ __pycache__/
 data/projects/
 data/backups/
 data/reports/
+dist/

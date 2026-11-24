@@ -1,0 +1,99 @@
+// =============================================================================
+// 자료 모양 — 기본 기준정보 · 새 프로젝트 · 데모 · 예전 자료 채우기 · 업로드 양식 읽기
+//  자료 정의는 docs/DATA_MODEL.md. 필드를 바꾸면 그 문서와 normalize() 를 함께 고친다
+// =============================================================================
+(function (root) {
+  "use strict";
+  const PC = root.PC || require("./util.js");
+  const { clone, num } = PC;
+
+  // 기준정보가 하나도 없을 때(새 폴더) 쓰는 값 — 원본 v4 의 default_settings 와 같음
+  function defaultSettings() {
+    return {
+      internal_overhead_ratio: 0.15,
+      external_overhead_ratio: 0.05,
+      default_promotion_month: "03",
+      internal_grades: [{ grade: "수석", rate: 8500000 }, { grade: "책임", rate: 7200000 }, { grade: "선임", rate: 6000000 }, { grade: "전임", rate: 4800000 }],
+      external_grades: ["특급", "고급", "중급", "초급"],
+      vendor_rates: [
+        { vendor: "파트너A", grade: "특급", rate: 9500000 }, { vendor: "파트너A", grade: "고급", rate: 7800000 }, { vendor: "파트너A", grade: "중급", rate: 6200000 },
+        { vendor: "파트너B", grade: "특급", rate: 9200000 }, { vendor: "파트너B", grade: "고급", rate: 7500000 }, { vendor: "파트너B", grade: "중급", rate: 6000000 }
+      ],
+      expense_accounts: [
+        { account: "출장비", category: "general", desc: "국내/외 출장 경비" },
+        { account: "회의·식대", category: "general", desc: "프로젝트 회의 및 업무추진비" },
+        { account: "장비·SW임차", category: "general", desc: "개발장비 및 라이선스" },
+        { account: "사전심의·인증비", category: "custom", desc: "외부 심의 및 보안인증 수수료" },
+        { account: "예비비", category: "custom", desc: "리스크 대응 예비 비용" }
+      ]
+    };
+  }
+
+  const emptyEstimate = () => ({ estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, items: [] });
+
+  function newProject(settings, id) {
+    const y = new Date().getFullYear();
+    return {
+      project_id: id || `PRJ-${y}-NEW`, project_name: "신규 프로젝트", client_name: "", pm_name: "", sales_rep: "", description: "",
+      date_mode: "month", start_date: `${y}-01`, end_date: `${y}-06`, contract_revenue: 0, target_hurdle_rate: 18.0,
+      settings: clone(settings || defaultSettings()),
+      internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate()
+    };
+  }
+
+  // 화면 확인 · 교육용 예시 (원본의 [데모 채우기]와 같은 자료)
+  function demoProject(settings) {
+    const p = newProject(settings, "PRJ-2026-01");
+    Object.assign(p, {
+      project_name: "차세대 원가·공정 시스템 구축", client_name: "대한정밀(주)", pm_name: "김철수 PM", sales_rep: "박영희 매니저",
+      description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행",
+      start_date: "2026-01", end_date: "2026-06", contract_revenue: 240000000, target_hurdle_rate: 18.0,
+      internal_labor: [
+        { name: "김철수", role: "PM", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6, promotions: [{ effective_ym: "2026-03", rate: 9000000 }],
+          mm: { "2026-01": 1, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 1 } },
+        { name: "이민지", role: "PL/아키텍트", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5, promotions: [],
+          mm: { "2026-01": 0.5, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 } }
+      ],
+      external_labor: [{ name: "외주개발1", role: "백엔드 개발", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
+      general_expenses: [{ name: "출장비", dist_mode: "equal_total", total_input: 9000000, unit_input: 0, monthly: {}, memo: "지방 사업장 방문" }],
+      custom_costs: [{ name: "사전심의·인증비", dist_mode: "fill_all", total_input: 0, unit_input: 400000, monthly: {}, memo: "보안 점검" }],
+      phases: [
+        { title: "1차 선행계약", start_ym: "2026-01", end_ym: "2026-03", revenue: 110000000, override_cost: "" },
+        { title: "2차 본계약", start_ym: "2026-04", end_ym: "2026-06", revenue: 130000000, override_cost: "" }
+      ],
+      estimate: { estimate_no: "EST-2026-0101", estimate_date: "2026-01-05", note: "공급가액 기준", applied_to_revenue: false,
+        items: [{ item_name: "컨설팅 및 설계", spec: "수석/선임", qty: 1, unit_price: 95000000, memo: "1차 범위" }, { item_name: "시스템 개발 및 이행", spec: "구축 일괄", qty: 1, unit_price: 155000000, memo: "2차 범위" }] }
+    });
+    return p;
+  }
+
+  // 파일에서 읽은 프로젝트의 빠진 부분을 채움 (원본 v4 파일 · 손으로 고친 파일)
+  function normalize(p, master) {
+    const base = newProject(master);
+    const out = Object.assign(base, p || {});
+    if (!out.settings || !Object.keys(out.settings).length) out.settings = clone(master || defaultSettings());
+    out.settings = Object.assign(defaultSettings(), out.settings);
+    ["internal_labor", "external_labor", "general_expenses", "custom_costs", "phases"].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+    out.estimate = Object.assign(emptyEstimate(), out.estimate || {});
+    if (!Array.isArray(out.estimate.items)) out.estimate.items = [];
+    return out;
+  }
+
+  // 업로드 양식(Project_Upload_Template): 첫 시트의 A열 = 키, B열 = 값
+  function fromTemplateRows(rows, master) {
+    const kv = {};
+    (rows || []).forEach(r => { if (r && r[0] !== undefined && r[0] !== "") kv[String(r[0]).trim()] = r[1]; });
+    const p = newProject(master, String(kv.project_id || "PRJ-UPLOAD"));
+    p.project_name = String(kv.project_name || `${p.project_id} 프로젝트`);
+    ["client_name", "pm_name", "sales_rep", "description"].forEach(k => { p[k] = String(kv[k] || ""); });
+    p.start_date = String(kv.start_date || kv.start_ym || p.start_date);
+    p.end_date = String(kv.end_date || kv.end_ym || p.end_date);
+    if (p.start_date.length > 7 || p.end_date.length > 7) p.date_mode = "date";
+    p.contract_revenue = num(kv.contract_revenue);
+    p.target_hurdle_rate = kv.target_hurdle_rate === undefined || kv.target_hurdle_rate === "" ? 18.0 : num(kv.target_hurdle_rate);
+    return p;
+  }
+
+  PC.Model = { defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate };
+  if (typeof module !== "undefined" && module.exports) module.exports = PC.Model;
+})(typeof window !== "undefined" ? window : globalThis);

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PM Hub Cost</title>
+  <link rel="stylesheet" href="assets/app.css" />
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem("prjcost.theme") || "light"; } catch (e) {}</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">C</span>
+      <h1>PM Hub Cost</h1><span class="brand-sub">프로젝트 원가 관리</span>
+      <span class="ver" id="verBadge"></span>
+    </div>
+    <div class="bar-group">
+      <span class="folder-chip off" id="folderChip" title="프로젝트 엑셀을 읽고 쓰는 폴더"><span class="dot"></span><span class="name">폴더 연결 전</span></span>
+      <button class="btn sm" data-act="connectFolder" id="btnFolder">📁 폴더 연결</button>
+    </div>
+    <div class="bar-group">
+      <select id="projectSelect" data-act="openSelected" aria-label="프로젝트 목록"></select>
+      <button class="btn" data-act="newProject">＋ 새 프로젝트</button>
+      <label class="btn file-btn" title="이 프로그램으로 저장한 엑셀 또는 업로드 양식을 엽니다">⬆ 엑셀 열기<input type="file" accept=".xlsx" id="uploadInput" /></label>
+      <span class="save-state" id="saveState"></span>
+      <button class="btn primary" data-act="save" title="Ctrl+S">💾 저장</button>
+      <button class="btn" data-act="toggleTheme" id="btnTheme" title="밝게 / 어둡게 바꾸기">어둡게</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <div class="notice warn" id="noticeBox" hidden></div>
+
+    <section class="kpis" aria-label="요약">
+      <div class="kpi"><span class="kpi-label">계약 매출</span><span class="kpi-val" id="kRev">0</span><span class="kpi-sub" id="kRevSub">견적 미등록</span></div>
+      <div class="kpi"><span class="kpi-label">총 원가</span><span class="kpi-val" id="kCost">0</span><span class="kpi-sub" id="kCostSub"></span><div class="mix" id="kMix"></div></div>
+      <div class="kpi" id="kMarginCard"><span class="kpi-label">예상 이익률</span><span class="kpi-val" id="kMargin">0.0%</span><span class="kpi-sub" id="kProfit">이익 0원</span></div>
+      <div class="kpi" id="kHurdleCard"><span class="kpi-label">목표 허들 대비</span><span class="kpi-val" id="kHurdle">-</span><span class="kpi-sub" id="kHurdleSub"></span></div>
+    </section>
+
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+    <section class="panel" id="panel"></section>
+  </main>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="js/util.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/xlsx.js"></script>
+  <script src="js/model.js"></script>
+  <script src="js/workbook.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
