@@ -5,7 +5,7 @@
 (function (root) {
   "use strict";
   const PC = root.PC || require("./util.js");
-  const { clone, num } = PC;
+  const { clone, num, isBlank } = PC;
 
   // 경비 계정 구분: 일반경비 · 기타경비 (금액을 직접 넣음) / 인비례 (인력 MM × 기준금액으로 자동)
   const CATEGORIES = [
@@ -18,6 +18,7 @@
   function defaultSettings() {
     return {
       default_promotion_month: "03",
+      areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 담당 영역(시스템) — 투입 현황을 영역별로 볼 때 씀
       internal_grades: [{ grade: "수석", rate: 8500000 }, { grade: "책임", rate: 7200000 }, { grade: "선임", rate: 6000000 }, { grade: "전임", rate: 4800000 }],
       external_grades: ["특급", "고급", "중급", "초급"],
       vendor_rates: [
@@ -67,12 +68,12 @@
       description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행",
       start_date: "2026-01", end_date: "2026-06", contract_revenue: 240000000, target_hurdle_rate: 18.0,
       internal_labor: [
-        { name: "김철수", role: "PM", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6, promotions: [{ effective_ym: "2026-03", rate: 9000000 }],
+        { name: "김철수", role: "PM", area: "PMO", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6, rate_changes: [{ effective_ym: "2026-03", rate: 8800000 }], promotions: [{ effective_ym: "2026-05", grade: "", rate: 9500000 }],
           mm: { "2026-01": 1, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 1 } },
-        { name: "이민지", role: "PL/아키텍트", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5, promotions: [],
+        { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5, promotions: [],
           mm: { "2026-01": 0.5, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 } }
       ],
-      external_labor: [{ name: "외주개발1", role: "백엔드 개발", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
+      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, rate_changes: [{ effective_ym: "2026-04", rate: 8000000 }], mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
       general_expenses: [{ name: "출장비", dist_mode: "equal_total", total_input: 9000000, unit_input: 0, monthly: {}, memo: "지방 사업장 방문" }],
       custom_costs: [{ name: "사전심의·인증비", dist_mode: "fill_all", total_input: 0, unit_input: 400000, monthly: {}, memo: "보안 점검" }],
       phases: [
@@ -92,7 +93,12 @@
     if (!out.settings || !Object.keys(out.settings).length) out.settings = clone(master || defaultSettings());
     out.settings = Object.assign(defaultSettings(), out.settings);
     ensureMmAccounts(out.settings);
+    if (!Array.isArray(out.settings.areas)) out.settings.areas = defaultSettings().areas;
     ["internal_labor", "external_labor", "general_expenses", "custom_costs", "phases"].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+    // 단가 인상 rate_changes(내부 연봉 인상 · 외주 협상)와 내부 승진 promotions(v4 이름 그대로)는 따로. 단가도 등급도 없는 빈 줄(예전 새 인력 기본값)은 뺌
+    const list = v => (Array.isArray(v) ? v : []).filter(r => r && (!isBlank(r.rate) || r.grade));
+    out.internal_labor.forEach(m => { m.promotions = list(m.promotions); m.rate_changes = list(m.rate_changes); });
+    out.external_labor.forEach(e => { e.rate_changes = list(e.rate_changes); });
     out.estimate = Object.assign(emptyEstimate(), out.estimate || {});
     if (!Array.isArray(out.estimate.items)) out.estimate.items = [];
     return out;

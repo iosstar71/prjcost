@@ -87,8 +87,11 @@ const b64 = f => fs.readFileSync(f).toString("base64");
 
     // 새 프로젝트 → 데모 → 저장 → 목록 · 지우기
     await page.click('[data-act="newProject"]');
-    await page.click('[data-act="showTab"][data-args*="info"]');
+    // 데모 채우기는 기준정보 > 기본값 · 데모
+    await page.click('[data-act="showTab"][data-args*="settings"]');
+    await page.click('[data-act="showSettings"][data-args*="basics"]');
     await page.click('[data-act="loadDemo"]'); await page.click('.dialog button[data-id="ok"]');
+    await page.click('[data-act="showTab"][data-args*="info"]');
     const demo = await page.evaluate(() => PC.App.S.calc.summary);
     check("Demo project: same figures as the v4 demo (revenue 240,000,000)", demo.revenue === 240000000 && demo.total_cost > 0, JSON.stringify(demo));
     // 금액 칸: 쉼표로 보이고, 쉼표를 넣어 입력해도 숫자로 읽음
@@ -110,10 +113,10 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Arrow keys and Enter move between cells like a spreadsheet (Enter on the last person goes to the blank new row)", f1 === "internal_labor.1.mm.2026-01" && f2 === "internal_labor.1.mm.2026-02" && f3 === "internal_labor", JSON.stringify([f1, f2, f3]));   // 마지막 사람 줄에서 Enter → 새 줄(이름 칸)
     const paste = (sel, text) => page.evaluate(([s2, t]) => { const el = document.querySelector(s2); el.focus(); const dt = new DataTransfer(); dt.setData("text/plain", t); el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, [sel, text]);
     // 엑셀에서 복사한 여러 줄 (성명 · 역할 · 등급) 을 새 줄에 붙여넣기 → 인력 2명 추가, 없는 등급은 빨갛게
-    await paste('input[data-new="internal_labor"]', "박신규\t개발\t책임\r\n최추가\tQA\t없는등급\r\n");
+    await paste('input[data-new="internal_labor"]', "박신규\t개발\tPMO\t책임\r\n최추가\tQA\t\t없는등급\r\n");
     await page.waitForFunction(() => PC.App.S.proj.internal_labor.length === 4, null, { timeout: 3000 }).catch(() => {});
-    const pv = await page.evaluate(() => ({ rows: PC.App.S.proj.internal_labor.map(r => [r.name, r.role, r.grade, r.base_rate]), invalid: document.querySelectorAll("select.invalid").length }));
-    check("Pasting rows copied from Excel adds people (grade sets the rate; unknown grade shown in red)", pv.rows.length === 4 && pv.rows[2].join() === "박신규,개발,책임,7200000" && pv.rows[3][2] === "없는등급" && pv.invalid === 1, JSON.stringify(pv));
+    const pv = await page.evaluate(() => ({ rows: PC.App.S.proj.internal_labor.map(r => [r.name, r.role, r.area, r.grade, r.base_rate]), invalid: document.querySelectorAll("select.invalid").length }));
+    check("Pasting rows copied from Excel adds people (area · grade; grade sets the rate; unknown grade shown in red)", pv.rows.length === 4 && pv.rows[2].join() === "박신규,개발,PMO,책임,7200000" && pv.rows[3][3] === "없는등급" && pv.invalid === 1, JSON.stringify(pv));
     // 머리글째 붙여넣기: 머리글 이름(성명 · 월)으로 열을 맞춤
     await paste(B("internal_labor.2.name"), "성명\t2026-02\t2026-03\n박신규\t0.5\t0.75");
     await page.waitForFunction(() => PC.App.S.proj.internal_labor[2].mm["2026-03"] === 0.75, null, { timeout: 3000 }).catch(() => {});
@@ -138,6 +141,43 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Typing a name in the blank last row adds a person and moves to the role cell", (await page.evaluate(() => PC.App.S.proj.internal_labor[4].name)) === "정신입" && (await focused()) === "internal_labor.4.role", await focused());
     await page.evaluate(() => { while (PC.App.S.proj.internal_labor.length > 2) PC.App.S.proj.internal_labor.pop(); PC.App.render(); });
 
+    // 단가 인상 · 승진 (따로): 인상단가만 넣으면 인상월은 기본 달(03), 그 달부터 끝까지 새 단가 / 승진등급만 고르면 그 등급 단가
+    await page.selectOption(B("internal_labor.1.area"), "개발");
+    await page.fill(B("internal_labor.1.rate_changes.0.rate"), "6,500,000"); await page.keyboard.press("Tab");
+    await page.waitForFunction(() => PC.App.S.calc.details.internal_labor[1].calc["2026-03"].rate === 6500000, null, { timeout: 3000 }).catch(() => {});
+    const raise = await page.evaluate(() => { const r = PC.App.S.calc.details.internal_labor[1]; return { m: r.rate_changes[0].effective_ym, area: r.area, rates: ["2026-02", "2026-03", "2026-06"].map(m => r.calc[m].rate), step: document.querySelector('[data-bind="internal_labor.1.mm.2026-03"]').closest("td").classList.contains("rate-step") }; });
+    await page.fill(B("internal_labor.1.promotions.0.effective_ym"), "2026-05"); await page.keyboard.press("Tab");
+    await page.selectOption(B("internal_labor.1.promotions.0.grade"), "책임");
+    await page.waitForFunction(() => PC.App.S.calc.details.internal_labor[1].calc["2026-05"].rate === 7200000, null, { timeout: 3000 }).catch(() => {});
+    const promo = await page.evaluate(() => ["2026-04", "2026-05"].map(m => PC.App.S.calc.details.internal_labor[1].calc[m].rate));
+    check("Internal staff: salary raise (rate + month) and promotion (month + grade) are set separately and apply from that month", raise.m === "2026-03" && raise.area === "개발" && raise.rates.join() === "6000000,6500000,6500000" && raise.step && promo.join() === "6500000,7200000", JSON.stringify({ raise, promo }));
+    for (let k = 0; k < 4; k++) await page.keyboard.press("Control+z");
+    await page.click('[data-act="showTab"][data-args*="external"]');
+    const ext = await page.evaluate(() => ({ m: document.querySelector('[data-bind="external_labor.0.rate_changes.0.effective_ym"]').value, rates: ["2026-03", "2026-04"].map(m => PC.App.S.calc.details.external_labor[0].calc[m].rate) }));
+    check("External staff: negotiated rate from a month (demo: 7,800,000 to 8,000,000 from 2026-04)", ext.m === "2026-04" && ext.rates.join() === "7800000,8000000", JSON.stringify(ext));
+
+    // 투입 현황: 영역별 · 등급별, 분할계약을 고르면 그 기간만
+    await page.click('[data-act="showTab"][data-args*="stats"]');
+    const statRows = () => page.$$eval("#panel table tbody tr", rs => rs.map(r => r.cells[0].innerText.trim() + ":" + r.cells[1].innerText.trim()));
+    const byArea = await statRows();
+    await page.click('[data-act="setStats"][data-args*="grade"]');
+    const byGrade = await statRows();
+    await page.selectOption('select[data-key="phase"]', "1");
+    const ph1 = await page.evaluate(() => ({ months: document.querySelectorAll("#panel table thead th.m").length, total: [...document.querySelectorAll("#panel table tr.total td")].map(t => t.innerText.trim()) }));
+    check("Staffing stats by area / grade; choosing a split contract shows only its months", byArea.join() === "PMO:1,분석 · 설계:1,개발:1,합계:3" && byGrade.join() === "수석:1,선임:1,고급:1,합계:3" && ph1.months === 3 && ph1.total.includes("7.5"), JSON.stringify({ byArea, byGrade, ph1 }));
+    await page.selectOption('select[data-key="phase"]', "0");
+    await page.click('[data-act="setStats"][data-args*="area"]');
+
+    // 기준정보: 작은 탭 · 담당 영역 목록도 엑셀처럼 (새 줄에 이름)
+    await page.click('[data-act="showTab"][data-args*="settings"]');
+    await page.click('[data-act="showSettings"][data-args*="areas"]');
+    await page.fill('input[data-new="settings.areas"]', "데이터"); await page.keyboard.press("Enter");
+    await page.waitForFunction(() => PC.App.S.proj.settings.areas.includes("데이터"), null, { timeout: 3000 }).catch(() => {});
+    check("Settings has sub-tabs; the area list takes a new entry like a grid", (await page.evaluate(() => PC.App.S.proj.settings.areas.slice(-1)[0])) === "데이터" && (await page.$$(".seg-btn")).length >= 6);
+    await page.evaluate(() => document.activeElement.blur());
+    await page.keyboard.press("Control+z");
+    await page.click('[data-act="showTab"][data-args*="internal"]');
+
     // MM 은 소수 둘째 자리까지
     await page.fill(B("internal_labor.1.mm.2026-06"), "0.25"); await page.keyboard.press("Tab");
     await page.waitForFunction(() => PC.App.S.proj.internal_labor[1].mm["2026-06"] === 0.25, null, { timeout: 3000 }).catch(() => {});
@@ -159,10 +199,10 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Expense table works like the staffing table (paste rows; month paste switches to monthly input, other months kept)", ex1.join() === "회의비,fill_all,500000,3000000" && ex2.mode === "manual" && ex2.m["2026-03"] === 100 && ex2.m["2026-04"] === 200 && ex2.m["2026-01"] === 1500000, JSON.stringify({ ex1, ex2 }));
     await page.keyboard.press("Control+z"); await page.keyboard.press("Control+z");
 
-    // 프로젝트 정보: 원가 구성 (항목별 금액 · 비중)
+    // 프로젝트 개요: 원가 구성 (인건비 · 경비(일반 + 인비례) · 기타경비)
     await page.click('[data-act="showTab"][data-args*="info"]');
     const comp = await page.$$eval("table.comp tr", rs => rs.map(r => r.innerText.replace(/\s+/g, " ").trim()));
-    check("Project info shows the cost breakdown with shares (labor, general by item, overhead by account, other)", ["내부 인건비", "외주 인건비", "일반경비", "출장비", "인비례 경비", "복리후생비", "기타경비", "총 원가"].every(k => comp.some(t => t.startsWith(k))) && comp.some(t => /%$/.test(t)), comp.join(" | "));
+    check("Overview shows the cost breakdown: labor, expense (general + MM-based in one group), other expense, with shares", ["내부 인건비", "외주 인건비", "경비", "출장비", "복리후생비", "외주 관리비", "기타경비", "사전심의", "총 원가"].every(k => comp.some(t => t.startsWith(k))) && !comp.some(t => t.startsWith("인비례") || t.startsWith("일반경비")) && comp.some(t => /%$/.test(t)), comp.join(" | "));
 
     // 보고서 (2시트 엑셀) 내려받기
     // 파일 이름은 프로그램이 정한 이름으로 확인 (헤드리스 크롬은 한글 이름을 "download" 로 알려 줌 — 실제 크롬 · 엣지는 그대로 씀)
@@ -172,13 +212,15 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     await dl.saveAs(rpath);
     const PCn = require("../js/util.js"); require("../js/xlsx.js");
     const rwb = await PCn.Xlsx.read(fs.readFileSync(rpath));
-    check("Report button downloads a 2-sheet Excel report (통합보고 · 항목별상세)", rwb.sheets.map(x => x.name).join() === "01_통합보고,02_항목별상세" && /^PRJ-2026-01_원가보고서_\d{8}_\d{6}\.xlsx$/.test(await page.evaluate(() => window.__lastDownload)), await page.evaluate(() => window.__lastDownload));
+    check("Report button downloads an Excel report (통합보고 · 항목별상세 · 투입현황)", rwb.sheets.map(x => x.name).join() === "01_통합보고,02_항목별상세,03_투입현황" && /^PRJ-2026-01_원가보고서_\d{8}_\d{6}\.xlsx$/.test(await page.evaluate(() => window.__lastDownload)), await page.evaluate(() => window.__lastDownload));
     check("Theme button says Dark in light mode", (await page.textContent("#btnTheme")).trim() === "Dark");
     if (shotDir) {
       fs.mkdirSync(shotDir, { recursive: true });
       await page.screenshot({ path: path.join(shotDir, "light_info.png") });
-      for (const tab of ["internal", "expense", "phase", "settings"]) { await page.click(`[data-act="showTab"][data-args*="${tab}"]`); await page.screenshot({ path: path.join(shotDir, `light_${tab}.png`), fullPage: true }); }
-      for (let k = 0; k < 4; k++) await page.click('[data-act="addRow"][data-args*="settings.internal_grades"]');
+      for (const tab of ["internal", "external", "stats", "expense", "phase", "settings"]) { await page.click(`[data-act="showTab"][data-args*="${tab}"]`); await page.screenshot({ path: path.join(shotDir, `light_${tab}.png`), fullPage: true }); }
+      for (const sub of ["vendors", "accounts", "basics"]) { await page.click(`[data-act="showSettings"][data-args*="${sub}"]`); await page.screenshot({ path: path.join(shotDir, `light_settings_${sub}.png`), fullPage: true }); }
+      await page.click('[data-act="showSettings"][data-args*="grades"]');
+      for (let k = 0; k < 4; k++) { await page.fill('input[data-new="settings.internal_grades"]', `등급${k}`); await page.keyboard.press("Enter"); await page.evaluate(() => document.activeElement.blur()); }
       await page.screenshot({ path: path.join(shotDir, "light_settings_more.png"), fullPage: true });
       for (let k = 0; k < 4; k++) await page.keyboard.press("Control+z");
       await page.click('[data-act="toggleTheme"]');

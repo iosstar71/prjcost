@@ -31,16 +31,17 @@
       ...(st.internal_grades || []).map(g => ["내부등급", g.grade || "", "기준단가", num(g.rate)]),
       ...(st.external_grades || []).map(g => ["외주등급", String(g), "등급목록", ""]),
       ...(st.vendor_rates || []).map(r => ["외주업체단가", r.vendor || "", r.grade || "", num(r.rate)]),
+      ...(st.areas || []).map(a => ["담당영역", String(a), "", ""]),
       ...(st.expense_accounts || []).map(a => ["경비계정", a.account || "", catName(a.category), PC.Model.isMmCategory(a.category) ? num(a.unit_amount) : a.desc || ""])
     ].map(cells => ({ cells }));
 
     const d = calc.details;
+    const step = l => { const r0 = (l || [])[0] || {}; return [r0.effective_ym || "", r0.rate === undefined || r0.rate === "" ? "" : num(r0.rate)]; };   // 첫 인상 · 승진 (월, 단가)
     const internal = d.internal_labor.map(m => {
-      const p0 = (m.promotions || [])[0] || {};
-      return { cells: [m.name || "", m.role || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", p0.effective_ym || "", p0.rate === undefined || p0.rate === "" ? "" : num(p0.rate), { v: m.total_mm, s: "dec" },
+      return { cells: [m.name || "", m.role || "", m.area || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", ...step(m.promotions), ((m.promotions || [])[0] || {}).grade || "", ...step(m.rate_changes), { v: m.total_mm, s: "dec" },
         ...months.map(mo => ({ v: m.calc[mo].mm, s: "dec" })), m.total_cost] };
     });
-    const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, { v: e.total_mm, s: "dec" },
+    const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.area || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, ...step(e.rate_changes), { v: e.total_mm, s: "dec" },
       ...months.map(mo => ({ v: e.calc[mo].mm, s: "dec" })), e.total_cost] }));
     const expIn = e => (e.dist_mode === "fill_all" ? num(e.unit_input) : num(e.total_input));
     const expenses = [
@@ -66,8 +67,8 @@
     return [
       { name: "01_Project_Info", cols: [22, 48], rows: [head(["항목", "내용"]), ...info] },
       { name: "02_Project_Settings", cols: widths(4, 22), rows: [head(["구분", "항목1(업체/등급/키)", "항목2(등급/유형)", "값(단가/비율/설명)"]), ...settingsRows] },
-      { name: "03_Internal_Labor", cols: widths(9 + months.length), rows: [head(["성명", "역할", "등급", "기준단가", "인비례포함", "승진월", "승진단가", "총MM", ...mHead, "합계금액"]), ...internal] },
-      { name: "04_External_Labor", cols: widths(8 + months.length), rows: [head(["성명/구분", "역할", "외주업체", "등급", "기준단가", "적용단가", "총MM", ...mHead, "합계금액"]), ...external] },
+      { name: "03_Internal_Labor", cols: widths(13 + months.length), rows: [head(["성명", "역할", "담당영역", "등급", "기준단가", "인비례포함", "승진월", "승진단가", "승진등급", "인상월", "인상단가", "총MM", ...mHead, "합계금액"]), ...internal] },
+      { name: "04_External_Labor", cols: widths(11 + months.length), rows: [head(["성명/구분", "역할", "담당영역", "외주업체", "등급", "기준단가", "적용단가", "인상월", "인상단가", "총MM", ...mHead, "합계금액"]), ...external] },
       { name: "05_Expenses", cols: widths(5 + months.length), rows: [head(["구분", "경비계정/항목", "분배방식", "입력금액", ...mHead, "합계금액"]), ...expenses] },
       { name: "06_Phases", cols: widths(11), rows: [head(["회차", "구분", "시작월", "종료월", "회차매출", "회차원가", "회차이익률(%)", "누적매출", "누적원가", "잔여매출", "잔여원가"]), ...phases] },
       { name: "07_Estimate", cols: widths(6, 18), freeze: false, rows: estimate },
@@ -152,9 +153,17 @@
       ...(d.mm_overheads || []).map(o => [o.category === "mm_internal" ? "인비례(내부)" : "인비례(외주)", o.account, "MM×기준금액", o.unit_amount, ...months.map(m => o.calc_monthly[m]), o.total_cost]),
       ...d.custom_costs.map(e => ["기타경비", e.name || "", e.dist_mode || "", e.dist_mode === "fill_all" ? num(e.unit_input) : num(e.total_input), ...months.map(m => e.calc_monthly[m]), e.total_cost])
     ], s.breakdown.general_expense + s.breakdown.internal_overhead + s.breakdown.external_overhead + s.breakdown.custom_cost);
+    const r3 = [];
+    [["area", "담당 영역별"], ["grade", "등급별"], ["vendor", "업체별 (내부 / 외주업체)"]].forEach(([by, title]) => {
+      const st3 = PC.Calc.staffStats(calc, { by });
+      r3.push({ cells: [{ v: `인력 투입 — ${title}`, s: "title" }] }, head(["구분", "인원", ...st3.months, "총 MM", "MM 비중(%)", "인건비(원)", "금액 비중(%)"]));
+      st3.rows.forEach(g => r3.push({ cells: [g.key, g.people, ...st3.months.map(m => ({ v: g.mm[m], s: "dec" })), { v: g.total_mm, s: "dec" }, pctCell(g.mm_share), g.cost, pctCell(g.share)] }));
+      r3.push({ cells: ["합계", st3.total.people, ...st3.months.map(m => ({ v: st3.total.mm[m], s: "dec" })), { v: st3.total.total_mm, s: "dec" }, "", st3.total.cost, ""], style: "total" }, { cells: [] });
+    });
     return [
       { name: "01_통합보고", cols: [26, 18, 14, 14, 14, 16, 16, 16], freeze: false, rows: r1 },
-      { name: "02_항목별상세", cols: widths(5 + months.length, 14, 18), freeze: false, rows: r2 }
+      { name: "02_항목별상세", cols: widths(5 + months.length, 14, 18), freeze: false, rows: r2 },
+      { name: "03_투입현황", cols: widths(6 + months.length, 12, 20), freeze: false, rows: r3 }
     ];
   }
 

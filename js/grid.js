@@ -17,6 +17,7 @@
     if (t === "num") return v === "" ? 0 : num(v);
     if (t === "mm") return v === "" ? 0 : PC.pyRound(num(v), 2);   // MM 은 소수 둘째 자리까지 (0.25)
     if (t === "mode") return MODE_OF(v);
+    if (t === "cat") return /외주/.test(v) || v === "mm_external" ? "mm_external" : /인비례|내부/.test(v) || v === "mm_internal" ? "mm_internal" : /기타|custom/.test(v) ? "custom" : "general";
     if (t === "blank-num") return v === "" ? "" : num(v);
     if (t === "bool") return TRUE.test(v);
     if (t === "month") { const m = MONTH.exec(v); return m ? `${m[1]}-${m[2].padStart(2, "0")}` : ""; }
@@ -120,14 +121,14 @@
       const list = el.dataset.new, cols = this.cols(this.table(el));
       this.h.pushUndo();
       const i = this.h.newRow(list);
-      this.h.setCell(list, i, "name", name);
-      this.h.render(`${list}.${i}.${(cols[1] || cols[0]).b}`);
+      this.h.setCell(list, i, cols[0].b, parse(cols[0].t, name));
+      this.h.render(cols[1] ? `${list}.${i}.${cols[1].b}` : `${list}.${i}${cols[0].b ? "." + cols[0].b : ""}`);
     },
 
     // 오른쪽 채우기: 이 달 값을 뒤의 모든 달에 (Ctrl+R) — 인력 MM · 경비 월별 금액
     fillRight(el) {
       const tbl = this.table(el), { r, c } = this.pos(el), cols = this.cols(tbl), list = tbl.dataset.list;
-      if (!cols[c] || !cols[c].fill || r >= this.h.proj()[list].length) return;
+      if (!cols[c] || !cols[c].fill || r >= this.h.listAt(list).length) return;
       const v = parse(cols[c].t, el.value);
       this.h.pushUndo();
       for (let k = c; k < cols.length; k++) if (cols[k].fill) this.h.setCell(list, r, cols[k].b, v);
@@ -141,6 +142,7 @@
       if (!tbl) return;
       const text = (e.clipboardData || window.clipboardData).getData("text/plain") || "";
       if (!/[\t\n\r]/.test(text.replace(/[\r\n]+$/, ""))) return;   // 한 칸 값은 브라우저가 그대로 붙여넣음
+      if (this.pos(el).r < 0) return;
       e.preventDefault();
       this.paste(tbl, el, parseTsv(text));
     },
@@ -151,11 +153,10 @@
       if (hm) { colIdx = hm; lines = data.slice(1); }
       if (!lines.length) return;
       this.h.pushUndo();
-      const proj = this.h.proj();
       let cells = 0, added = 0, unknown = 0;
       lines.forEach((line, i) => {
         const row = r + i;
-        if (row >= proj[list].length) { this.h.newRow(list); added++; }
+        if (row >= this.h.listAt(list).length) { this.h.newRow(list); added++; }
         line.forEach((raw, j) => {
           const ci = colIdx ? colIdx[j] : c + j;
           const col = cols[ci];
@@ -163,11 +164,12 @@
           const v = parse(col.t, raw);
           this.h.setCell(list, row, col.b, v);
           cells++;
-          if (col.b === "grade" || col.b === "vendor") unknown += this.h.known(list, col.b, v) ? 0 : 1;
+          if (col.b === "grade" || col.b === "vendor" || col.b === "area") unknown += this.h.known(list, col.b, v) ? 0 : 1;
         });
       });
-      this.h.render(`${list}.${r}.${cols[colIdx ? Math.max(0, colIdx.find(x => x >= 0)) : c].b}`);
-      PC.UI.toast(`${lines.length}줄 · ${cells}칸을 붙여 넣었습니다${added ? ` (새 인력 ${added}명)` : ""}${unknown ? ` — 기준정보에 없는 등급 · 업체 ${unknown}칸은 빨갛게 표시` : ""}. Ctrl+Z 로 되돌릴 수 있습니다.`, unknown ? "error" : "ok");
+      const fb = cols[colIdx ? Math.max(0, colIdx.find(x => x >= 0)) : c].b;
+      this.h.render(fb ? `${list}.${r}.${fb}` : `${list}.${r}`);
+      PC.UI.toast(`${lines.length}줄 · ${cells}칸을 붙여 넣었습니다${added ? ` (새 인력 ${added}명)` : ""}${unknown ? ` — 기준정보에 없는 등급 · 업체 · 영역 ${unknown}칸은 빨갛게 표시` : ""}. Ctrl+Z 로 되돌릴 수 있습니다.`, unknown ? "error" : "ok");
     },
     _test: { parseTsv, headerMap, parse }
   };

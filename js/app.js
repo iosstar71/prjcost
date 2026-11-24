@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.1";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -18,7 +18,9 @@
     tab: "info",
     list: [],
     past: [], future: [],
-    noted: new Set()               // 이번에 이미 알린 '예전 비율 방식' 파일           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
+    noted: new Set(),
+    settingsTab: "grades",         // 기준정보 안의 작은 탭
+    stats: { by: "area", scope: "all", phase: 0 }   // 투입 현황 보기 조건 (phase: 분할계약 회차, 0 = 전체 기간)               // 이번에 이미 알린 '예전 비율 방식' 파일           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
   };
   const UNDO_KEEP = 100;
   const $ = id => document.getElementById(id);
@@ -40,7 +42,7 @@
     renderKpis();
     renderTabs();
     const tab = Views.TABS.find(t => t.id === S.tab) || Views.TABS[0];
-    $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file });
+    $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file, sub: S.settingsTab, stats: S.stats });
     renderSaveState();
     renderUndo();
     restoreFocus(focus);
@@ -138,9 +140,14 @@
     if ((m = /^internal_labor\.(\d+)\.grade$/.exec(path))) {   // 등급을 바꾸면 기준단가도 그 등급 단가로
       const g = (p.settings.internal_grades || []).find(x => x.grade === value);
       if (g) p.internal_labor[+m[1]].base_rate = num(g.rate);
-    } else if ((m = /^internal_labor\.(\d+)\.promotions\.0\./.exec(path))) {   // 승진월 · 단가가 모두 비면 승진 없음
-      const mem = p.internal_labor[+m[1]], p0 = mem.promotions[0] || {};
-      if (!p0.effective_ym && (p0.rate === "" || p0.rate === undefined)) mem.promotions = [];
+    } else if ((m = /^(internal_labor|external_labor)\.(\d+)\.(promotions|rate_changes)\.0\./.exec(path))) {   // 단가(승진은 등급도)가 비면 인상 · 승진 없음
+      const l = p[m[1]][+m[2]][m[3]], r0 = l[0] || {};
+      const has = (r0.rate !== "" && r0.rate !== undefined) || r0.grade;
+      if (!r0.effective_ym && !has) l.shift();
+      else if (has && !r0.effective_ym) {   // 단가 · 등급만 넣었으면 달은 기본값 (내부: 기본 인상 · 승진월 / 외주: 둘째 달)
+        const start = String(p.start_date || "2026-01").slice(0, 7);
+        r0.effective_ym = m[1] === "internal_labor" ? `${start.slice(0, 4)}-${p.settings.default_promotion_month || "03"}` : (PC.monthRange(start, String(p.end_date || start).slice(0, 7))[1] || start);
+      }
     } else if ((m = /^(general_expenses|custom_costs)\.(\d+)\.dist_mode$/.exec(path)) && value === "manual") {   // 월별 직접 입력으로: 지금 달별 금액에서 시작
       const r = p[m[1]][+m[2]], prev = S.calc && S.calc.details[m[1]][+m[2]];
       if (prev && !Object.values(r.monthly || {}).some(v => num(v))) r.monthly = Object.assign({}, prev.calc_monthly);
@@ -168,12 +175,12 @@
   const ROW = {
     internal_labor: p => {
       const g0 = (p.settings.internal_grades || [])[0] || { grade: "선임", rate: 6000000 };
-      return { name: "신규인력", role: "개발", grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
-        promotions: [{ effective_ym: `${String(p.start_date || "2026").slice(0, 4)}-${p.settings.default_promotion_month || "03"}`, rate: "" }], mm: {} };
+      return { name: "신규인력", role: "개발", area: "", grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
+        rate_changes: [], promotions: [], mm: {} };
     },
     external_labor: p => {
       const v0 = (p.settings.vendor_rates || [])[0] || { vendor: "파트너A", grade: "고급" };
-      return { name: "외주인력", role: "개발", vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, mm: {} };
+      return { name: "외주인력", role: "개발", area: "", vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, rate_changes: [], mm: {} };
     },
     general_expenses: p => expenseRow(p, "general", "일반경비"),
     custom_costs: p => expenseRow(p, "custom", "기타비용"),
@@ -182,7 +189,8 @@
     "settings.internal_grades": () => ({ grade: "신규등급", rate: 5000000 }),
     "settings.external_grades": () => "신규등급",
     "settings.vendor_rates": p => ({ vendor: "신규업체", grade: (p.settings.external_grades || [])[0] || "고급", rate: 7500000 }),
-    "settings.expense_accounts": () => ({ account: "신규계정", category: "general", desc: "" })
+    "settings.expense_accounts": () => ({ account: "신규계정", category: "general", desc: "" }),
+    "settings.areas": () => "새 영역"
   };
   function expenseRow(p, cat, fallback) {
     const acc = (p.settings.expense_accounts || []).find(a => a.category === cat);
@@ -192,6 +200,8 @@
 
   const A = {
     showTab(id) { S.tab = id; render(); },
+    showSettings(id) { S.settingsTab = id; render(); },
+    setStats(key, v) { S.stats[key] = key === "phase" ? Number(v) || 0 : v; render(); },
     addRow(list) {
       if (list === "phases" && S.proj.phases.length >= 5) return UI.toast("분할계약은 5회차까지 넣을 수 있습니다.", "error");
       pushUndo();
@@ -385,6 +395,7 @@
     document.addEventListener("change", e => {
       if (e.target.id === "uploadInput") { upload(e.target.files[0]); e.target.value = ""; return; }
       if (e.target.dataset.act === "openSelected") return A.openSelected();
+      if (e.target.dataset.changeAct) return A[e.target.dataset.changeAct](e.target.dataset.key, e.target.value);
       onInput(e);
     });
     document.addEventListener("click", e => {
@@ -407,11 +418,13 @@
     });
     PC.Grid.init({
       proj: () => S.proj, pushUndo, render,
-      newRow: list => { S.proj[list].push(ROW[list](S.proj)); return S.proj[list].length - 1; },
+      listAt,
+      newRow: list => { const l = listAt(list); l.push(ROW[list](S.proj)); return l.length - 1; },
       setValue: (path, v) => { setPath(S.proj, path, v); afterBind(path, v); },
       // 표의 한 칸에 값: 경비의 입력 금액(@amount)은 분배 방식에 따라 총액 · 한 달 금액으로, 달별 금액을 넣으면 '월별 직접 입력'으로
       setCell: (list, row, b, v) => {
-        const r = S.proj[list][row];
+        if (!b) { setPath(S.proj, `${list}.${row}`, v); return; }   // 글자 목록 (외주 등급 · 담당 영역)
+        const r = listAt(list)[row];
         if (b === "@amount") { if (r.dist_mode === "manual") return; b = r.dist_mode === "fill_all" ? "unit_input" : "total_input"; }
         if (/^monthly\./.test(b) && r.dist_mode !== "manual") {
           const calc = Calc.calculateProjectCost(S.proj, S.master).details[list][row].calc_monthly;
@@ -421,7 +434,7 @@
         setPath(S.proj, `${list}.${row}.${b}`, v);
         afterBind(`${list}.${row}.${b}`, v);
       },
-      known: (list, key, v) => !v || (key === "grade"
+      known: (list, key, v) => !v || (key === "area" ? (S.proj.settings.areas || []).includes(v) : key === "grade"
         ? (list === "internal_labor" ? (S.proj.settings.internal_grades || []).some(g => g.grade === v) : (S.proj.settings.external_grades || []).includes(v))
         : (S.proj.settings.vendor_rates || []).some(r => r.vendor === v))
     });

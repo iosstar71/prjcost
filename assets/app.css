@@ -186,7 +186,22 @@ table.grid tr.new-row td > input:focus { color: var(--text); }
 table.grid tbody tr:hover td { background: transparent; }
 table.grid tbody tr[data-row]:hover td { background: var(--sub); }
 
-/* ---------- 원가 구성 (프로젝트 정보) ---------- */
+/* ---------- 작은 탭 (기준정보) · 고르기 단추 (투입 현황) ---------- */
+.seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 9px; background: var(--chip); }
+.seg-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; color: var(--text-sub); font-weight: 700; font-size: var(--fs-sm); cursor: pointer; white-space: nowrap; }
+.seg-btn:hover { color: var(--text); }
+.seg-btn.active { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12); }
+.seg-btn .cnt { padding: 0 6px; border-radius: 999px; background: var(--card); color: var(--muted); font-size: var(--fs-xs); }
+.seg-btn.active .cnt { background: var(--primary-tint); color: var(--primary); }
+.narrow { max-width: 860px; display: grid; gap: 14px; }
+.stat-bar { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: end; margin-bottom: 14px; }
+.stat-bar .field select { min-width: 260px; }
+.mini-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.mini-kpi { display: grid; gap: 2px; padding: 10px 14px; border-radius: 8px; background: var(--sub); border: 1px solid var(--line); }
+.mini-kpi span { font-size: var(--fs-xs); color: var(--muted); font-weight: 700; }
+.mini-kpi b { font-size: 17px; font-variant-numeric: tabular-nums; }
+
+/* ---------- 원가 구성 (프로젝트 개요) ---------- */
 .comp-card { padding: 14px 16px; }
 table.comp td { border-right: 0; padding: 5px 6px; }
 table.comp tr.cg td { padding-top: 9px; }
@@ -199,10 +214,9 @@ table.comp tfoot tr + tr td { border-top: 1px solid var(--line); }
 .bar { display: block; height: 8px; border-radius: 4px; background: var(--chip); overflow: hidden; }
 .bar.thin { height: 5px; }
 .bar i { display: block; height: 100%; border-radius: 4px; }
-.k-internal_labor { background: var(--c1); } .k-external_labor { background: var(--c2); } .k-general_expense { background: var(--c3); } .k-mm_overhead { background: var(--c4); } .k-custom_cost { background: var(--c5); }
+.k-internal_labor { background: var(--c1); } .k-external_labor { background: var(--c2); } .k-expense { background: var(--c3); } .k-custom_cost { background: var(--c5); }
 
 /* ---------- 기준정보: 두 줄 (카드 높이가 달라도 서로 늘어나지 않게) ---------- */
-.settings-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 .sub-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; background: var(--card); box-shadow: var(--shadow); }
 .sub-card .tbl-wrap { border-radius: 6px; }
 
@@ -217,9 +231,12 @@ table.comp tfoot tr + tr td { border-top: 1px solid var(--line); }
 .toast.error { border-left-color: var(--bad); }
 .toast.ok { border-left-color: var(--ok); }
 
-@media (max-width: 1100px) { .info-layout, .settings-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1100px) { .info-layout { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) {
   .topbar { padding: 10px 12px; }
   .workspace { padding: 0 12px 40px; }
   #projectSelect { min-width: 0; width: 100%; }
 }
+
+/* 단가가 바뀌는 달 (인상 · 승진): 칸 왼쪽에 굵은 선 */
+table.grid td.rate-step { box-shadow: inset 3px 0 0 var(--warning); }

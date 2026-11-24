@@ -304,24 +304,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9000000,
-      "share": 7.16,
+      "key": "expense",
+      "label": "경비",
+      "amount": 12100000,
+      "share": 9.63,
       "items": [
        {
         "name": "출장비",
         "amount": 9000000,
         "share": 7.16
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 3100000,
-      "share": 2.47,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 1800000,
@@ -1034,10 +1026,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9000000,
-      "share": 51.92,
+      "key": "expense",
+      "label": "경비",
+      "amount": 9058750.59,
+      "share": 52.26,
       "items": [
        {
         "name": "X0",
@@ -1048,15 +1040,7 @@
         "name": "X1",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 58750.59,
-      "share": 0.34,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -1794,24 +1778,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 333333.36,
-      "share": 0.18,
+      "key": "expense",
+      "label": "경비",
+      "amount": 1091640.94,
+      "share": 0.59,
       "items": [
        {
         "name": "X0",
         "amount": 333333.36,
         "share": 0.18
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 758307.58,
-      "share": 0.41,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -2985,10 +2961,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 1001001.01,
-      "share": 1.81,
+      "key": "expense",
+      "label": "경비",
+      "amount": 2184552.97,
+      "share": 3.95,
       "items": [
        {
         "name": "X0",
@@ -3004,15 +2980,7 @@
         "name": "X2",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 1183551.96,
-      "share": 2.14,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -3903,15 +3871,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 1140402.3,
       "share": 0.66,
       "items": [
@@ -5261,15 +5222,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 1556565.57,
       "share": 0.58,
       "items": [
@@ -6978,10 +6932,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 1028006.7,
-      "share": 0.31,
+      "key": "expense",
+      "label": "경비",
+      "amount": 9597753.35,
+      "share": 2.89,
       "items": [
        {
         "name": "X0",
@@ -6997,15 +6951,7 @@
         "name": "X2",
         "amount": 15003.36,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 8569746.65,
-      "share": 2.58,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 5269500,
@@ -8633,10 +8579,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9002000.12,
-      "share": 5.67,
+      "key": "expense",
+      "label": "경비",
+      "amount": 12571629.48,
+      "share": 7.92,
       "items": [
        {
         "name": "X0",
@@ -8652,15 +8598,7 @@
         "name": "X2",
         "amount": 9000000,
         "share": 5.67
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 3569629.36,
-      "share": 2.25,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 1784814.68,
@@ -9899,8 +9837,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 1000000.95,
       "share": 0.91,
       "items": [
@@ -9913,15 +9851,7 @@
         "name": "X1",
         "amount": 1000000.95,
         "share": 0.91
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 0,
-      "share": 0,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -11147,10 +11077,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 1006001.96,
-      "share": 0.54,
+      "key": "expense",
+      "label": "경비",
+      "amount": 3572791.87,
+      "share": 1.93,
       "items": [
        {
         "name": "X0",
@@ -11161,15 +11091,7 @@
         "name": "X1",
         "amount": 6001,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 2566789.91,
-      "share": 1.39,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -12818,8 +12740,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 3800001.03,
       "share": 4.96,
       "items": [
@@ -12837,15 +12759,7 @@
         "name": "X2",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 0,
-      "share": 0,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -13796,10 +13710,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9000000,
-      "share": 16.72,
+      "key": "expense",
+      "label": "경비",
+      "amount": 13074600,
+      "share": 24.29,
       "items": [
        {
         "name": "X0",
@@ -13810,15 +13724,7 @@
         "name": "X1",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 4074600,
-      "share": 7.57,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 2037300,
@@ -14892,10 +14798,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9000000,
-      "share": 1.61,
+      "key": "expense",
+      "label": "경비",
+      "amount": 22971835.85,
+      "share": 4.11,
       "items": [
        {
         "name": "X0",
@@ -14911,15 +14817,7 @@
         "name": "X2",
         "amount": 9000000,
         "share": 1.61
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 13971835.85,
-      "share": 2.5,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 1730717.3,
@@ -16991,24 +16889,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 333333.36,
-      "share": 0.72,
+      "key": "expense",
+      "label": "경비",
+      "amount": 3752746.86,
+      "share": 8.05,
       "items": [
        {
         "name": "X0",
         "amount": 333333.36,
         "share": 0.72
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 3419413.5,
-      "share": 7.34,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 996913.5,
@@ -17687,24 +17577,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
+      "key": "expense",
+      "label": "경비",
+      "amount": 2424702.2,
+      "share": 2.22,
       "items": [
        {
         "name": "X0",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 2424702.2,
-      "share": 2.22,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -18645,15 +18527,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 893950.54,
       "share": 0.97,
       "items": [
@@ -19487,10 +19362,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 333333.33,
-      "share": 0.63,
+      "key": "expense",
+      "label": "경비",
+      "amount": 802469.08,
+      "share": 1.52,
       "items": [
        {
         "name": "X0",
@@ -19501,15 +19376,7 @@
         "name": "X1",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 469135.75,
-      "share": 0.89,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -20261,24 +20128,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 2500.62,
-      "share": 0.02,
+      "key": "expense",
+      "label": "경비",
+      "amount": 110001.7,
+      "share": 0.75,
       "items": [
        {
         "name": "X0",
         "amount": 2500.62,
         "share": 0.02
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 107501.08,
-      "share": 0.73,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -20908,10 +20767,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 4803000.36,
-      "share": 3.84,
+      "key": "expense",
+      "label": "경비",
+      "amount": 6767938.46,
+      "share": 5.41,
       "items": [
        {
         "name": "X0",
@@ -20922,15 +20781,7 @@
         "name": "X1",
         "amount": 4800000,
         "share": 3.84
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 1964938.1,
-      "share": 1.57,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 982469.05,
@@ -21906,24 +21757,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9000000,
-      "share": 19.02,
+      "key": "expense",
+      "label": "경비",
+      "amount": 9902222.16,
+      "share": 20.93,
       "items": [
        {
         "name": "X0",
         "amount": 9000000,
         "share": 19.02
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 902222.16,
-      "share": 1.91,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -22658,10 +22501,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 245725.92,
-      "share": 0.56,
+      "key": "expense",
+      "label": "경비",
+      "amount": 4195525.92,
+      "share": 9.57,
       "items": [
        {
         "name": "X0",
@@ -22677,15 +22520,7 @@
         "name": "X2",
         "amount": 8501.74,
         "share": 0.02
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 3949800,
-      "share": 9.01,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 2629800,
@@ -23730,10 +23565,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9002000.24,
-      "share": 5.14,
+      "key": "expense",
+      "label": "경비",
+      "amount": 13229801.99,
+      "share": 7.55,
       "items": [
        {
         "name": "X0",
@@ -23749,15 +23584,7 @@
         "name": "X2",
         "amount": 2000.24,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 4227801.75,
-      "share": 2.41,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 10950,
@@ -24957,8 +24784,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 9002500.62,
       "share": 30.83,
       "items": [
@@ -24976,15 +24803,7 @@
         "name": "X2",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 0,
-      "share": 0,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -25708,24 +25527,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9000000,
-      "share": 13.8,
+      "key": "expense",
+      "label": "경비",
+      "amount": 10235431.99,
+      "share": 15.7,
       "items": [
        {
         "name": "X0",
         "amount": 9000000,
         "share": 13.8
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 1235431.99,
-      "share": 1.89,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 356913.55,
@@ -26681,10 +26492,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 290264.55,
-      "share": 0.11,
+      "key": "expense",
+      "label": "경비",
+      "amount": 4350511.14,
+      "share": 1.58,
       "items": [
        {
         "name": "X0",
@@ -26700,15 +26511,7 @@
         "name": "X2",
         "amount": 259259.07,
         "share": 0.09
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 4060246.59,
-      "share": 1.47,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -28329,24 +28132,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9000000,
-      "share": 6.45,
+      "key": "expense",
+      "label": "경비",
+      "amount": 9845358.45,
+      "share": 7.06,
       "items": [
        {
         "name": "X0",
         "amount": 9000000,
         "share": 6.45
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 845358.45,
-      "share": 0.61,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -29381,15 +29176,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 651234.5,
       "share": 0.43,
       "items": [
@@ -30605,15 +30393,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 3725850.06,
       "share": 1.11,
       "items": [
@@ -32336,10 +32117,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 269260.43,
-      "share": 0.07,
+      "key": "expense",
+      "label": "경비",
+      "amount": 3202223.15,
+      "share": 0.84,
       "items": [
        {
         "name": "X0",
@@ -32355,15 +32136,7 @@
         "name": "X2",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 2932962.72,
-      "share": 0.77,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -34141,24 +33914,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 1000001.04,
-      "share": 0.57,
+      "key": "expense",
+      "label": "경비",
+      "amount": 1968413.02,
+      "share": 1.11,
       "items": [
        {
         "name": "X0",
         "amount": 1000001.04,
         "share": 0.57
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 968411.98,
-      "share": 0.55,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 689259.19,
@@ -35354,8 +35119,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 1000001.04,
       "share": 17.24,
       "items": [
@@ -35368,15 +35133,7 @@
         "name": "X1",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 0,
-      "share": 0,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -36143,24 +35900,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 5001.24,
-      "share": 0,
+      "key": "expense",
+      "label": "경비",
+      "amount": 5867810.5,
+      "share": 3,
       "items": [
        {
         "name": "X0",
         "amount": 5001.24,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 5862809.26,
-      "share": 3,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 462854.63,
@@ -37619,10 +37368,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 1000001.1,
-      "share": 0.14,
+      "key": "expense",
+      "label": "경비",
+      "amount": 32041601.1,
+      "share": 4.63,
       "items": [
        {
         "name": "X0",
@@ -37638,15 +37387,7 @@
         "name": "X2",
         "amount": 0,
         "share": 0
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 31041600,
-      "share": 4.49,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 7944900,
@@ -40027,24 +39768,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 7600000,
-      "share": 6.68,
+      "key": "expense",
+      "label": "경비",
+      "amount": 12009700,
+      "share": 10.56,
       "items": [
        {
         "name": "X0",
         "amount": 7600000,
         "share": 6.68
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 4409700,
-      "share": 3.88,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -41179,15 +40912,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 0,
       "share": 0,
       "items": [
@@ -42568,10 +42294,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9098765.36,
-      "share": 8.02,
+      "key": "expense",
+      "label": "경비",
+      "amount": 9938271.46,
+      "share": 8.76,
       "items": [
        {
         "name": "X0",
@@ -42582,15 +42308,7 @@
         "name": "X1",
         "amount": 9000000,
         "share": 7.93
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 839506.1,
-      "share": 0.74,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -43650,15 +43368,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 2079900,
       "share": 1.37,
       "items": [
@@ -44688,15 +44399,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 568305.68,
       "share": 0.62,
       "items": [
@@ -45680,10 +45384,10 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 1000000.05,
-      "share": 0.85,
+      "key": "expense",
+      "label": "경비",
+      "amount": 4559800.05,
+      "share": 3.87,
       "items": [
        {
         "name": "X0",
@@ -45699,15 +45403,7 @@
         "name": "X2",
         "amount": 333333.35,
         "share": 0.28
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 3559800,
-      "share": 3.02,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -46676,24 +46372,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 259259.07,
-      "share": 0.09,
+      "key": "expense",
+      "label": "경비",
+      "amount": 8778659.07,
+      "share": 2.97,
       "items": [
        {
         "name": "X0",
         "amount": 259259.07,
         "share": 0.09
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 8519400,
-      "share": 2.89,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -47895,15 +47583,8 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 0,
-      "share": 0,
-      "items": []
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
+      "key": "expense",
+      "label": "경비",
       "amount": 2239800,
       "share": 6.29,
       "items": [
@@ -48431,24 +48112,16 @@
       "items": []
      },
      {
-      "key": "general_expense",
-      "label": "일반경비",
-      "amount": 9000000,
-      "share": 7.16,
+      "key": "expense",
+      "label": "경비",
+      "amount": 12100000,
+      "share": 9.63,
       "items": [
        {
         "name": "출장비",
         "amount": 9000000,
         "share": 7.16
-       }
-      ]
-     },
-     {
-      "key": "mm_overhead",
-      "label": "인비례 경비",
-      "amount": 3100000,
-      "share": 2.47,
-      "items": [
+       },
        {
         "name": "복리후생비",
         "amount": 1800000,

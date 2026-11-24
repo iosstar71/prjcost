@@ -73,6 +73,26 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("demo project calculates (6 months, revenue 240,000,000)", [c.months.length, c.summary.revenue], [6, 240000000]);
   eq("normalize fills missing parts of an old project", Object.keys(M.normalize({ project_id: "A" }, M.defaultSettings())).sort(), Object.keys(M.newProject(M.defaultSettings())).sort());
 
+  // 투입 현황: 영역별 · 등급별, 분할계약 기간만
+  const st = PC.Calc.staffStats(c, { by: "area" });
+  eq("staff stats by area: groups, MM and people (demo)", st.rows.map(r => [r.key, r.total_mm, r.people]), [["PMO", 6, 1], ["분석 · 설계", 4.5, 1], ["개발", 4, 1]]);
+  eq("staff stats total = labor cost", st.total.cost, c.summary.breakdown.internal_labor + c.summary.breakdown.external_labor);
+  const ph1 = PC.Calc.staffStats(c, { by: "kind", months: ["2026-01", "2026-02", "2026-03"] });
+  eq("staff stats limited to a phase's months (internal / external MM)", ph1.rows.map(r => [r.key, r.total_mm]), [["내부", 5.5], ["외주", 2]]);
+  eq("staff stats internal only by grade", PC.Calc.staffStats(c, { by: "grade", scope: "internal" }).rows.map(r => r.key), ["수석", "선임"]);
+
+  // 단가 인상 · 승진: 그 달부터 끝까지 새 단가. 내부는 인상과 승진을 따로 (같은 달이면 승진), 외주는 협상 단가
+  const rateOf = (row, m) => row.calc[m].rate;
+  const kim = c.details.internal_labor[0], ext = c.details.external_labor[0];
+  eq("internal: raise from 03, promotion from 05", ["2026-02", "2026-03", "2026-05"].map(m => rateOf(kim, m)), [8500000, 8800000, 9500000]);
+  eq("external: negotiated rate from 04", ["2026-03", "2026-04"].map(m => rateOf(ext, m)), [7800000, 8000000]);
+  const st2 = M.defaultSettings();
+  const r = (rc, pr) => PC.Calc.resolveInternalRate({ grade: "선임", base_rate: 6000000, rate_changes: rc, promotions: pr }, "2026-06", st2);
+  eq("promotion with grade only uses the grade rate", r([], [{ effective_ym: "2026-06", grade: "책임", rate: "" }]), 7200000);
+  eq("same month: promotion wins over raise", r([{ effective_ym: "2026-06", rate: 6500000 }], [{ effective_ym: "2026-06", rate: 7000000 }]), 7000000);
+  eq("later raise after promotion applies", r([{ effective_ym: "2026-06", rate: 7300000 }], [{ effective_ym: "2026-04", rate: 7000000 }]), 7300000);
+  const nz = M.normalize({ internal_labor: [{ name: "a", promotions: [{ effective_ym: "2026-03", rate: "" }] }], external_labor: [{ name: "b" }] }, st2);
+  eq("normalize drops empty promotions and adds rate_changes", [nz.internal_labor[0].promotions, nz.internal_labor[0].rate_changes, nz.external_labor[0].rate_changes], [[], [], []]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
