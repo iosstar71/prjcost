@@ -18,6 +18,7 @@
   function defaultSettings() {
     return {
       default_promotion_month: "03",
+      raise_month: "",   // 연봉 인상월(MM) — 등급의 인상단가가 이 달부터 (비우면 인상 없음)
       areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 담당 영역(시스템) — 투입 현황을 영역별로 볼 때 씀
       internal_grades: [{ grade: "수석", rate: 8500000 }, { grade: "책임", rate: 7200000 }, { grade: "선임", rate: 6000000 }, { grade: "전임", rate: 4800000 }],
       external_grades: ["특급", "고급", "중급", "초급"],
@@ -54,13 +55,17 @@
       project_id: id || `PRJ-${y}-NEW`, project_name: "신규 프로젝트", client_name: "", pm_name: "", sales_rep: "", description: "",
       date_mode: "month", start_date: `${y}-01`, end_date: `${y}-06`, contract_revenue: 0, target_hurdle_rate: 18.0,
       settings: ensureMmAccounts(clone(settings || defaultSettings())),
-      internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate()
+      internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate(), versions: []
     };
   }
 
   // 화면 확인 · 교육용 예시 (원본의 [데모 채우기]와 같은 자료)
   function demoProject(settings) {
     const p = newProject(settings, "PRJ-2026-01");
+    // 데모: 3월 연봉 인상(수석 · 선임), 외주 파트너A 고급은 4월부터 협상 단가
+    p.settings.raise_month = "03";
+    p.settings.internal_grades.forEach(g => { if (g.grade === "수석") g.raise_rate = 8800000; if (g.grade === "선임") g.raise_rate = 6200000; });
+    p.settings.vendor_rates.forEach(v => { if (v.vendor === "파트너A" && v.grade === "고급") Object.assign(v, { raise_ym: "2026-04", raise_rate: 8000000 }); });
     // 데모는 인비례 기준금액을 채워 자동 계산이 보이게
     p.settings.expense_accounts.forEach(a => { if (a.category === "mm_internal" && !num(a.unit_amount)) a.unit_amount = 300000; if (a.category === "mm_external" && !num(a.unit_amount)) a.unit_amount = 100000; });
     Object.assign(p, {
@@ -68,12 +73,12 @@
       description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행",
       start_date: "2026-01", end_date: "2026-06", contract_revenue: 240000000, target_hurdle_rate: 18.0,
       internal_labor: [
-        { name: "김철수", role: "PM", area: "PMO", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6, rate_changes: [{ effective_ym: "2026-03", rate: 8800000 }], promotions: [{ effective_ym: "2026-05", grade: "", rate: 9500000 }],
+        { name: "김철수", role: "PM", area: "PMO", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6, promotions: [{ effective_ym: "2026-05", grade: "", rate: 9500000 }],
           mm: { "2026-01": 1, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 1 } },
         { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5, promotions: [],
           mm: { "2026-01": 0.5, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 } }
       ],
-      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, rate_changes: [{ effective_ym: "2026-04", rate: 8000000 }], mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
+      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
       general_expenses: [{ name: "출장비", dist_mode: "equal_total", total_input: 9000000, unit_input: 0, monthly: {}, memo: "지방 사업장 방문" }],
       custom_costs: [{ name: "사전심의·인증비", dist_mode: "fill_all", total_input: 0, unit_input: 400000, monthly: {}, memo: "보안 점검" }],
       phases: [
@@ -95,12 +100,37 @@
     ensureMmAccounts(out.settings);
     if (!Array.isArray(out.settings.areas)) out.settings.areas = defaultSettings().areas;
     ["internal_labor", "external_labor", "general_expenses", "custom_costs", "phases"].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
-    // 단가 인상 rate_changes(내부 연봉 인상 · 외주 협상)와 내부 승진 promotions(v4 이름 그대로)는 따로. 단가도 등급도 없는 빈 줄(예전 새 인력 기본값)은 뺌
+    // 승진(promotions, v4 이름 그대로)만 사람마다. 단가도 등급도 없는 빈 줄(예전 새 인력 기본값)은 뺌
+    //  단가 인상은 기준정보(내부 등급의 인상단가 + 연봉 인상월, 외주업체 단가의 인상월 · 인상단가)
     const list = v => (Array.isArray(v) ? v : []).filter(r => r && (!isBlank(r.rate) || r.grade));
-    out.internal_labor.forEach(m => { m.promotions = list(m.promotions); m.rate_changes = list(m.rate_changes); });
-    out.external_labor.forEach(e => { e.rate_changes = list(e.rate_changes); });
+    out.internal_labor.forEach(m => {
+      m.promotions = list(m.promotions).concat(list(m.rate_changes));   // v0.9.1 의 사람별 인상 → 같은 효과의 승진 줄(단가만)
+      delete m.rate_changes;
+    });
+    out.external_labor.forEach(e => {   // v0.9.1 의 사람별 협상 단가 → 그 업체 · 등급 단가의 인상(비어 있을 때)
+      const r0 = list(e.rate_changes)[0], vr = (out.settings.vendor_rates || []).find(v => v.vendor === e.vendor && v.grade === e.grade);
+      if (r0 && vr && isBlank(vr.raise_rate)) Object.assign(vr, { raise_ym: r0.effective_ym || "", raise_rate: num(r0.rate) });
+      delete e.rate_changes;
+    });
+    if (out.settings.raise_month === undefined) out.settings.raise_month = "";
+    if (!Array.isArray(out.versions)) out.versions = [];
     out.estimate = Object.assign(emptyEstimate(), out.estimate || {});
     if (!Array.isArray(out.estimate.items)) out.estimate.items = [];
+    return out;
+  }
+
+  // 버전(기준선): 저장할 때 이름 · 메모를 붙여 그때의 자료를 통째로 남김 (초기 계획 · 실계약 · 수정계약 …) — project.versions[]
+  const VERSION_NAMES = ["초기 계획", "실계약", "수정계약", "2차 수정계약", "3차 수정계약"];
+  function snapshot(p) { const d = clone(p); delete d.versions; return d; }
+  function nextVersionName(p) {
+    const used = new Set((p.versions || []).map(v => v.name));
+    return VERSION_NAMES.find(n => !used.has(n)) || `${(p.versions || []).length + 1}차 수정계약`;
+  }
+  // 버전 자료를 지금 프로젝트로: 자료는 그 버전, 버전 목록 · 파일 이름(ID)은 지금 것
+  function restoreVersion(p, v, master) {
+    const out = normalize(clone(v.data), master);
+    out.versions = p.versions;
+    out.project_id = p.project_id;
     return out;
   }
 
@@ -127,6 +157,6 @@
     return p;
   }
 
-  PC.Model = { CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyRatioNote };
+  PC.Model = { VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyRatioNote };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Model;
 })(typeof window !== "undefined" ? window : globalThis);

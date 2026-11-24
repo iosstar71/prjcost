@@ -239,4 +239,17 @@ table.comp tfoot tr + tr td { border-top: 1px solid var(--line); }
 }
 
 /* 단가가 바뀌는 달 (인상 · 승진): 칸 왼쪽에 굵은 선 */
-table.grid td.rate-step { box-shadow: inset 3px 0 0 var(--warning); }
+table.grid td.rate-step { box-shadow: inset 3px 0 0 var(--warn); }
+
+/* 입력 창 (버전 저장) */
+.dialog-form { display: grid; gap: 12px; margin-bottom: 18px; }
+.dialog-form input, .dialog-form textarea { width: 100%; }
+/* 버전 비교: 차이 색 — 매출 · 이익이 늘면 좋음(초록), 원가 · MM 이 늘면 주의(빨강) */
+.up-good { color: var(--ok); font-weight: 700; }
+.up-bad { color: var(--bad); font-weight: 700; }
+.ver-list { margin-bottom: 22px; }
+.ver-cmp { display: grid; grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1.6fr); gap: 16px; align-items: start; }
+.ver-cmp tr.em td { font-weight: 700; }
+@media (max-width: 1100px) { .ver-cmp { grid-template-columns: minmax(0, 1fr); } }
+
+.raise-bar { max-width: 260px; margin-bottom: 14px; }

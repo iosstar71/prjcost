@@ -28,9 +28,12 @@
 
     const settingsRows = [
       ["승진설정", "default_promotion_month", "기본승진월", String(st.default_promotion_month || "03")],
+      ["연봉인상", "raise_month", "연봉인상월", String(st.raise_month || "")],
       ...(st.internal_grades || []).map(g => ["내부등급", g.grade || "", "기준단가", num(g.rate)]),
+      ...(st.internal_grades || []).filter(g => g.raise_rate !== undefined && g.raise_rate !== "").map(g => ["내부등급인상", g.grade || "", "인상단가", num(g.raise_rate)]),
       ...(st.external_grades || []).map(g => ["외주등급", String(g), "등급목록", ""]),
       ...(st.vendor_rates || []).map(r => ["외주업체단가", r.vendor || "", r.grade || "", num(r.rate)]),
+      ...(st.vendor_rates || []).filter(r => r.raise_rate !== undefined && r.raise_rate !== "").map(r => ["외주업체인상", `${r.vendor || ""} ${r.grade || ""}`, r.raise_ym || "", num(r.raise_rate)]),
       ...(st.areas || []).map(a => ["담당영역", String(a), "", ""]),
       ...(st.expense_accounts || []).map(a => ["경비계정", a.account || "", catName(a.category), PC.Model.isMmCategory(a.category) ? num(a.unit_amount) : a.desc || ""])
     ].map(cells => ({ cells }));
@@ -38,10 +41,10 @@
     const d = calc.details;
     const step = l => { const r0 = (l || [])[0] || {}; return [r0.effective_ym || "", r0.rate === undefined || r0.rate === "" ? "" : num(r0.rate)]; };   // 첫 인상 · 승진 (월, 단가)
     const internal = d.internal_labor.map(m => {
-      return { cells: [m.name || "", m.role || "", m.area || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", ...step(m.promotions), ((m.promotions || [])[0] || {}).grade || "", ...step(m.rate_changes), { v: m.total_mm, s: "dec" },
+      return { cells: [m.name || "", m.role || "", m.area || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", ...step(m.promotions), ((m.promotions || [])[0] || {}).grade || "", { v: m.total_mm, s: "dec" },
         ...months.map(mo => ({ v: m.calc[mo].mm, s: "dec" })), m.total_cost] };
     });
-    const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.area || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, ...step(e.rate_changes), { v: e.total_mm, s: "dec" },
+    const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.area || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, { v: e.total_mm, s: "dec" },
       ...months.map(mo => ({ v: e.calc[mo].mm, s: "dec" })), e.total_cost] }));
     const expIn = e => (e.dist_mode === "fill_all" ? num(e.unit_input) : num(e.total_input));
     const expenses = [
@@ -63,15 +66,19 @@
       ...(auditRows || []).slice(-(AUDIT_KEEP - 1)).map(r => ({ cells: r })),
       { cells: [nowText(), "local_user", project.project_id || "", s.revenue, s.total_cost, { v: s.margin_rate, s: "dec" }] }];
 
+    // 버전(기준선) 요약 — 자료 전체는 State_JSON 의 versions 에
+    const versions = [head(["번호", "이름", "저장일시", "메모", "계약매출", "총원가", "이익률(%)"]),
+      ...(project.versions || []).map(v => { const vs = PC.Calc.calculateProjectCost(v.data || {}, st).summary; return { cells: [v.no, v.name || "", v.saved_at || "", { v: v.memo || "", s: "wrap" }, vs.revenue, vs.total_cost, { v: vs.margin_rate, s: "dec" }] }; })];
     const mHead = months.map(m => m);
     return [
       { name: "01_Project_Info", cols: [22, 48], rows: [head(["항목", "내용"]), ...info] },
       { name: "02_Project_Settings", cols: widths(4, 22), rows: [head(["구분", "항목1(업체/등급/키)", "항목2(등급/유형)", "값(단가/비율/설명)"]), ...settingsRows] },
-      { name: "03_Internal_Labor", cols: widths(13 + months.length), rows: [head(["성명", "역할", "담당영역", "등급", "기준단가", "인비례포함", "승진월", "승진단가", "승진등급", "인상월", "인상단가", "총MM", ...mHead, "합계금액"]), ...internal] },
-      { name: "04_External_Labor", cols: widths(11 + months.length), rows: [head(["성명/구분", "역할", "담당영역", "외주업체", "등급", "기준단가", "적용단가", "인상월", "인상단가", "총MM", ...mHead, "합계금액"]), ...external] },
+      { name: "03_Internal_Labor", cols: widths(11 + months.length), rows: [head(["성명", "역할", "담당영역", "등급", "기준단가", "인비례포함", "승진월", "승진단가", "승진등급", "총MM", ...mHead, "합계금액"]), ...internal] },
+      { name: "04_External_Labor", cols: widths(9 + months.length), rows: [head(["성명/구분", "역할", "담당영역", "외주업체", "등급", "기준단가", "적용단가", "총MM", ...mHead, "합계금액"]), ...external] },
       { name: "05_Expenses", cols: widths(5 + months.length), rows: [head(["구분", "경비계정/항목", "분배방식", "입력금액", ...mHead, "합계금액"]), ...expenses] },
       { name: "06_Phases", cols: widths(11), rows: [head(["회차", "구분", "시작월", "종료월", "회차매출", "회차원가", "회차이익률(%)", "누적매출", "누적원가", "잔여매출", "잔여원가"]), ...phases] },
       { name: "07_Estimate", cols: widths(6, 18), freeze: false, rows: estimate },
+      { name: "08_Versions", cols: [8, 16, 20, 40, 16, 16, 12], freeze: false, rows: versions },
       { name: "99_Audit_Log", cols: [20, 12, 16, 16, 16, 12], rows: audit },
       { name: "State_JSON", hidden: true, rows: X.jsonRows(project) }
     ];
@@ -84,10 +91,11 @@
     const st = settings || {};
     return [
       { name: "Overhead_Config", cols: [28, 14, 24], rows: [head(["config_key", "value", "description"]),
-        { cells: ["default_promotion_month", String(st.default_promotion_month || "03"), "내부 기본 승진월(MM)"] }] },
-      { name: "Internal_Grades", cols: [16, 16], rows: [head(["grade", "monthly_rate"]), ...(st.internal_grades || []).map(g => ({ cells: [g.grade || "", num(g.rate)] }))] },
+        { cells: ["default_promotion_month", String(st.default_promotion_month || "03"), "내부 기본 승진월(MM)"] },
+        { cells: ["raise_month", String(st.raise_month || ""), "연봉 인상월(MM) — 등급의 인상단가가 이 달부터"] }] },
+      { name: "Internal_Grades", cols: [16, 16, 16], rows: [head(["grade", "monthly_rate", "raise_rate"]), ...(st.internal_grades || []).map(g => ({ cells: [g.grade || "", num(g.rate), g.raise_rate === undefined || g.raise_rate === "" ? "" : num(g.raise_rate)] }))] },
       { name: "External_Grades", cols: [16], rows: [head(["grade"]), ...(st.external_grades || []).map(g => ({ cells: [String(g)] }))] },
-      { name: "External_Rates", cols: [16, 12, 16], rows: [head(["vendor", "grade", "monthly_rate"]), ...(st.vendor_rates || []).map(r => ({ cells: [r.vendor || "", r.grade || "", num(r.rate)] }))] },
+      { name: "External_Rates", cols: [16, 12, 16, 12, 16], rows: [head(["vendor", "grade", "monthly_rate", "raise_ym", "raise_rate"]), ...(st.vendor_rates || []).map(r => ({ cells: [r.vendor || "", r.grade || "", num(r.rate), r.raise_ym || "", r.raise_rate === undefined || r.raise_rate === "" ? "" : num(r.raise_rate)] }))] },
       { name: "Expense_Accounts", cols: [18, 14, 16, 32], rows: [head(["account", "category", "unit_amount(원/MM)", "desc"]), ...(st.expense_accounts || []).map(a => ({ cells: [a.account || "", a.category || "general", PC.Model.isMmCategory(a.category) ? num(a.unit_amount) : "", a.desc || ""] }))] },
       { name: "Master_JSON", hidden: true, rows: X.jsonRows(st) }
     ];

@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.1";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.2";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -20,7 +20,8 @@
     past: [], future: [],
     noted: new Set(),
     settingsTab: "grades",         // 기준정보 안의 작은 탭
-    stats: { by: "area", scope: "all", phase: 0 }   // 투입 현황 보기 조건 (phase: 분할계약 회차, 0 = 전체 기간)               // 이번에 이미 알린 '예전 비율 방식' 파일           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
+    stats: { by: "area", scope: "all", phase: 0 },
+    cmp: { a: null, b: 0 }          // 버전 비교: 기준 버전 번호 · 비교 대상 (0 = 지금 화면)   // 투입 현황 보기 조건 (phase: 분할계약 회차, 0 = 전체 기간)               // 이번에 이미 알린 '예전 비율 방식' 파일           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
   };
   const UNDO_KEEP = 100;
   const $ = id => document.getElementById(id);
@@ -42,7 +43,7 @@
     renderKpis();
     renderTabs();
     const tab = Views.TABS.find(t => t.id === S.tab) || Views.TABS[0];
-    $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file, sub: S.settingsTab, stats: S.stats });
+    $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file, sub: S.settingsTab, stats: S.stats, cmp: S.cmp });
     renderSaveState();
     renderUndo();
     restoreFocus(focus);
@@ -130,6 +131,7 @@
     if (t === "mm") return v === "" ? 0 : PC.pyRound(num(v), 2);   // MM 은 소수 둘째 자리까지
     if (t === "blank-num") return v === "" ? "" : num(v);
     if (t === "pct") return num(v) / 100;
+    if (t === "month2b") return /\d/.test(v) ? String(v).replace(/\D/g, "").padStart(2, "0").slice(-2) : "";   // 비울 수 있는 월(MM)
     if (t === "month2") return String(v || "03").replace(/\D/g, "").padStart(2, "0").slice(-2);
     return el.tagName === "TEXTAREA" ? v : v.trim();
   }
@@ -140,14 +142,11 @@
     if ((m = /^internal_labor\.(\d+)\.grade$/.exec(path))) {   // 등급을 바꾸면 기준단가도 그 등급 단가로
       const g = (p.settings.internal_grades || []).find(x => x.grade === value);
       if (g) p.internal_labor[+m[1]].base_rate = num(g.rate);
-    } else if ((m = /^(internal_labor|external_labor)\.(\d+)\.(promotions|rate_changes)\.0\./.exec(path))) {   // 단가(승진은 등급도)가 비면 인상 · 승진 없음
+    } else if ((m = /^(internal_labor)\.(\d+)\.(promotions)\.0\./.exec(path))) {   // 승진단가 · 승진등급이 모두 비면 승진 없음
       const l = p[m[1]][+m[2]][m[3]], r0 = l[0] || {};
       const has = (r0.rate !== "" && r0.rate !== undefined) || r0.grade;
       if (!r0.effective_ym && !has) l.shift();
-      else if (has && !r0.effective_ym) {   // 단가 · 등급만 넣었으면 달은 기본값 (내부: 기본 인상 · 승진월 / 외주: 둘째 달)
-        const start = String(p.start_date || "2026-01").slice(0, 7);
-        r0.effective_ym = m[1] === "internal_labor" ? `${start.slice(0, 4)}-${p.settings.default_promotion_month || "03"}` : (PC.monthRange(start, String(p.end_date || start).slice(0, 7))[1] || start);
-      }
+      else if (has && !r0.effective_ym) r0.effective_ym = `${String(p.start_date || "2026").slice(0, 4)}-${p.settings.default_promotion_month || "03"}`;   // 단가 · 등급만 넣었으면 기본 승진월
     } else if ((m = /^(general_expenses|custom_costs)\.(\d+)\.dist_mode$/.exec(path)) && value === "manual") {   // 월별 직접 입력으로: 지금 달별 금액에서 시작
       const r = p[m[1]][+m[2]], prev = S.calc && S.calc.details[m[1]][+m[2]];
       if (prev && !Object.values(r.monthly || {}).some(v => num(v))) r.monthly = Object.assign({}, prev.calc_monthly);
@@ -176,11 +175,11 @@
     internal_labor: p => {
       const g0 = (p.settings.internal_grades || [])[0] || { grade: "선임", rate: 6000000 };
       return { name: "신규인력", role: "개발", area: "", grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
-        rate_changes: [], promotions: [], mm: {} };
+        promotions: [], mm: {} };
     },
     external_labor: p => {
       const v0 = (p.settings.vendor_rates || [])[0] || { vendor: "파트너A", grade: "고급" };
-      return { name: "외주인력", role: "개발", area: "", vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, rate_changes: [], mm: {} };
+      return { name: "외주인력", role: "개발", area: "", vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, mm: {} };
     },
     general_expenses: p => expenseRow(p, "general", "일반경비"),
     custom_costs: p => expenseRow(p, "custom", "기타비용"),
@@ -202,6 +201,36 @@
     showTab(id) { S.tab = id; render(); },
     showSettings(id) { S.settingsTab = id; render(); },
     setStats(key, v) { S.stats[key] = key === "phase" ? Number(v) || 0 : v; render(); },
+    setCompare(key, v) { S.cmp[key] = Number(v) || 0; render(); },
+    // 버전 저장: 이름 · 메모를 받아 지금 자료를 버전으로 남기고 파일에 저장 (저장을 못 하면 버전도 되돌림)
+    async saveVersion() {
+      const p = S.proj;
+      const f = await UI.form("버전 저장", "지금 자료를 이 이름으로 남기고 저장합니다. 나중에 [버전] 탭에서 비교하거나 불러올 수 있습니다.",
+        [{ key: "name", label: "버전 이름", value: M.nextVersionName(p), options: M.VERSION_NAMES }, { key: "memo", label: "메모", ph: "예: 고객 요청으로 2차 범위 축소, 외주 1명 감축", multiline: true }], "버전 저장");
+      if (!f) return;
+      if (!f.name) return UI.toast("버전 이름을 넣으세요.", "error");
+      pushUndo();
+      const no = (p.versions || []).reduce((m, v) => Math.max(m, v.no || 0), 0) + 1;
+      p.versions = (p.versions || []).concat([{ no, name: f.name, memo: f.memo, saved_at: PC.nowText(), data: M.snapshot(p) }]);
+      S.cmp = { a: no, b: 0 };
+      if (await save(false)) UI.toast(`버전 ${no}. ${f.name} 을(를) 남기고 저장했습니다.`, "ok");
+      else { p.versions = p.versions.filter(v => v.no !== no); S.past.pop(); render(); }
+    },
+    async restoreVersion(i) {
+      const v = S.proj.versions[i];
+      if (!(await UI.confirm("버전 불러오기", `${v.no}. ${v.name} (${v.saved_at}) 의 자료로 지금 화면을 바꿉니다.\n버전 목록은 그대로이고, [저장]을 눌러야 파일에 반영됩니다. Ctrl+Z 로 되돌릴 수 있습니다.`, "불러오기"))) return;
+      pushUndo();
+      S.proj = M.restoreVersion(S.proj, v, S.master);
+      render();
+      UI.toast(`${v.no}. ${v.name} 을(를) 불러왔습니다 — 저장해야 파일에 반영됩니다.`);
+    },
+    async removeVersion(i) {
+      const v = S.proj.versions[i];
+      if (!(await UI.confirm("버전 지우기", `${v.no}. ${v.name} 을(를) 지울까요? [저장]을 눌러야 파일에서도 빠집니다.`, "지우기", true))) return;
+      pushUndo();
+      S.proj.versions.splice(i, 1);
+      render();
+    },
     addRow(list) {
       if (list === "phases" && S.proj.phases.length >= 5) return UI.toast("분할계약은 5회차까지 넣을 수 있습니다.", "error");
       pushUndo();

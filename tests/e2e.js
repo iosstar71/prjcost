@@ -69,7 +69,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
       return { backups, mm: PC.App.S.proj.internal_labor[0].mm["2026-05"], audit: wb.sheet("99_Audit_Log").rows.length, sheets: wb.sheets.map(s => s.name) };
     });
     check("Ctrl+S saves: previous file copied to backups, the change is there after reopening, save history grows", after.backups.length === 1 && after.mm === 1 && after.audit === 3, JSON.stringify(after));
-    check("Saved file keeps the v4 sheet layout (01…07, 99_Audit_Log, State_JSON)", after.sheets.join() === "01_Project_Info,02_Project_Settings,03_Internal_Labor,04_External_Labor,05_Expenses,06_Phases,07_Estimate,99_Audit_Log,State_JSON", after.sheets.join());
+    check("Saved file keeps the v4 sheet layout (01…07, 08_Versions added, 99_Audit_Log, State_JSON)", after.sheets.join() === "01_Project_Info,02_Project_Settings,03_Internal_Labor,04_External_Labor,05_Expenses,06_Phases,07_Estimate,08_Versions,99_Audit_Log,State_JSON", after.sheets.join());
 
     // 다른 곳(Excel)에서 먼저 바뀌면 저장 전에 알림
     await page.evaluate(async () => {
@@ -106,10 +106,17 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     // ---- 인력 표를 엑셀처럼 ----
     await page.click('[data-act="showTab"][data-args*="internal"]');
     const B = b => `[data-bind="${b}"]`, focused = () => page.evaluate(() => document.activeElement.dataset.bind || document.activeElement.dataset.new || document.activeElement.tagName);
-    await page.focus(B("internal_labor.0.mm.2026-01"));
-    await page.keyboard.press("ArrowDown"); const f1 = await focused();
-    await page.keyboard.press("ArrowRight"); const f2 = await focused();
-    await page.keyboard.press("Enter"); const f3 = await focused();
+    // 화살표 · Enter 이동 (헤드리스 크롬은 키를 가끔 늦게 넘겨 줘서 한 번 더 시도)
+    const navOnce = async () => {
+      await page.focus(B("internal_labor.0.mm.2026-01")); await page.waitForTimeout(80);
+      await page.keyboard.press("ArrowDown"); await page.waitForTimeout(30); const a1 = await focused();
+      await page.keyboard.press("ArrowRight"); await page.waitForTimeout(30); const a2 = await focused();
+      await page.keyboard.press("Enter"); await page.waitForTimeout(30); const a3 = await focused();
+      return [a1, a2, a3];
+    };
+    let nav = await navOnce();
+    if (nav.join() !== "internal_labor.1.mm.2026-01,internal_labor.1.mm.2026-02,internal_labor") nav = await navOnce();
+    const [f1, f2, f3] = nav;
     check("Arrow keys and Enter move between cells like a spreadsheet (Enter on the last person goes to the blank new row)", f1 === "internal_labor.1.mm.2026-01" && f2 === "internal_labor.1.mm.2026-02" && f3 === "internal_labor", JSON.stringify([f1, f2, f3]));   // 마지막 사람 줄에서 Enter → 새 줄(이름 칸)
     const paste = (sel, text) => page.evaluate(([s2, t]) => { const el = document.querySelector(s2); el.focus(); const dt = new DataTransfer(); dt.setData("text/plain", t); el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, [sel, text]);
     // 엑셀에서 복사한 여러 줄 (성명 · 역할 · 등급) 을 새 줄에 붙여넣기 → 인력 2명 추가, 없는 등급은 빨갛게
@@ -141,20 +148,25 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Typing a name in the blank last row adds a person and moves to the role cell", (await page.evaluate(() => PC.App.S.proj.internal_labor[4].name)) === "정신입" && (await focused()) === "internal_labor.4.role", await focused());
     await page.evaluate(() => { while (PC.App.S.proj.internal_labor.length > 2) PC.App.S.proj.internal_labor.pop(); PC.App.render(); });
 
-    // 단가 인상 · 승진 (따로): 인상단가만 넣으면 인상월은 기본 달(03), 그 달부터 끝까지 새 단가 / 승진등급만 고르면 그 등급 단가
+    // 승진은 인력 표 (승진월 · 승진등급), 단가 인상은 기준정보 (등급 인상단가 + 연봉 인상월 / 외주업체 인상월 · 인상단가)
     await page.selectOption(B("internal_labor.1.area"), "개발");
-    await page.fill(B("internal_labor.1.rate_changes.0.rate"), "6,500,000"); await page.keyboard.press("Tab");
-    await page.waitForFunction(() => PC.App.S.calc.details.internal_labor[1].calc["2026-03"].rate === 6500000, null, { timeout: 3000 }).catch(() => {});
-    const raise = await page.evaluate(() => { const r = PC.App.S.calc.details.internal_labor[1]; return { m: r.rate_changes[0].effective_ym, area: r.area, rates: ["2026-02", "2026-03", "2026-06"].map(m => r.calc[m].rate), step: document.querySelector('[data-bind="internal_labor.1.mm.2026-03"]').closest("td").classList.contains("rate-step") }; });
     await page.fill(B("internal_labor.1.promotions.0.effective_ym"), "2026-05"); await page.keyboard.press("Tab");
     await page.selectOption(B("internal_labor.1.promotions.0.grade"), "책임");
     await page.waitForFunction(() => PC.App.S.calc.details.internal_labor[1].calc["2026-05"].rate === 7200000, null, { timeout: 3000 }).catch(() => {});
-    const promo = await page.evaluate(() => ["2026-04", "2026-05"].map(m => PC.App.S.calc.details.internal_labor[1].calc[m].rate));
-    check("Internal staff: salary raise (rate + month) and promotion (month + grade) are set separately and apply from that month", raise.m === "2026-03" && raise.area === "개발" && raise.rates.join() === "6000000,6500000,6500000" && raise.step && promo.join() === "6500000,7200000", JSON.stringify({ raise, promo }));
-    for (let k = 0; k < 4; k++) await page.keyboard.press("Control+z");
-    await page.click('[data-act="showTab"][data-args*="external"]');
-    const ext = await page.evaluate(() => ({ m: document.querySelector('[data-bind="external_labor.0.rate_changes.0.effective_ym"]').value, rates: ["2026-03", "2026-04"].map(m => PC.App.S.calc.details.external_labor[0].calc[m].rate) }));
-    check("External staff: negotiated rate from a month (demo: 7,800,000 to 8,000,000 from 2026-04)", ext.m === "2026-04" && ext.rates.join() === "7800000,8000000", JSON.stringify(ext));
+    const promo = await page.evaluate(() => { const r = PC.App.S.calc.details.internal_labor[1]; return { area: r.area, rates: ["2026-02", "2026-03", "2026-05"].map(m => r.calc[m].rate), step: document.querySelector('[data-bind="internal_labor.1.mm.2026-05"]').closest("td").classList.contains("rate-step"), raiseCols: document.querySelectorAll('[data-bind*="rate_changes"]').length }; });
+    check("Promotion is set per person (month + grade); the grade raise from Settings applies from the raise month (demo 03)", promo.area === "개발" && promo.rates.join() === "6000000,6200000,7200000" && promo.step && promo.raiseCols === 0, JSON.stringify(promo));
+    for (let k = 0; k < 3; k++) await page.keyboard.press("Control+z");
+    await page.click('[data-act="showTab"][data-args*="settings"]');
+    await page.click('[data-act="showSettings"][data-args*="grades"]');
+    await page.fill(B("settings.raise_month"), "04"); await page.keyboard.press("Tab");
+    await page.waitForFunction(() => PC.App.S.calc.details.internal_labor[1].calc["2026-03"].rate === 6000000, null, { timeout: 3000 }).catch(() => {});
+    const rm = await page.evaluate(() => ["2026-03", "2026-04"].map(m => PC.App.S.calc.details.internal_labor[1].calc[m].rate));
+    await page.click('[data-act="showSettings"][data-args*="vendors"]');
+    const vr = await page.evaluate(() => ({ ym: [...document.querySelectorAll('[data-bind$=".raise_ym"]')].map(e => e.value).filter(Boolean).join(), rates: ["2026-03", "2026-04"].map(m => PC.App.S.calc.details.external_labor[0].calc[m].rate) }));
+    check("Settings: changing the raise month moves the internal raise; vendor rate has its own raise month and rate", rm.join() === "6000000,6200000" && vr.ym === "2026-04" && vr.rates.join() === "7800000,8000000", JSON.stringify({ rm, vr }));
+    await page.evaluate(() => document.activeElement.blur());
+    await page.keyboard.press("Control+z");
+    await page.click('[data-act="showSettings"][data-args*="grades"]');
 
     // 투입 현황: 영역별 · 등급별, 분할계약을 고르면 그 기간만
     await page.click('[data-act="showTab"][data-args*="stats"]');
@@ -227,6 +239,22 @@ const b64 = f => fs.readFileSync(f).toString("base64");
       for (const tab of ["internal", "info"]) { await page.click(`[data-act="showTab"][data-args*="${tab}"]`); await page.screenshot({ path: path.join(shotDir, `dark_${tab}.png`) }); }
       await page.click('[data-act="toggleTheme"]');
     }
+    // 버전 저장: 이름 · 메모 → 파일에 함께 저장. 자료를 바꾸면 [버전] 탭에서 차이 · 불러오기
+    await page.click('[data-act="saveVersion"]');
+    await page.waitForSelector(".dialog-form");
+    const vname = await page.inputValue('.dialog [data-key="name"]');
+    await page.fill('.dialog [data-key="memo"]', "착수 보고 기준");
+    await page.click('.dialog button[data-id="ok"]');
+    await page.waitForFunction(() => PC.App.S.file === "PRJ-2026-01.xlsx" && !document.getElementById("saveState").classList.contains("dirty"), null, { timeout: 5000 }).catch(() => {});
+    await page.evaluate(() => { PC.App.S.proj.contract_revenue = 260000000; PC.App.S.proj.external_labor = []; PC.App.render(); });
+    await page.click('[data-act="showTab"][data-args*="versions"]');
+    const vt = await page.evaluate(() => ({ n: PC.App.S.proj.versions.length, memo: PC.App.S.proj.versions[0].memo, rows: [...document.querySelectorAll(".ver-cmp table")[0].tBodies[0].rows].map(r => r.innerText.replace(/\s+/g, " ").trim()) }));
+    const fileVer = await page.evaluate(async () => { const wb = await PC.Xlsx.read(await (await (await PC.Store.dir.getDirectoryHandle("projects")).getFileHandle("PRJ-2026-01.xlsx")).getFile()); return { rows: wb.sheet("08_Versions").rows.length, json: PC.Xlsx.readJson(wb.sheet("State_JSON")).versions.length }; });
+    check("Save as version: name (suggested 초기 계획) + memo stored in the project file; Versions tab compares it with the current screen", vname === "초기 계획" && vt.n === 1 && vt.memo === "착수 보고 기준" && fileVer.rows === 2 && fileVer.json === 1 && vt.rows.some(t => t.startsWith("계약 매출") && t.endsWith("+20,000,000")) && vt.rows.some(t => t.startsWith("외주 인건비") && /-[\d,]+$/.test(t)), JSON.stringify({ vname, vt, fileVer }));
+    await page.click('[data-act="restoreVersion"]'); await page.click('.dialog button[data-id="ok"]');
+    const rv = await page.evaluate(() => ({ rev: PC.App.S.proj.contract_revenue, ext: PC.App.S.proj.external_labor.length, n: PC.App.S.proj.versions.length }));
+    check("Restoring a version brings its data back (versions kept)", rv.rev === 240000000 && rv.ext === 1 && rv.n === 1, JSON.stringify(rv));
+    if (shotDir) await page.screenshot({ path: path.join(shotDir, "light_versions.png"), fullPage: true });
     await page.keyboard.press("Control+s");
     await page.waitForFunction(() => PC.App.S.file === "PRJ-2026-01.xlsx");
     check("Saving a new project creates projects/<ID>.xlsx and lists it", (await page.$$eval("#projectSelect option", o => o.map(x => x.value))).includes("PRJ-2026-01.xlsx"));

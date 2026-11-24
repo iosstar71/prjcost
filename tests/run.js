@@ -81,18 +81,36 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("staff stats limited to a phase's months (internal / external MM)", ph1.rows.map(r => [r.key, r.total_mm]), [["내부", 5.5], ["외주", 2]]);
   eq("staff stats internal only by grade", PC.Calc.staffStats(c, { by: "grade", scope: "internal" }).rows.map(r => r.key), ["수석", "선임"]);
 
-  // 단가 인상 · 승진: 그 달부터 끝까지 새 단가. 내부는 인상과 승진을 따로 (같은 달이면 승진), 외주는 협상 단가
+  // 단가 인상(기준정보: 내부 등급 인상단가 + 연봉 인상월, 외주업체 인상월 · 인상단가) · 승진(사람마다)
   const rateOf = (row, m) => row.calc[m].rate;
-  const kim = c.details.internal_labor[0], ext = c.details.external_labor[0];
-  eq("internal: raise from 03, promotion from 05", ["2026-02", "2026-03", "2026-05"].map(m => rateOf(kim, m)), [8500000, 8800000, 9500000]);
-  eq("external: negotiated rate from 04", ["2026-03", "2026-04"].map(m => rateOf(ext, m)), [7800000, 8000000]);
+  const kim = c.details.internal_labor[0], lee = c.details.internal_labor[1], ext = c.details.external_labor[0];
+  eq("demo: raise month 03 within the project", PC.Calc.raiseMonth(demo.settings, c.months), "2026-03");
+  eq("internal: grade raise from 03 (also over a personal base rate), promotion rate from 05", ["2026-02", "2026-03", "2026-05"].map(m => rateOf(kim, m)), [8500000, 8800000, 9500000]);
+  eq("internal: other grade raise from 03", ["2026-02", "2026-03"].map(m => rateOf(lee, m)), [6000000, 6200000]);
+  eq("external: vendor rate raised from the negotiated month", ["2026-03", "2026-04"].map(m => rateOf(ext, m)), [7800000, 8000000]);
   const st2 = M.defaultSettings();
-  const r = (rc, pr) => PC.Calc.resolveInternalRate({ grade: "선임", base_rate: 6000000, rate_changes: rc, promotions: pr }, "2026-06", st2);
-  eq("promotion with grade only uses the grade rate", r([], [{ effective_ym: "2026-06", grade: "책임", rate: "" }]), 7200000);
-  eq("same month: promotion wins over raise", r([{ effective_ym: "2026-06", rate: 6500000 }], [{ effective_ym: "2026-06", rate: 7000000 }]), 7000000);
-  eq("later raise after promotion applies", r([{ effective_ym: "2026-06", rate: 7300000 }], [{ effective_ym: "2026-04", rate: 7000000 }]), 7300000);
-  const nz = M.normalize({ internal_labor: [{ name: "a", promotions: [{ effective_ym: "2026-03", rate: "" }] }], external_labor: [{ name: "b" }] }, st2);
-  eq("normalize drops empty promotions and adds rate_changes", [nz.internal_labor[0].promotions, nz.internal_labor[0].rate_changes, nz.external_labor[0].rate_changes], [[], [], []]);
+  st2.internal_grades.find(g => g.grade === "책임").raise_rate = 7500000;
+  const r = (pr, ym, raise) => PC.Calc.resolveInternalRate({ grade: "선임", base_rate: 6000000, promotions: pr }, ym, st2, raise);
+  eq("promotion with grade only uses the grade rate (raised after the raise month)", [r([{ effective_ym: "2026-02", grade: "책임", rate: "" }], "2026-02", "2026-03"), r([{ effective_ym: "2026-02", grade: "책임", rate: "" }], "2026-04", "2026-03")], [7200000, 7500000]);
+  eq("grade without a raise rate keeps its rate", r([], "2026-06", "2026-03"), 6000000);
+  eq("no raise month in the project period = no raise", PC.Calc.raiseMonth({ raise_month: "11" }, ["2026-01", "2026-02"]), "");
+  const nz = M.normalize({ settings: M.defaultSettings(), internal_labor: [{ name: "a", promotions: [{ effective_ym: "2026-03", rate: "" }], rate_changes: [{ effective_ym: "2026-04", rate: 100 }] }],
+    external_labor: [{ name: "b", vendor: "파트너A", grade: "고급", rate_changes: [{ effective_ym: "2026-05", rate: 200 }] }] }, st2);
+  const va = nz.settings.vendor_rates.find(v => v.vendor === "파트너A" && v.grade === "고급");
+  eq("normalize: empty promotions dropped; v0.9.1 per-person raises move (internal → promotion rate, external → vendor raise)", [nz.internal_labor[0].promotions, nz.internal_labor[0].rate_changes, nz.external_labor[0].rate_changes, va.raise_ym, va.raise_rate], [[{ effective_ym: "2026-04", rate: 100 }], undefined, undefined, "2026-05", 200]);
+
+  // 버전(기준선): 남긴 자료와 지금을 비교, 불러오기는 ID · 버전 목록을 지킴
+  const vp = M.demoProject(M.defaultSettings());
+  vp.versions = [{ no: 1, name: "초기 계획", data: M.snapshot(vp) }];
+  eq("snapshot leaves out the version list", vp.versions[0].data.versions, undefined);
+  vp.external_labor = []; vp.contract_revenue = 250000000;
+  const cmpr = PC.Calc.compareVersions(PC.Calc.calculateProjectCost(vp.versions[0].data, vp.settings), PC.Calc.calculateProjectCost(vp, vp.settings));
+  const byKey = k => cmpr.summary.find(x => x.key === k);
+  eq("compare: revenue +10,000,000, external labor removed, staff row shows -4 MM", [byKey("revenue").diff, byKey("external_labor").b, cmpr.staff.find(x => x.kind === "외주").d_mm], [10000000, 0, -4]);
+  eq("next version name follows the list", M.nextVersionName(vp), "실계약");
+  vp.project_id = "KEEP";
+  const rv = M.restoreVersion(vp, vp.versions[0], M.defaultSettings());
+  eq("restore brings back the data, keeps ID and versions", [rv.external_labor.length, rv.contract_revenue, rv.project_id, rv.versions.length], [1, 240000000, "KEEP", 1]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

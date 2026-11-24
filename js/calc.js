@@ -7,35 +7,35 @@
   const PC = root.PC || require("./util.js");
   const { num, isBlank, pyRound, normalizeYm, monthRange, nowText } = PC;
 
-  // 내부 인력의 그 달 단가: 기준단가(없으면 등급 단가) → 적용월이 지난 연봉 인상 · 승진 중 마지막 것 (같은 달이면 승진)
-  function resolveInternalRate(member, ym, settings) {
-    const grades = new Map();
-    (settings.internal_grades || []).forEach(g => { if (g && g.grade) grades.set(String(g.grade).trim(), num(g.rate)); });
-    const gradeName = String(member.grade || "").trim();
-    let rate = !isBlank(member.base_rate) ? num(member.base_rate) : num(grades.get(gradeName));
-    rateSteps(member.rate_changes).concat(rateSteps(member.promotions, grades))
-      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))   // 같은 달은 순서 유지 → 승진이 뒤
-      .forEach(([eff, pRate]) => { if (eff <= ym) rate = pRate; });
-    return pyRound(rate, 2);
+  // 연봉 인상월: 프로젝트 기간 안에서 기준정보의 인상월(MM)이 처음 오는 달 (기간이 1년 이내라 한 번). 없으면 ""
+  function raiseMonth(settings, months) {
+    const mm = String((settings && settings.raise_month) || "").padStart(2, "0");
+    return (/^\d\d$/.test(mm) && mm !== "00" && months.find(m => m.slice(5) === mm)) || "";
+  }
+  // 등급의 그 달 단가: 인상월부터는 인상단가(넣은 등급만)
+  function gradeRate(g, ym, raiseYm) {
+    if (!g) return undefined;
+    return raiseYm && ym >= raiseYm && !isBlank(g.raise_rate) ? num(g.raise_rate) : num(g.rate);
   }
 
-  // 외주 인력의 그 달 단가: 적용단가(없으면 업체 · 등급 단가) → 적용월이 지난 단가 변동 중 마지막 것 (협상으로 바뀐 단가)
-  function resolveExternalRate(ext, ym, baseRate) {
-    let rate = baseRate;
-    rateSteps(ext.rate_changes).forEach(([eff, r]) => { if (eff <= ym) rate = r; });
-    return pyRound(rate, 2);
-  }
-  // 단가 변동 목록 → [[YYYY-MM, 단가]] (적용월 순). 적용월 · 단가가 없는 줄은 빼고, 등급만 있으면 등급표 단가
-  function rateSteps(list, grades) {
-    const out = [];
-    (list || []).forEach(p => {
+  // 내부 인력의 그 달 단가: 기준단가(없으면 등급 단가) → 인상월부터 등급의 인상단가(넣은 등급만) → 승진월부터 승진단가(없으면 승진등급 단가)
+  function resolveInternalRate(member, ym, settings, raiseYm) {
+    const grades = new Map();
+    (settings.internal_grades || []).forEach(g => { if (g && g.grade) grades.set(String(g.grade).trim(), g); });
+    const own = grades.get(String(member.grade || "").trim());
+    let rate = !isBlank(member.base_rate) ? num(member.base_rate) : num(gradeRate(own, ym, raiseYm));
+    if (own && raiseYm && ym >= raiseYm && !isBlank(own.raise_rate)) rate = num(own.raise_rate);
+    const promos = [];
+    (member.promotions || []).forEach(p => {
       const eff = normalizeYm(p && p.effective_ym, "");
-      if (!eff) return;
-      const g = String((p && p.grade) || "").trim();
-      if (!isBlank(p.rate)) out.push([eff, num(p.rate)]);
-      else if (grades && g && grades.has(g)) out.push([eff, num(grades.get(g))]);
+      if (!eff || eff > ym) return;
+      const pg = grades.get(String((p && p.grade) || "").trim());
+      if (!isBlank(p.rate)) promos.push([eff, num(p.rate)]);
+      else if (pg) promos.push([eff, num(gradeRate(pg, ym, raiseYm))]);
     });
-    return out.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    promos.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    if (promos.length) rate = promos[promos.length - 1][1];
+    return pyRound(rate, 2);
   }
 
   // 경비를 달마다 나눔: 총액 균등 · 매달 같은 금액 · 직접 입력
@@ -84,12 +84,16 @@
     // 인비례 경비 계정: 내부(인비례 대상 인력 MM) · 외주(외주 인력 MM) × 계정별 기준금액(원/MM)
     const mmAccounts = (settings.expense_accounts || []).filter(a => a && (a.category === "mm_internal" || a.category === "mm_external"));
 
-    // 외주 업체|등급 → 단가
-    const extRate = new Map();
+    // 외주 업체|등급 → 단가 (+ 협상으로 바뀌는 달 · 인상단가)
+    const extRate = new Map(), extRaise = new Map();
     (settings.vendor_rates || []).forEach(r => {
       const v = String(r.vendor || "").trim(), g = String(r.grade || "").trim();
-      if (v && g) extRate.set(`${v}|${g}`, num(r.rate));
+      if (!v || !g) return;
+      extRate.set(`${v}|${g}`, num(r.rate));
+      const eff = normalizeYm(r.raise_ym, "");
+      if (eff && !isBlank(r.raise_rate)) extRaise.set(`${v}|${g}`, [eff, num(r.raise_rate)]);
     });
+    const raiseYm = raiseMonth(settings, months);
     Object.entries(settings.external_rates || {}).forEach(([k, v]) => { if (!extRate.has(k)) extRate.set(k, num(v)); });
 
     // 1. 내부 인건비
@@ -99,7 +103,7 @@
       let rowTotal = 0, totalMm = 0;
       months.forEach(m => {
         const mm = num(mmMap[m]);
-        const rate = resolveInternalRate(mem, m, settings);
+        const rate = resolveInternalRate(mem, m, settings, raiseYm);
         const cost = pyRound(mm * rate, 2);
         calc[m] = { mm, rate, cost };
         internalMonthly[m] = pyRound(internalMonthly[m] + cost, 2);
@@ -121,7 +125,7 @@
       let rowTotal = 0, totalMm = 0;
       months.forEach(m => {
         const mm = num(mmMap[m]);
-        const rate = resolveExternalRate(ext, m, applied);
+        const up = extRaise.get(key), rate = up && m >= up[0] ? up[1] : applied;   // 협상 인상월부터 인상단가
         const cost = pyRound(mm * rate, 2);
         calc[m] = { mm, rate, cost };
         externalMonthly[m] = pyRound(externalMonthly[m] + cost, 2);
@@ -248,6 +252,37 @@
     return { months, rows, total: { mm: Object.fromEntries(months.map(m => [m, pyRound(rows.reduce((a, g) => a + g.mm[m], 0), 2)])), total_mm: totalMm, cost: totalCost, people: rows.reduce((a, g) => a + g.people, 0) } };
   }
 
-  PC.Calc = { calculateProjectCost, calculateEstimate, resolveInternalRate, resolveExternalRate, distributeMonthly, staffStats };
+  // 두 계산 결과(버전 · 지금) 비교 — 요약 줄과 사람별 MM · 인건비 (이름 + 내부/외주로 맞춤)
+  function compareVersions(a, b) {
+    const sa = a.summary, sb = b.summary, comp = (s, k) => ((s.composition.find(g => g.key === k) || {}).amount || 0);
+    const mmOf = c => pyRound(c.details.internal_labor.concat(c.details.external_labor).reduce((t, r) => t + num(r.total_mm), 0), 2);
+    const row = (key, label, va, vb, unit) => ({ key, label, a: va, b: vb, diff: typeof va === "number" ? pyRound(vb - va, 2) : null, unit: unit || "won" });
+    const summary = [
+      row("period", "기간", `${a.months[0] || ""} ~ ${a.months[a.months.length - 1] || ""} (${a.months.length}개월)`, `${b.months[0] || ""} ~ ${b.months[b.months.length - 1] || ""} (${b.months.length}개월)`, "text"),
+      row("revenue", "계약 매출", sa.revenue, sb.revenue),
+      row("internal_labor", "내부 인건비", comp(sa, "internal_labor"), comp(sb, "internal_labor")),
+      row("external_labor", "외주 인건비", comp(sa, "external_labor"), comp(sb, "external_labor")),
+      row("expense", "경비", comp(sa, "expense"), comp(sb, "expense")),
+      row("custom_cost", "기타경비", comp(sa, "custom_cost"), comp(sb, "custom_cost")),
+      row("total_cost", "총 원가", sa.total_cost, sb.total_cost),
+      row("profit", "예상 이익", sa.profit, sb.profit),
+      row("margin_rate", "이익률(%)", sa.margin_rate, sb.margin_rate, "pct"),
+      row("total_mm", "총 MM", mmOf(a), mmOf(b), "mm")
+    ];
+    const people = new Map();
+    const add = (c, side) => [["내부", c.details.internal_labor], ["외주", c.details.external_labor]].forEach(([kind, rows]) => rows.forEach(r => {
+      const k = `${kind}|${String(r.name || "").trim()}`;
+      const p = people.get(k) || { kind, name: r.name || "", area: "", grade: "", a_mm: 0, b_mm: 0, a_cost: 0, b_cost: 0 };
+      p[`${side}_mm`] = pyRound(p[`${side}_mm`] + num(r.total_mm), 2);
+      p[`${side}_cost`] = pyRound(p[`${side}_cost`] + num(r.total_cost), 2);
+      if (side === "b" || !p.grade) { p.area = r.area || p.area; p.grade = r.grade || p.grade; }
+      people.set(k, p);
+    }));
+    add(a, "a"); add(b, "b");
+    const staff = [...people.values()].map(p => Object.assign(p, { d_mm: pyRound(p.b_mm - p.a_mm, 2), d_cost: pyRound(p.b_cost - p.a_cost, 2) }));
+    return { summary, staff };
+  }
+
+  PC.Calc = { compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Calc;
 })(typeof window !== "undefined" ? window : globalThis);
