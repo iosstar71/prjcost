@@ -87,7 +87,7 @@
   // ---------------- 인력 표 (내부 · 외주 공통) ----------------
   function laborTab(list, p, c, cols, o) {
     const months = c.months, rows = c.details[list];
-    const all = cols.concat(monthCols(months, "mm", m => (r, base) => `<td>${mmInp(`${base}.mm.${m}`, r.calc[m].mm || "", `${m} MM`)}<span class="cell-cost">${man(r.calc[m].cost)}만</span></td>`));
+    const all = cols.concat(monthCols(months, "mm", m => (r, base) => `<td>${mmInp(`${base}.mm.${m}`, r.calc[m].mm || "", `${m} MM`)}${r.calc[m].cost ? `<span class="cell-cost">${man(r.calc[m].cost)}만</span>` : ""}</td>`));
     const foot = rows.length ? `<tr class="total"><td></td><td colspan="${cols.length}" class="l">합계 · ${sumBy(rows, r => r.total_mm).toFixed(2)} MM</td>${months.map(m => `<td class="num">${man(sumBy(rows, r => r.calc[m].cost))}만</td>`).join("")}<td class="num">${won(o.total)}</td></tr>` : "";
     return head(o.icon, o.title, GRID_HINT, btn(o.addLabel, "addRow", [list], "primary sm", "", "plus"))
       + gridTable({ list, rows, cols: all, newLabel: "이름 입력", foot, tailHead: `<th>합계(원)</th>`,
