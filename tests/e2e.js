@@ -88,6 +88,14 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     await page.click('[data-act="loadDemo"]'); await page.click('.dialog button[data-id="ok"]');
     const demo = await page.evaluate(() => PC.App.S.calc.summary);
     check("Demo project: same figures as the v4 demo (revenue 240,000,000)", demo.revenue === 240000000 && demo.total_cost > 0, JSON.stringify(demo));
+    // 금액 칸: 쉼표로 보이고, 쉼표를 넣어 입력해도 숫자로 읽음
+    const rev = page.locator('input[data-bind="contract_revenue"]');
+    const shown = await rev.inputValue();
+    await rev.fill("250,000,000"); await rev.press("Tab");
+    await page.waitForFunction(() => PC.App.S.proj.contract_revenue === 250000000, null, { timeout: 3000 }).catch(() => {});
+    const typed = await page.evaluate(() => ({ v: PC.App.S.proj.contract_revenue, shown: document.querySelector('input[data-bind="contract_revenue"]').value }));
+    check("Money fields show thousands separators and accept typed commas", shown === "240,000,000" && typed.v === 250000000 && typed.shown === "250,000,000", JSON.stringify({ shown, typed }));
+    await rev.fill("240000000"); await rev.press("Tab");
     if (shotDir) {
       fs.mkdirSync(shotDir, { recursive: true });
       await page.screenshot({ path: path.join(shotDir, "light_info.png") });

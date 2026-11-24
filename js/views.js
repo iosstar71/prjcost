@@ -11,11 +11,14 @@
   const args = (...a) => esc(JSON.stringify(a));
   const btn = (label, act, a, cls, title) => `<button class="btn ${cls || ""}" data-act="${act}" data-args="${args(...(a || []))}"${title ? ` title="${esc(title)}"` : ""}>${label}</button>`;
   const del = (list, i) => btn("×", "removeRow", [list, i], "danger sm icon", "이 줄 지우기");
+  // 금액은 쉼표를 넣어 보여 줌 (숫자 칸은 쉼표를 못 보여서 글자 칸 + 숫자 키패드). 빈 값은 그대로 빈 칸
+  const money = v => (v === "" || v === null || v === undefined ? "" : Number.isFinite(Number(String(v).replace(/,/g, ""))) ? Number(String(v).replace(/,/g, "")).toLocaleString("ko-KR", { maximumFractionDigits: 2 }) : v);
   function inp(path, value, o = {}) {
-    const type = o.type || "text";
-    const kind = o.kind || (type === "number" ? "num" : "text");
-    const v = value === null || value === undefined ? "" : value;
-    return `<input type="${type}" data-bind="${esc(path)}" data-type="${kind}" value="${esc(v)}"${o.cls ? ` class="${o.cls}"` : ""}${o.ph !== undefined ? ` placeholder="${esc(o.ph)}"` : ""}${o.step ? ` step="${o.step}"` : ""}${o.list ? ` list="${o.list}"` : ""}${o.label ? ` aria-label="${esc(o.label)}"` : ""}>`;
+    const type = o.money ? "text" : (o.type || "text");
+    const kind = o.kind || (o.money || type === "number" ? "num" : "text");
+    const v = o.money ? money(value) : value === null || value === undefined ? "" : value;
+    if (o.money) o = Object.assign({}, o, { cls: `money ${o.cls || ""}`.trim(), mode: "decimal" });
+    return `<input type="${type}"${o.mode ? ` inputmode="${o.mode}"` : ""} data-bind="${esc(path)}" data-type="${kind}" value="${esc(v)}"${o.cls ? ` class="${o.cls}"` : ""}${o.ph !== undefined ? ` placeholder="${esc(o.ph)}"` : ""}${o.step ? ` step="${o.step}"` : ""}${o.list ? ` list="${o.list}"` : ""}${o.label ? ` aria-label="${esc(o.label)}"` : ""}>`;
   }
   function sel(path, value, options, o = {}) {
     const opts = options.map(x => (typeof x === "object" ? x : { v: x, t: x }));
@@ -45,7 +48,7 @@
       ${field("기간 입력 단위", sel("date_mode", p.date_mode || "month", [{ v: "month", t: "월 (YYYY-MM)" }, { v: "date", t: "일자 (YYYY-MM-DD)" }]))}
       ${field("시작", inp("start_date", toMode(p.start_date), { type: dateType }))}
       ${field("종료", inp("end_date", toMode(p.end_date), { type: dateType }), { help: `${c.months.length}개월 · ${c.months[0] || ""} ~ ${c.months[c.months.length - 1] || ""}` })}
-      ${field("계약 매출 (원)", inp("contract_revenue", p.contract_revenue, { type: "number" }), { help: `${won(p.contract_revenue)}원` })}
+      ${field("계약 매출 (원)", inp("contract_revenue", p.contract_revenue, { money: true }))}
       ${field("목표 허들 이익률 (%)", inp("target_hurdle_rate", p.target_hurdle_rate, { type: "number", step: "0.1" }))}
       ${field("프로젝트 설명", `<textarea rows="4" data-bind="description" data-type="text" placeholder="배경 · 범위 · 특이사항">${esc(p.description)}</textarea>`, { full: true })}
     </div>`;
@@ -63,10 +66,10 @@
         <td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>
         <td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "PM/개발", label: "역할" })}</td>
         <td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>
-        <td>${inp(`${base}.base_rate`, r.base_rate, { type: "number", kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>
+        <td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>
         <td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례 포함")}</td>
         <td>${inp(`${base}.promotions.0.effective_ym`, p0.effective_ym, { type: "month", label: "승진월" })}</td>
-        <td>${inp(`${base}.promotions.0.rate`, p0.rate, { type: "number", kind: "blank-num", cls: "w-md", ph: "승진단가", label: "승진단가" })}</td>
+        <td>${inp(`${base}.promotions.0.rate`, p0.rate, { money: true, kind: "blank-num", cls: "w-md", ph: "승진단가", label: "승진단가" })}</td>
         <td class="c">${inp(`${base}.target_mm`, r.target_mm !== undefined ? r.target_mm : r.total_mm, { type: "number", step: "0.1", cls: "mm", label: "총 MM" })} ${btn("배분", "distribute", ["internal_labor", i], "sm", "총 MM 을 기간에 고르게 나눔")}</td>
         ${months.map(m => `<td>${inp(`${base}.mm.${m}`, r.calc[m].mm || "", { type: "number", step: "0.1", cls: "mm", ph: "0", label: `${m} MM` })}<span class="cell-cost">${man(r.calc[m].cost)}만</span></td>`).join("")}
         <td class="num"><b>${won(r.total_cost)}</b><span class="cell-cost">${r.total_mm} MM</span></td>
@@ -91,7 +94,7 @@
         <td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "개발/디자인", label: "역할" })}</td>
         <td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체" })}</td>
         <td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>
-        <td>${inp(`${base}.custom_rate`, r.custom_rate, { type: "number", kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>
+        <td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>
         <td class="c">${inp(`${base}.target_mm`, r.target_mm !== undefined ? r.target_mm : r.total_mm, { type: "number", step: "0.1", cls: "mm", label: "총 MM" })} ${btn("배분", "distribute", ["external_labor", i], "sm", "총 MM 을 기간에 고르게 나눔")}</td>
         ${months.map(m => `<td>${inp(`${base}.mm.${m}`, r.calc[m].mm || "", { type: "number", step: "0.1", cls: "mm", ph: "0", label: `${m} MM` })}<span class="cell-cost">${man(r.calc[m].cost)}만</span></td>`).join("")}
         <td class="num"><b>${won(r.total_cost)}</b><span class="cell-cost">${r.total_mm} MM</span></td>
@@ -111,13 +114,13 @@
     const rowsOf = (list, label) => d[list].map((r, i) => {
       const base = `${list}.${i}`, mode = r.dist_mode || "equal_total";
       const input = mode === "manual" ? `<span class="tag">달마다 입력</span>`
-        : inp(mode === "fill_all" ? `${base}.unit_input` : `${base}.total_input`, mode === "fill_all" ? r.unit_input : r.total_input, { type: "number", cls: "w-md", label: "입력금액" });
+        : inp(mode === "fill_all" ? `${base}.unit_input` : `${base}.total_input`, mode === "fill_all" ? r.unit_input : r.total_input, { money: true, cls: "w-md", label: "입력금액" });
       return `<tr>
         <td class="c">${del(list, i)}</td><td class="l">${label}</td>
         <td class="l">${inp(`${base}.name`, r.name, { cls: "w-lg", list: `acc_${list}`, label: "계정/항목" })}</td>
         <td>${sel(`${base}.dist_mode`, mode, MODES, { label: "분배 방식" })}</td>
         <td>${input}</td>
-        ${months.map(m => mode === "manual" ? `<td>${inp(`${base}.monthly.${m}`, r.calc_monthly[m] || "", { type: "number", cls: "w-sm", ph: "0", label: `${m} 금액` })}</td>` : `<td class="num">${won(r.calc_monthly[m])}</td>`).join("")}
+        ${months.map(m => mode === "manual" ? `<td>${inp(`${base}.monthly.${m}`, r.calc_monthly[m] || "", { money: true, cls: "w-sm", ph: "0", label: `${m} 금액` })}</td>` : `<td class="num">${won(r.calc_monthly[m])}</td>`).join("")}
         <td class="num"><b>${won(r.total_cost)}</b></td></tr>`;
     }).join("");
     const auto = (label, name, ratio, monthly, total) => `<tr class="auto"><td></td><td class="l">${label}</td><td class="l">${name}</td><td class="c">자동 ${(num(ratio) * 100).toFixed(1)}%</td><td class="c">-</td>${months.map(m => `<td class="num">${won(monthly[m])}</td>`).join("")}<td class="num"><b>${won(total)}</b></td></tr>`;
@@ -140,8 +143,8 @@
       <td class="l">${inp(`phases.${i}.title`, ph.title, { cls: "w-lg", label: "차수명" })}</td>
       <td>${inp(`phases.${i}.start_ym`, ph.start_ym, { type: "month", label: "시작월" })}</td>
       <td>${inp(`phases.${i}.end_ym`, ph.end_ym, { type: "month", label: "종료월" })}</td>
-      <td>${inp(`phases.${i}.revenue`, ph.revenue, { type: "number", cls: "w-lg", label: "회차 매출" })}</td>
-      <td>${inp(`phases.${i}.override_cost`, ph.override_cost, { type: "number", kind: "blank-num", cls: "w-lg", ph: "비우면 기간 원가 자동", label: "별도 원가" })}</td></tr>`).join("");
+      <td>${inp(`phases.${i}.revenue`, ph.revenue, { money: true, cls: "w-lg", label: "회차 매출" })}</td>
+      <td>${inp(`phases.${i}.override_cost`, ph.override_cost, { money: true, kind: "blank-num", cls: "w-lg", ph: "비우면 기간 원가 자동", label: "별도 원가" })}</td></tr>`).join("");
     const summary = c.phases.map(x => `<tr><td class="l"><b>${esc(x.title)}</b></td><td class="c">${esc(x.start_ym)} ~ ${esc(x.end_ym)}</td>
       <td class="num">${won(x.revenue)}</td><td class="num">${won(x.cost)}</td><td class="num"><span class="tag ${x.margin_rate >= c.summary.hurdle_rate ? "ok" : "bad"}">${x.margin_rate}%</span></td>
       <td class="num">${won(x.cum_revenue)}</td><td class="num">${won(x.cum_cost)}</td><td class="num">${won(x.rem_revenue)}</td><td class="num">${won(x.rem_cost)}</td></tr>`).join("");
@@ -163,7 +166,7 @@
       <td class="l">${inp(`estimate.items.${i}.item_name`, it.item_name, { cls: "w-xl", label: "항목명" })}</td>
       <td class="l">${inp(`estimate.items.${i}.spec`, it.spec, { cls: "w-lg", label: "규격/등급" })}</td>
       <td>${inp(`estimate.items.${i}.qty`, it.qty, { type: "number", step: "0.1", cls: "w-xs", label: "수량" })}</td>
-      <td>${inp(`estimate.items.${i}.unit_price`, it.unit_price, { type: "number", cls: "w-lg", label: "단가" })}</td>
+      <td>${inp(`estimate.items.${i}.unit_price`, it.unit_price, { money: true, cls: "w-lg", label: "단가" })}</td>
       <td class="num"><b>${won(it.amount)}</b></td>
       <td class="l">${inp(`estimate.items.${i}.memo`, it.memo, { cls: "w-lg", label: "비고" })}</td></tr>`).join("");
     return head("견적서", est.applied_to_revenue ? "공급가액이 계약 매출에 적용됨" : "",
@@ -190,11 +193,11 @@
         ${field("외주 인비례율 (%)", inp("settings.external_overhead_ratio", +(num(st.external_overhead_ratio) * 100).toFixed(4), { type: "number", step: "0.1", kind: "pct" }))}
         ${field("기본 승진월 (MM)", inp("settings.default_promotion_month", st.default_promotion_month || "03", { ph: "03", kind: "month2" }))}</div>`)}
       ${card("내부 등급 · 기준단가", "settings.internal_grades", tbl(`<th class="l">등급</th><th>월 기준단가(원)</th><th></th>`,
-        (st.internal_grades || []).map((g, i) => `<tr><td class="l">${inp(`settings.internal_grades.${i}.grade`, g.grade, { cls: "w-md" })}</td><td>${inp(`settings.internal_grades.${i}.rate`, g.rate, { type: "number", cls: "w-lg" })}</td><td class="c">${del("settings.internal_grades", i)}</td></tr>`).join(""), 3))}
+        (st.internal_grades || []).map((g, i) => `<tr><td class="l">${inp(`settings.internal_grades.${i}.grade`, g.grade, { cls: "w-md" })}</td><td>${inp(`settings.internal_grades.${i}.rate`, g.rate, { money: true, cls: "w-lg" })}</td><td class="c">${del("settings.internal_grades", i)}</td></tr>`).join(""), 3))}
       ${card("외주 등급", "settings.external_grades", tbl(`<th class="l">등급</th><th></th>`,
         (st.external_grades || []).map((g, i) => `<tr><td class="l">${inp(`settings.external_grades.${i}`, g, { cls: "w-lg" })}</td><td class="c">${del("settings.external_grades", i)}</td></tr>`).join(""), 2))}
       ${card("외주업체별 등급 단가", "settings.vendor_rates", tbl(`<th class="l">업체</th><th>등급</th><th>월 단가(원)</th><th></th>`,
-        (st.vendor_rates || []).map((v, i) => `<tr><td class="l">${inp(`settings.vendor_rates.${i}.vendor`, v.vendor, { cls: "w-md" })}</td><td>${sel(`settings.vendor_rates.${i}.grade`, v.grade || "", st.external_grades || [])}</td><td>${inp(`settings.vendor_rates.${i}.rate`, v.rate, { type: "number", cls: "w-lg" })}</td><td class="c">${del("settings.vendor_rates", i)}</td></tr>`).join(""), 4))}
+        (st.vendor_rates || []).map((v, i) => `<tr><td class="l">${inp(`settings.vendor_rates.${i}.vendor`, v.vendor, { cls: "w-md" })}</td><td>${sel(`settings.vendor_rates.${i}.grade`, v.grade || "", st.external_grades || [])}</td><td>${inp(`settings.vendor_rates.${i}.rate`, v.rate, { money: true, cls: "w-lg" })}</td><td class="c">${del("settings.vendor_rates", i)}</td></tr>`).join(""), 4))}
       ${card("경비 계정", "settings.expense_accounts", tbl(`<th class="l">계정</th><th>구분</th><th class="l">설명</th><th></th>`,
         (st.expense_accounts || []).map((a, i) => `<tr><td class="l">${inp(`settings.expense_accounts.${i}.account`, a.account, { cls: "w-lg" })}</td><td>${sel(`settings.expense_accounts.${i}.category`, a.category || "general", [{ v: "general", t: "일반경비" }, { v: "custom", t: "기타비용" }])}</td><td class="l">${inp(`settings.expense_accounts.${i}.desc`, a.desc, { cls: "w-xl" })}</td><td class="c">${del("settings.expense_accounts", i)}</td></tr>`).join(""), 4), true)}
     </div>`;
