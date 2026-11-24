@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>착수 전 프로젝트 원가 관리 v4.0</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-sub: #f8fafc;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --border-soft: #e2e8f0;
+      --accent: #334155;
+      --accent-hover: #1e293b;
+      --accent-text: #ffffff;
+      --chip: #e2e8f0;
+      --ok: #15803d;
+      --ok-bg: #dcfce7;
+      --warn: #b91c1c;
+      --warn-bg: #fee2e2;
+      --danger: #dc2626;
+    }
+    body.dark {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-sub: #162033;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #334155;
+      --border-soft: #293548;
+      --accent: #475569;
+      --accent-hover: #64748b;
+      --accent-text: #f8fafc;
+      --chip: #334155;
+      --ok: #4ade80;
+      --ok-bg: #14532d;
+      --warn: #f87171;
+      --warn-bg: #7f1d1d;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; font-family: "Pretendard", "Malgun Gothic", -apple-system, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-size: 13px; transition: background .18s, color .18s; }
+
+    /* Top Header */
+    .topbar {
+      position: sticky; top: 0; z-index: 30;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 10px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .ver-badge {
+      padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      background: var(--accent); color: var(--accent-text);
+    }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+    /* Controls */
+    input, select, textarea, button {
+      font-size: 12.5px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface-sub); color: var(--text); padding: 6px 9px;
+    }
+    textarea { resize: vertical; line-height: 1.45; }
+    input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+    button { cursor: pointer; font-weight: 600; transition: background .15s; }
+    button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+    button.primary:hover { background: var(--accent-hover); }
+    button.ghost { background: var(--surface-sub); color: var(--text); }
+    button.ghost:hover { background: var(--chip); }
+    button.danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+    button.danger:hover { background: var(--warn-bg); }
+    button.sm { padding: 4px 8px; font-size: 11.5px; }
+
+    /* Main Container */
+    .workspace { max-width: 1500px; margin: 14px auto; padding: 0 18px 40px; display: grid; gap: 12px; }
+
+    /* Slim KPI Bar */
+    .kpi-bar {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 8px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+    }
+    .kpi-item {
+      padding: 6px 10px; border-radius: 8px; background: var(--surface-sub); border: 1px solid var(--border-soft);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .kpi-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .kpi-val { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .kpi-sub { font-size: 11px; color: var(--muted); }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+
+    /* Project Bar */
+    .proj-bar {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 8px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    }
+    .status-pill { padding: 3px 9px; border-radius: 999px; background: var(--chip); font-size: 11.5px; font-weight: 600; }
+
+    /* Tabs */
+    .tabs {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      border-bottom: 1px solid var(--border); padding-bottom: 0;
+    }
+    .tab-btn {
+      border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0;
+      background: transparent; color: var(--muted); padding: 9px 15px; font-size: 13px; font-weight: 600;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--surface-sub); }
+    .tab-btn.active {
+      background: var(--surface); color: var(--text);
+      border-color: var(--border); margin-bottom: -1px; padding-bottom: 10px;
+    }
+
+    /* Tab Panel */
+    .panel {
+      background: var(--surface); border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 10px 10px; padding: 16px; display: none;
+    }
+    .panel.active { display: block; }
+    .panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .panel-head h2 { margin: 0; font-size: 14.5px; font-weight: 700; }
+
+    /* Forms & Tables */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+    .field.full { grid-column: 1 / -1; }
+
+    .tbl-wrap { overflow-x: auto; border: 1px solid var(--border-soft); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border-bottom: 1px solid var(--border-soft); border-right: 1px solid var(--border-soft); padding: 6px 7px; text-align: right; white-space: nowrap; }
+    th { background: var(--surface-sub); color: var(--muted); font-weight: 700; text-align: center; }
+    td.left, th.left { text-align: left; }
+    td.center, th.center { text-align: center; }
+    tr:last-child td { border-bottom: none; }
+    tr.auto-row { background: var(--surface-sub); font-weight: 600; }
+    .cell-cost { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+    .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; }
+    .sub-card { border: 1px solid var(--border-soft); border-radius: 8px; padding: 12px; background: var(--surface-sub); }
+    .sub-card h3 { margin: 0 0 8px 0; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>착수 전 프로젝트 원가 관리</h1>
+      <span id="verBadge" class="ver-badge">v4.0</span>
+      <span id="statusBadge" class="status-pill">신규 메모리</span>
+    </div>
+    <div class="row">
+      <button class="ghost" onclick="newProject()">+ 신규</button>
+      <button class="ghost" onclick="loadDemo()">데모 채우기</button>
+      <label class="status-pill" style="cursor:pointer; border:1px solid var(--border); background:var(--surface-sub)">
+        엑셀 업로드
+        <input type="file" accept=".xlsx" style="display:none" onchange="handleUpload(this.files[0])" />
+      </label>
+      <button class="ghost" onclick="exportReport()">보고서 출력(2시트)</button>
+      <button class="primary" onclick="saveAndClose()">엑셀 저장 후 닫기</button>
+      <button class="ghost" onclick="toggleTheme()">다크/노멀</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- 프로젝트 목록 및 삭제 바 -->
+    <section class="proj-bar">
+      <span style="font-weight:700; font-size:12px; color:var(--muted)">프로젝트 목록</span>
+      <select id="projectList" style="min-width:260px"></select>
+      <button class="ghost" onclick="loadSelected()">불러오기</button>
+      <button class="danger" onclick="deleteSelected()">목록에서 제거</button>
+      <span id="notice" style="margin-left:auto; font-size:12px; color:var(--muted)"></span>
+    </section>
+
+    <!-- 슬림 KPI 바 -->
+    <section class="kpi-bar">
+      <div class="kpi-item">
+        <span class="kpi-label">계약 매출</span>
+        <span id="k_rev" class="kpi-val">0 원</span>
+        <span id="k_est_hint" class="kpi-sub">견적 미등록</span>
+      </div>
+      <div class="kpi-item">
+        <span class="kpi-label">총 원가</span>
+        <span id="k_cost" class="kpi-val">0 원</span>
+        <span id="k_mix" class="kpi-sub">내부 0 / 외주 0 / 경비 0</span>
+      </div>
+      <div class="kpi-item">
+        <span class="kpi-label">예상 이익 / 이익률</span>
+        <span id="k_margin" class="kpi-val">0.0%</span>
+        <span id="k_profit" class="kpi-sub">0 원</span>
+      </div>
+      <div class="kpi-item">
+        <span class="kpi-label">목표 허들 대비</span>
+        <span id="k_hurdle" class="kpi-val">-</span>
+        <span id="k_hurdle_sub" class="kpi-sub">목표 18.0%</span>
+      </div>
+    </section>
+
+    <!-- 7개 탭 (엑셀 시트와 1:1 매칭) -->
+    <section>
+      <div class="tabs" id="tabBar">
+        <button class="tab-btn active" data-tab="info" onclick="switchTab('info')">프로젝트 정보</button>
+        <button class="tab-btn" data-tab="internal" onclick="switchTab('internal')">내부인력</button>
+        <button class="tab-btn" data-tab="external" onclick="switchTab('external')">외주인력</button>
+        <button class="tab-btn" data-tab="expense" onclick="switchTab('expense')">경비·기타</button>
+        <button class="tab-btn" data-tab="phase" onclick="switchTab('phase')">분할계약</button>
+        <button class="tab-btn" data-tab="estimate" onclick="switchTab('estimate')">견적서</button>
+        <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">기준정보</button>
+      </div>
+
+      <!-- TAB 1: 프로젝트 정보 -->
+      <div id="tab-info" class="panel active">
+        <div class="panel-head">
+          <h2>프로젝트 기본 정보 (01_Project_Info)</h2>
+          <div class="row">
+            <span style="font-size:11.5px; color:var(--muted)">달력 입력 형식:</span>
+            <select id="f_date_mode" onchange="changeDateMode(this.value)">
+              <option value="month">월 달력 (YYYY-MM)</option>
+              <option value="date">일자 달력 (YYYY-MM-DD)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>프로젝트 ID</label><input id="f_id" value="PRJ-2026-01" onchange="syncInfo()" /></div>
+          <div class="field"><label>프로젝트명</label><input id="f_name" value="차세대 원가·공정 시스템 구축" onchange="syncInfo()" /></div>
+          <div class="field"><label>고객사</label><input id="f_client" value="대한정밀(주)" onchange="syncInfo()" /></div>
+          <div class="field"><label>프로젝트 PM</label><input id="f_pm" placeholder="예: 김철수 PM" onchange="syncInfo()" /></div>
+          <div class="field"><label>영업대표</label><input id="f_sales" placeholder="예: 박영희 매니저" onchange="syncInfo()" /></div>
+          <div class="field"><label>시작 기간</label><input id="f_start" type="month" value="2026-01" onchange="syncInfo()" /></div>
+          <div class="field"><label>종료 기간</label><input id="f_end" type="month" value="2026-06" onchange="syncInfo()" /></div>
+          <div class="field"><label>계약 매출 (원)</label><input id="f_rev" type="number" value="240000000" onchange="syncInfo()" /></div>
+          <div class="field"><label>목표 허들 이익률 (%)</label><input id="f_hurdle" type="number" step="0.1" value="18.0" onchange="syncInfo()" /></div>
+          <div class="field full">
+            <label>프로젝트 설명 (여러 줄 입력 가능)</label>
+            <textarea id="f_desc" rows="4" placeholder="프로젝트 배경, 주요 범위, 특이사항 등을 여러 줄로 입력하세요." onchange="syncInfo()"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: 내부인력 -->
+      <div id="tab-internal" class="panel">
+        <div class="panel-head">
+          <h2>내부인력 투입 계획 (03_Internal_Labor)</h2>
+          <button class="primary sm" onclick="addInternal()">+ 내부인력 추가</button>
+        </div>
+        <div id="internalGrid" class="tbl-wrap"></div>
+      </div>
+
+      <!-- TAB 3: 외주인력 -->
+      <div id="tab-external" class="panel">
+        <div class="panel-head">
+          <h2>외주인력 투입 계획 (04_External_Labor)</h2>
+          <button class="primary sm" onclick="addExternal()">+ 외주인력 추가</button>
+        </div>
+        <div id="externalGrid" class="tbl-wrap"></div>
+      </div>
+
+      <!-- TAB 4: 경비·기타 -->
+      <div id="tab-expense" class="panel">
+        <div class="panel-head">
+          <h2>경비 및 기타비용 (05_Expenses)</h2>
+          <div class="row">
+            <button class="primary sm" onclick="addExpense('general_expenses')">+ 일반경비 추가</button>
+            <button class="ghost sm" onclick="addExpense('custom_costs')">+ 기타비용 추가</button>
+          </div>
+        </div>
+        <div id="expenseGrid" class="tbl-wrap"></div>
+      </div>
+
+      <!-- TAB 5: 분할계약 -->
+      <div id="tab-phase" class="panel">
+        <div class="panel-head">
+          <h2>분할계약 관리 · 최대 5회차 (06_Phases)</h2>
+          <button class="primary sm" onclick="addPhase()">+ 분할 차수 추가</button>
+        </div>
+        <div id="phaseEditor" class="tbl-wrap" style="margin-bottom:12px"></div>
+        <div id="phaseSummary" class="tbl-wrap"></div>
+      </div>
+
+      <!-- TAB 6: 견적서 -->
+      <div id="tab-estimate" class="panel">
+        <div class="panel-head">
+          <h2>견적서 등록 (07_Estimate · 옵션)</h2>
+          <div class="row">
+            <button class="ghost sm" onclick="addEstimateItem()">+ 품목 추가</button>
+            <button class="primary sm" onclick="applyEstimateToRevenue()">견적 공급가액 → 계약매출 적용</button>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-bottom:12px">
+          <div class="field"><label>견적번호</label><input id="e_no" placeholder="EST-2026-001" onchange="syncEstimateMeta()" /></div>
+          <div class="field"><label>견적일자</label><input id="e_date" type="date" onchange="syncEstimateMeta()" /></div>
+          <div class="field"><label>비고</label><input id="e_note" placeholder="견적 조건/유효기간 등" onchange="syncEstimateMeta()" /></div>
+        </div>
+        <div id="estimateGrid" class="tbl-wrap"></div>
+      </div>
+
+      <!-- TAB 7: 기준정보 -->
+      <div id="tab-settings" class="panel">
+        <div class="panel-head">
+          <h2>프로젝트 전용 기준정보 (02_Project_Settings)</h2>
+          <div class="row">
+            <span style="font-size:11.5px; color:var(--muted)">* 수정 내용은 현재 프로젝트에만 적용됩니다.</span>
+            <button class="ghost sm" onclick="saveSettingsAsDefault()">현재 기준정보를 신규 기본값으로 저장</button>
+          </div>
+        </div>
+        <div id="settingsArea" class="settings-grid"></div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const API = "/api";
+let currentPath = null;
+let currentMtime = null;
+let defaultSettings = null;
+let lastCalc = null;
+
+let proj = {
+  project_id: "PRJ-2026-01",
+  project_name: "차세대 원가·공정 시스템 구축",
+  client_name: "대한정밀(주)",
+  pm_name: "",
+  sales_rep: "",
+  description: "",
+  date_mode: "month",
+  start_date: "2026-01",
+  end_date: "2026-06",
+  contract_revenue: 240000000,
+  target_hurdle_rate: 18.0,
+  settings: null,
+  internal_labor: [],
+  external_labor: [],
+  general_expenses: [],
+  custom_costs: [],
+  phases: [],
+  estimate: { estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, items: [] }
+};
+
+function toggleTheme() { document.body.classList.toggle("dark"); }
+
+function switchTab(tabKey) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tabKey));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "tab-" + tabKey));
+}
+
+function changeDateMode(mode) {
+  proj.date_mode = mode;
+  const s = document.getElementById("f_start");
+  const e = document.getElementById("f_end");
+  if (mode === "date") {
+    s.type = "date"; e.type = "date";
+    s.value = (proj.start_date || "2026-01").length === 7 ? proj.start_date + "-01" : (proj.start_date || "2026-01-01");
+    e.value = (proj.end_date || "2026-06").length === 7 ? proj.end_date + "-28" : (proj.end_date || "2026-06-30");
+  } else {
+    s.type = "month"; e.type = "month";
+    s.value = (proj.start_date || "2026-01").slice(0, 7);
+    e.value = (proj.end_date || "2026-06").slice(0, 7);
+  }
+  syncInfo();
+}
+
+function syncInfo() {
+  proj.project_id = f_id.value.trim();
+  proj.project_name = f_name.value.trim();
+  proj.client_name = f_client.value.trim();
+  proj.pm_name = f_pm.value.trim();
+  proj.sales_rep = f_sales.value.trim();
+  proj.start_date = f_start.value;
+  proj.end_date = f_end.value;
+  proj.contract_revenue = Number(f_rev.value || 0);
+  proj.target_hurdle_rate = Number(f_hurdle.value || 0);
+  proj.description = f_desc.value;
+  recalc();
+}
+
+function bindInfoUI() {
+  f_id.value = proj.project_id || "";
+  f_name.value = proj.project_name || "";
+  f_client.value = proj.client_name || "";
+  f_pm.value = proj.pm_name || "";
+  f_sales.value = proj.sales_rep || "";
+  f_desc.value = proj.description || "";
+  f_rev.value = proj.contract_revenue ?? 0;
+  f_hurdle.value = proj.target_hurdle_rate ?? 18.0;
+  f_date_mode.value = proj.date_mode || "month";
+  f_start.type = proj.date_mode === "date" ? "date" : "month";
+  f_end.type = proj.date_mode === "date" ? "date" : "month";
+  f_start.value = proj.date_mode === "date"
+    ? ((proj.start_date || "2026-01").length === 7 ? proj.start_date + "-01" : proj.start_date)
+    : (proj.start_date || "2026-01").slice(0, 7);
+  f_end.value = proj.date_mode === "date"
+    ? ((proj.end_date || "2026-06").length === 7 ? proj.end_date + "-28" : proj.end_date)
+    : (proj.end_date || "2026-06").slice(0, 7);
+
+  const est = proj.estimate || {};
+  e_no.value = est.estimate_no || "";
+  e_date.value = est.estimate_date || "";
+  e_note.value = est.note || "";
+}
+
+function newProject() {
+  currentPath = null; currentMtime = null;
+  proj = {
+    project_id: "PRJ-2026-NEW",
+    project_name: "신규 프로젝트",
+    client_name: "",
+    pm_name: "",
+    sales_rep: "",
+    description: "",
+    date_mode: "month",
+    start_date: "2026-01",
+    end_date: "2026-06",
+    contract_revenue: 150000000,
+    target_hurdle_rate: 18.0,
+    settings: JSON.parse(JSON.stringify(defaultSettings)),
+    internal_labor: [],
+    external_labor: [],
+    general_expenses: [],
+    custom_costs: [],
+    phases: [],
+    estimate: { estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, items: [] }
+  };
+  bindInfoUI();
+  statusBadge.textContent = "신규 메모리";
+  notice.textContent = "신규 프로젝트가 초기화되었습니다.";
+  recalc();
+}
+
+function loadDemo() {
+  proj.project_id = "PRJ-2026-01";
+  proj.project_name = "차세대 원가·공정 시스템 구축";
+  proj.client_name = "대한정밀(주)";
+  proj.pm_name = "김철수 PM";
+  proj.sales_rep = "박영희 매니저";
+  proj.description = "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행";
+  proj.contract_revenue = 240000000;
+  proj.target_hurdle_rate = 18.0;
+  const defPromoYm = (proj.start_date || "2026-01").slice(0, 4) + "-" + (proj.settings?.default_promotion_month || "03");
+  proj.internal_labor = [
+    {
+      name: "김철수", role: "PM", grade: "수석", base_rate: 8500000, overhead_eligible: true,
+      target_mm: 6, promotions: [{ effective_ym: defPromoYm, rate: 9000000 }],
+      mm: { "2026-01": 1, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 1 }
+    },
+    {
+      name: "이민지", role: "PL/아키텍트", grade: "선임", base_rate: 6000000, overhead_eligible: false,
+      target_mm: 4.5, promotions: [],
+      mm: { "2026-01": 0.5, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 }
+    }
+  ];
+  proj.external_labor = [
+    {
+      name: "외주개발1", role: "백엔드 개발", vendor: "파트너A", grade: "고급", custom_rate: "",
+      target_mm: 4, mm: { "2026-01": 0, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 }
+    }
+  ];
+  proj.general_expenses = [
+    { name: "출장비", dist_mode: "equal_total", total_input: 9000000, unit_input: 0, monthly: {}, memo: "지방 사업장 방문" }
+  ];
+  proj.custom_costs = [
+    { name: "사전심의·인증비", dist_mode: "fill_all", total_input: 0, unit_input: 400000, monthly: {}, memo: "보안 점검" }
+  ];
+  proj.phases = [
+    { title: "1차 선행계약", start_ym: "2026-01", end_ym: "2026-03", revenue: 110000000, override_cost: "" },
+    { title: "2차 본계약", start_ym: "2026-04", end_ym: "2026-06", revenue: 130000000, override_cost: "" }
+  ];
+  proj.estimate = {
+    estimate_no: "EST-2026-0101", estimate_date: "2026-01-05", note: "공급가액 기준", applied_to_revenue: false,
+    items: [
+      { item_name: "컨설팅 및 설계", spec: "수석/선임", qty: 1, unit_price: 95000000, memo: "1차 범위" },
+      { item_name: "시스템 개발 및 이행", spec: "구축 일괄", qty: 1, unit_price: 155000000, memo: "2차 범위" }
+    ]
+  };
+  bindInfoUI();
+  recalc();
+}
+
+function autoDistributeMM(kind, idx) {
+  const arr = kind === "internal" ? proj.internal_labor : proj.external_labor;
+  const months = (lastCalc && lastCalc.months) || [];
+  if (!months.length) return;
+  const totalMM = Number(arr[idx].target_mm || 0);
+  const per = Math.floor((totalMM / months.length) * 100) / 100;
+  let remain = Math.round((totalMM - per * months.length) * 100) / 100;
+  const mmObj = {};
+  months.forEach((m, i) => {
+    mmObj[m] = i === months.length - 1 ? Math.round((per + remain) * 100) / 100 : per;
+  });
+  arr[idx].mm = mmObj;
+  recalc();
+}
+
+function addInternal() {
+  const g0 = (proj.settings?.internal_grades || [])[0] || { grade: "선임", rate: 6000000 };
+  const yr = (proj.start_date || "2026-01").slice(0, 4);
+  const defM = proj.settings?.default_promotion_month || "03";
+  proj.internal_labor.push({
+    name: "신규인력", role: "개발", grade: g0.grade, base_rate: g0.rate,
+    overhead_eligible: true, target_mm: 0,
+    promotions: [{ effective_ym: `${yr}-${defM}`, rate: "" }], mm: {}
+  });
+  recalc();
+}
+
+function addExternal() {
+  const vr0 = (proj.settings?.vendor_rates || [])[0] || { vendor: "파트너A", grade: "고급" };
+  proj.external_labor.push({
+    name: "외주인력", role: "개발", vendor: vr0.vendor, grade: vr0.grade,
+    custom_rate: "", target_mm: 0, mm: {}
+  });
+  recalc();
+}
+
+function addExpense(key) {
+  const accounts = (proj.settings?.expense_accounts || []).filter(a => key === "general_expenses" ? a.category === "general" : a.category === "custom");
+  const defName = accounts[0]?.account || (key === "general_expenses" ? "일반경비" : "기타비용");
+  proj[key].push({ name: defName, dist_mode: "equal_total", total_input: 0, unit_input: 0, monthly: {}, memo: "" });
+  recalc();
+}
+
+function addPhase() {
+  if (proj.phases.length >= 5) return alert("분할계약은 최대 5회차까지 등록할 수 있습니다.");
+  proj.phases.push({
+    title: `${proj.phases.length + 1}차 계약`,
+    start_ym: (proj.start_date || "2026-01").slice(0, 7),
+    end_ym: (proj.end_date || "2026-06").slice(0, 7),
+    revenue: 0, override_cost: ""
+  });
+  recalc();
+}
+
+function addEstimateItem() {
+  if (!proj.estimate) proj.estimate = { estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, items: [] };
+  proj.estimate.items.push({ item_name: "신규 품목", spec: "", qty: 1, unit_price: 0, memo: "" });
+  recalc();
+}
+
+function syncEstimateMeta() {
+  proj.estimate.estimate_no = e_no.value.trim();
+  proj.estimate.estimate_date = e_date.value;
+  proj.estimate.note = e_note.value.trim();
+  recalc();
+}
+
+function applyEstimateToRevenue() {
+  if (!lastCalc || !lastCalc.estimate) return;
+  const sup = lastCalc.estimate.supply_total || 0;
+  if (sup <= 0) return alert("적용할 견적 공급가액이 0원입니다. 품목을 먼저 입력하세요.");
+  proj.contract_revenue = sup;
+  proj.estimate.applied_to_revenue = true;
+  f_rev.value = sup;
+  notice.textContent = `견적 공급가액(${sup.toLocaleString()}원)이 계약매출에 반영되었습니다.`;
+  recalc();
+}
+
+async function recalc() {
+  const res = await fetch(`${API}/recalc`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project: proj })
+  });
+  const data = await res.json();
+  lastCalc = data.calc;
+  renderAll(lastCalc);
+}
+
+function renderAll(calc) {
+  const s = calc.summary;
+  const b = s.breakdown;
+  const months = calc.months || [];
+
+  k_rev.textContent = Number(s.revenue).toLocaleString() + " 원";
+  k_est_hint.textContent = calc.estimate.supply_total > 0
+    ? `견적 공급가액: ${Number(calc.estimate.supply_total).toLocaleString()}원`
+    : "견적 미등록";
+  k_cost.textContent = Number(s.total_cost).toLocaleString() + " 원";
+  k_mix.textContent = `내부 ${(b.internal_labor/1e6).toFixed(1)}M · 외주 ${(b.external_labor/1e6).toFixed(1)}M · 경비·기타 ${((b.general_expense+b.internal_overhead+b.external_overhead+b.custom_cost)/1e6).toFixed(1)}M`;
+  k_margin.textContent = s.margin_rate + "%";
+  k_margin.className = "kpi-val " + (s.hurdle_met ? "ok" : "warn");
+  k_profit.textContent = Number(s.profit).toLocaleString() + " 원";
+  k_hurdle.textContent = (s.hurdle_gap >= 0 ? "+" : "") + s.hurdle_gap + "%p";
+  k_hurdle.className = "kpi-val " + (s.hurdle_met ? "ok" : "warn");
+  k_hurdle_sub.textContent = `목표 ${s.hurdle_rate}% (${s.hurdle_met ? "달성" : "미달"})`;
+
+  renderInternal(calc, months);
+  renderExternal(calc, months);
+  renderExpenses(calc, months);
+  renderPhases(calc);
+  renderEstimate(calc);
+  renderSettings();
+}
+
+function renderInternal(calc, months) {
+  const iGrades = (proj.settings?.internal_grades || []).map(g => g.grade);
+  let html = `<table><thead><tr>
+    <th>삭제</th><th class="left">성명</th><th class="left">역할</th><th>등급</th><th>기준단가</th><th>인비례</th>
+    <th>승진월</th><th>승진단가</th><th>총MM/배분</th>${months.map(m => `<th>${m}</th>`).join("")}<th>합계금액</th>
+  </tr></thead><tbody>`;
+
+  calc.details.internal_labor.forEach((r, idx) => {
+    const p0 = (r.promotions && r.promotions[0]) || { effective_ym: "", rate: "" };
+    html += `<tr>
+      <td class="center"><button class="danger sm" onclick="proj.internal_labor.splice(${idx},1);recalc()">×</button></td>
+      <td class="left"><input value="${r.name || ""}" onchange="proj.internal_labor[${idx}].name=this.value;recalc()" style="width:72px"/></td>
+      <td class="left"><input value="${r.role || ""}" placeholder="PM/개발" onchange="proj.internal_labor[${idx}].role=this.value;recalc()" style="width:78px"/></td>
+      <td><select onchange="onInternalGradeChange(${idx}, this.value)">
+        ${iGrades.map(g => `<option value="${g}" ${r.grade===g?"selected":""}>${g}</option>`).join("")}
+      </select></td>
+      <td><input type="number" value="${r.base_rate || 0}" onchange="proj.internal_labor[${idx}].base_rate=Number(this.value);recalc()" style="width:88px"/></td>
+      <td class="center"><input type="checkbox" ${r.overhead_eligible?"checked":""} onchange="proj.internal_labor[${idx}].overhead_eligible=this.checked;recalc()"/></td>
+      <td><input type="month" value="${p0.effective_ym || ""}" onchange="setPromo(${idx}, this.value, null)" style="width:118px"/></td>
+      <td><input type="number" placeholder="승진단가" value="${p0.rate ?? ""}" onchange="setPromo(${idx}, null, this.value)" style="width:86px"/></td>
+      <td class="center">
+        <input type="number" step="0.1" value="${r.target_mm ?? r.total_mm}" onchange="proj.internal_labor[${idx}].target_mm=Number(this.value)" style="width:52px"/>
+        <button class="ghost sm" onclick="autoDistributeMM('internal', ${idx})">배분</button>
+      </td>
+      ${months.map(m => {
+        const cell = r.calc[m] || { mm: 0, cost: 0 };
+        return `<td><input type="number" step="0.1" value="${cell.mm}" onchange="proj.internal_labor[${idx}].mm['${m}']=Number(this.value);recalc()" style="width:50px"/><span class="cell-cost">${Math.round(cell.cost/10000).toLocaleString()}만</span></td>`;
+      }).join("")}
+      <td><strong>${Number(r.total_cost).toLocaleString()}</strong></td>
+    </tr>`;
+  });
+  if (!calc.details.internal_labor.length) html += `<tr><td colspan="${months.length+10}" class="center" style="color:var(--muted);padding:16px">등록된 내부인력이 없습니다.</td></tr>`;
+  html += `</tbody></table>`;
+  internalGrid.innerHTML = html;
+}
+
+function onInternalGradeChange(idx, grade) {
+  proj.internal_labor[idx].grade = grade;
+  const found = (proj.settings?.internal_grades || []).find(g => g.grade === grade);
+  if (found) proj.internal_labor[idx].base_rate = Number(found.rate || 0);
+  recalc();
+}
+
+function setPromo(idx, ym, rate) {
+  const cur = (proj.internal_labor[idx].promotions && proj.internal_labor[idx].promotions[0]) || { effective_ym: "", rate: "" };
+  const nextYm = ym !== null ? ym : cur.effective_ym;
+  const nextRate = rate !== null ? (rate === "" ? "" : Number(rate)) : cur.rate;
+  proj.internal_labor[idx].promotions = (nextYm || nextRate !== "") ? [{ effective_ym: nextYm, rate: nextRate }] : [];
+  recalc();
+}
+
+function renderExternal(calc, months) {
+  const vendors = [...new Set((proj.settings?.vendor_rates || []).map(v => v.vendor))];
+  const eGrades = proj.settings?.external_grades || ["특급", "고급", "중급"];
+  let html = `<table><thead><tr>
+    <th>삭제</th><th class="left">성명/구분</th><th class="left">역할</th><th>외주업체</th><th>등급</th>
+    <th>적용단가(공란=기준)</th><th>총MM/배분</th>${months.map(m => `<th>${m}</th>`).join("")}<th>합계금액</th>
+  </tr></thead><tbody>`;
+
+  calc.details.external_labor.forEach((r, idx) => {
+    html += `<tr>
+      <td class="center"><button class="danger sm" onclick="proj.external_labor.splice(${idx},1);recalc()">×</button></td>
+      <td class="left"><input value="${r.name || ""}" onchange="proj.external_labor[${idx}].name=this.value;recalc()" style="width:76px"/></td>
+      <td class="left"><input value="${r.role || ""}" placeholder="개발/디자인" onchange="proj.external_labor[${idx}].role=this.value;recalc()" style="width:78px"/></td>
+      <td><select onchange="proj.external_labor[${idx}].vendor=this.value;recalc()">
+        ${vendors.map(v => `<option value="${v}" ${r.vendor===v?"selected":""}>${v}</option>`).join("")}
+      </select></td>
+      <td><select onchange="proj.external_labor[${idx}].grade=this.value;recalc()">
+        ${eGrades.map(g => `<option value="${g}" ${r.grade===g?"selected":""}>${g}</option>`).join("")}
+      </select></td>
+      <td><input type="number" placeholder="${r.default_rate}" value="${r.custom_rate ?? ""}" onchange="proj.external_labor[${idx}].custom_rate=this.value===''?'':Number(this.value);recalc()" style="width:96px"/></td>
+      <td class="center">
+        <input type="number" step="0.1" value="${r.target_mm ?? r.total_mm}" onchange="proj.external_labor[${idx}].target_mm=Number(this.value)" style="width:52px"/>
+        <button class="ghost sm" onclick="autoDistributeMM('external', ${idx})">배분</button>
+      </td>
+      ${months.map(m => {
+        const cell = r.calc[m] || { mm: 0, cost: 0 };
+        return `<td><input type="number" step="0.1" value="${cell.mm}" onchange="proj.external_labor[${idx}].mm['${m}']=Number(this.value);recalc()" style="width:50px"/><span class="cell-cost">${Math.round(cell.cost/10000).toLocaleString()}만</span></td>`;
+      }).join("")}
+      <td><strong>${Number(r.total_cost).toLocaleString()}</strong></td>
+    </tr>`;
+  });
+  if (!calc.details.external_labor.length) html += `<tr><td colspan="${months.length+8}" class="center" style="color:var(--muted);padding:16px">등록된 외주인력이 없습니다.</td></tr>`;
+  html += `</tbody></table>`;
+  externalGrid.innerHTML = html;
+}
+
+function renderExpenses(calc, months) {
+  const b = calc.summary.breakdown;
+  const allAccounts = proj.settings?.expense_accounts || [];
+  let html = `<table><thead><tr>
+    <th>삭제</th><th class="left">구분</th><th class="left">경비계정/항목</th><th>분배방식</th><th>입력금액</th>
+    ${months.map(m => `<th>${m}</th>`).join("")}<th>합계금액</th>
+  </tr></thead><tbody>`;
+
+  const rowBuilder = (arr, prop, label, catCode) => {
+    const accOpts = allAccounts.filter(a => a.category === catCode).map(a => a.account);
+    arr.forEach((r, idx) => {
+      const val = r.dist_mode === "fill_all" ? (r.unit_input || 0) : (r.total_input || 0);
+      html += `<tr>
+        <td class="center"><button class="danger sm" onclick="proj.${prop}.splice(${idx},1);recalc()">×</button></td>
+        <td class="left">${label}</td>
+        <td class="left">
+          <input list="acc_${catCode}" value="${r.name || ""}" onchange="proj.${prop}[${idx}].name=this.value;recalc()" style="width:120px"/>
+          <datalist id="acc_${catCode}">${accOpts.map(a => `<option value="${a}"></option>`).join("")}</datalist>
+        </td>
+        <td><select onchange="proj.${prop}[${idx}].dist_mode=this.value;recalc()">
+          <option value="equal_total" ${r.dist_mode==="equal_total"?"selected":""}>총액 균등분배</option>
+          <option value="fill_all" ${r.dist_mode==="fill_all"?"selected":""}>월별 동일적용</option>
+        </select></td>
+        <td><input type="number" value="${val}" onchange="setExpVal('${prop}', ${idx}, this.value)" style="width:94px"/></td>
+        ${months.map(m => `<td>${Math.round(r.calc_monthly[m] || 0).toLocaleString()}</td>`).join("")}
+        <td><strong>${Number(r.total_cost).toLocaleString()}</strong></td>
+      </tr>`;
+    });
+  };
+
+  rowBuilder(calc.details.general_expenses, "general_expenses", "일반경비", "general");
+  html += `<tr class="auto-row">
+    <td class="center">-</td><td class="left">내부 인비례</td><td class="left">내부 인비례성 경비</td>
+    <td class="center">자동 (${((proj.settings?.internal_overhead_ratio||0)*100).toFixed(1)}%)</td><td>-</td>
+    ${months.map(m => `<td>${Math.round(calc.details.internal_overhead_monthly[m] || 0).toLocaleString()}</td>`).join("")}
+    <td><strong>${Number(b.internal_overhead).toLocaleString()}</strong></td>
+  </tr>`;
+  html += `<tr class="auto-row">
+    <td class="center">-</td><td class="left">외주 인비례</td><td class="left">외주 인비례성 경비</td>
+    <td class="center">자동 (${((proj.settings?.external_overhead_ratio||0)*100).toFixed(1)}%)</td><td>-</td>
+    ${months.map(m => `<td>${Math.round(calc.details.external_overhead_monthly[m] || 0).toLocaleString()}</td>`).join("")}
+    <td><strong>${Number(b.external_overhead).toLocaleString()}</strong></td>
+  </tr>`;
+  rowBuilder(calc.details.custom_costs, "custom_costs", "기타비용", "custom");
+
+  html += `</tbody></table>`;
+  expenseGrid.innerHTML = html;
+}
+
+function setExpVal(prop, idx, val) {
+  const num = Number(val || 0);
+  if (proj[prop][idx].dist_mode === "fill_all") proj[prop][idx].unit_input = num;
+  else proj[prop][idx].total_input = num;
+  recalc();
+}
+
+function renderPhases(calc) {
+  let ed = `<table><thead><tr><th>삭제</th><th class="left">차수명</th><th>시작월</th><th>종료월</th><th>회차 매출</th><th>별도 원가(옵션)</th></tr></thead><tbody>`;
+  proj.phases.forEach((ph, i) => {
+    ed += `<tr>
+      <td class="center"><button class="danger sm" onclick="proj.phases.splice(${i},1);recalc()">×</button></td>
+      <td class="left"><input value="${ph.title || ""}" onchange="proj.phases[${i}].title=this.value;recalc()" style="width:120px"/></td>
+      <td><input type="month" value="${ph.start_ym || ""}" onchange="proj.phases[${i}].start_ym=this.value;recalc()"/></td>
+      <td><input type="month" value="${ph.end_ym || ""}" onchange="proj.phases[${i}].end_ym=this.value;recalc()"/></td>
+      <td><input type="number" value="${ph.revenue || 0}" onchange="proj.phases[${i}].revenue=Number(this.value);recalc()" style="width:110px"/></td>
+      <td><input type="number" placeholder="공란시 기간자동" value="${ph.override_cost ?? ""}" onchange="proj.phases[${i}].override_cost=this.value===''?'':Number(this.value);recalc()" style="width:120px"/></td>
+    </tr>`;
+  });
+  if (!proj.phases.length) ed += `<tr><td colspan="6" class="center" style="color:var(--muted);padding:12px">등록된 분할계약이 없습니다.</td></tr>`;
+  ed += `</tbody></table>`;
+  phaseEditor.innerHTML = ed;
+
+  let sm = `<table><thead><tr>
+    <th class="left">회차</th><th>기간</th><th>회차매출</th><th>회차원가</th><th>회차이익률</th>
+    <th>누적매출</th><th>누적원가</th><th>잔여매출</th><th>잔여원가</th>
+  </tr></thead><tbody>`;
+  (calc.phases || []).forEach(p => {
+    sm += `<tr>
+      <td class="left"><strong>${p.title}</strong></td><td class="center">${p.start_ym} ~ ${p.end_ym}</td>
+      <td>${Number(p.revenue).toLocaleString()}</td><td>${Number(p.cost).toLocaleString()}</td><td>${p.margin_rate}%</td>
+      <td>${Number(p.cum_revenue).toLocaleString()}</td><td>${Number(p.cum_cost).toLocaleString()}</td>
+      <td>${Number(p.rem_revenue).toLocaleString()}</td><td>${Number(p.rem_cost).toLocaleString()}</td>
+    </tr>`;
+  });
+  sm += `</tbody></table>`;
+  phaseSummary.innerHTML = sm;
+}
+
+function renderEstimate(calc) {
+  const est = calc.estimate;
+  let html = `<table><thead><tr>
+    <th>삭제</th><th class="left">항목명</th><th class="left">규격/등급</th><th>수량</th><th>단가(원)</th><th>금액(원)</th><th class="left">비고</th>
+  </tr></thead><tbody>`;
+  est.items.forEach((it, idx) => {
+    html += `<tr>
+      <td class="center"><button class="danger sm" onclick="proj.estimate.items.splice(${idx},1);recalc()">×</button></td>
+      <td class="left"><input value="${it.item_name || ""}" onchange="proj.estimate.items[${idx}].item_name=this.value;recalc()" style="width:160px"/></td>
+      <td class="left"><input value="${it.spec || ""}" onchange="proj.estimate.items[${idx}].spec=this.value;recalc()" style="width:120px"/></td>
+      <td><input type="number" step="0.1" value="${it.qty}" onchange="proj.estimate.items[${idx}].qty=Number(this.value);recalc()" style="width:65px"/></td>
+      <td><input type="number" value="${it.unit_price}" onchange="proj.estimate.items[${idx}].unit_price=Number(this.value);recalc()" style="width:110px"/></td>
+      <td><strong>${Number(it.amount).toLocaleString()}</strong></td>
+      <td class="left"><input value="${it.memo || ""}" onchange="proj.estimate.items[${idx}].memo=this.value;recalc()" style="width:140px"/></td>
+    </tr>`;
+  });
+  html += `<tr class="auto-row"><td colspan="5" class="left">공급가액 합계</td><td>${Number(est.supply_total).toLocaleString()}</td><td class="left">${est.applied_to_revenue ? "매출 적용됨" : ""}</td></tr>`;
+  html += `<tr class="auto-row"><td colspan="5" class="left">부가세 (10%)</td><td>${Number(est.vat).toLocaleString()}</td><td></td></tr>`;
+  html += `<tr class="auto-row"><td colspan="5" class="left">견적 총액 (VAT 포함)</td><td>${Number(est.grand_total).toLocaleString()}</td><td></td></tr>`;
+  html += `</tbody></table>`;
+  estimateGrid.innerHTML = html;
+}
+
+function renderSettings() {
+  const st = proj.settings || defaultSettings;
+  if (!st) return;
+  let html = `
+    <div class="sub-card">
+      <h3>1. 공통 비율 & 내부 기본 승진월</h3>
+      <div class="form-grid">
+        <div class="field"><label>내부 인비례율 (%)</label><input type="number" step="0.1" value="${(st.internal_overhead_ratio*100).toFixed(1)}" onchange="proj.settings.internal_overhead_ratio=Number(this.value)/100;recalc()"/></div>
+        <div class="field"><label>외주 인비례율 (%)</label><input type="number" step="0.1" value="${(st.external_overhead_ratio*100).toFixed(1)}" onchange="proj.settings.external_overhead_ratio=Number(this.value)/100;recalc()"/></div>
+        <div class="field"><label>내부 기본 승진월 (MM)</label><input value="${st.default_promotion_month || '03'}" placeholder="03" onchange="proj.settings.default_promotion_month=this.value.padStart(2,'0');recalc()"/></div>
+      </div>
+    </div>
+
+    <div class="sub-card">
+      <div class="row" style="justify-content:space-between; margin-bottom:6px">
+        <h3>2. 내부 등급 및 기준단가</h3>
+        <button class="ghost sm" onclick="proj.settings.internal_grades.push({grade:'신규등급',rate:5000000});recalc()">+ 추가</button>
+      </div>
+      <table><thead><tr><th class="left">등급명</th><th>월 기준단가(원)</th><th>삭제</th></tr></thead><tbody>
+        ${(st.internal_grades||[]).map((g, i) => `<tr>
+          <td class="left"><input value="${g.grade}" onchange="proj.settings.internal_grades[${i}].grade=this.value;recalc()" style="width:100px"/></td>
+          <td><input type="number" value="${g.rate}" onchange="proj.settings.internal_grades[${i}].rate=Number(this.value);recalc()" style="width:110px"/></td>
+          <td class="center"><button class="danger sm" onclick="proj.settings.internal_grades.splice(${i},1);recalc()">×</button></td>
+        </tr>`).join("")}
+      </tbody></table>
+    </div>
+
+    <div class="sub-card">
+      <div class="row" style="justify-content:space-between; margin-bottom:6px">
+        <h3>3. 외주 등급 목록</h3>
+        <button class="ghost sm" onclick="proj.settings.external_grades.push('신규등급');recalc()">+ 추가</button>
+      </div>
+      <table><thead><tr><th class="left">외주 등급명</th><th>삭제</th></tr></thead><tbody>
+        ${(st.external_grades||[]).map((g, i) => `<tr>
+          <td class="left"><input value="${g}" onchange="proj.settings.external_grades[${i}]=this.value;recalc()" style="width:140px"/></td>
+          <td class="center"><button class="danger sm" onclick="proj.settings.external_grades.splice(${i},1);recalc()">×</button></td>
+        </tr>`).join("")}
+      </tbody></table>
+    </div>
+
+    <div class="sub-card">
+      <div class="row" style="justify-content:space-between; margin-bottom:6px">
+        <h3>4. 외주업체별 등급 단가</h3>
+        <button class="ghost sm" onclick="proj.settings.vendor_rates.push({vendor:'신규업체',grade:'고급',rate:7500000});recalc()">+ 추가</button>
+      </div>
+      <table><thead><tr><th class="left">외주업체</th><th>등급</th><th>월 단가(원)</th><th>삭제</th></tr></thead><tbody>
+        ${(st.vendor_rates||[]).map((vr, i) => `<tr>
+          <td class="left"><input value="${vr.vendor}" onchange="proj.settings.vendor_rates[${i}].vendor=this.value;recalc()" style="width:95px"/></td>
+          <td><input value="${vr.grade}" onchange="proj.settings.vendor_rates[${i}].grade=this.value;recalc()" style="width:65px"/></td>
+          <td><input type="number" value="${vr.rate}" onchange="proj.settings.vendor_rates[${i}].rate=Number(this.value);recalc()" style="width:100px"/></td>
+          <td class="center"><button class="danger sm" onclick="proj.settings.vendor_rates.splice(${i},1);recalc()">×</button></td>
+        </tr>`).join("")}
+      </tbody></table>
+    </div>
+
+    <div class="sub-card" style="grid-column: 1 / -1">
+      <div class="row" style="justify-content:space-between; margin-bottom:6px">
+        <h3>5. 경비 계정 기준정보</h3>
+        <button class="ghost sm" onclick="proj.settings.expense_accounts.push({account:'신규계정',category:'general',desc:''});recalc()">+ 추가</button>
+      </div>
+      <table><thead><tr><th class="left">계정명</th><th>구분</th><th class="left">설명</th><th>삭제</th></tr></thead><tbody>
+        ${(st.expense_accounts||[]).map((ea, i) => `<tr>
+          <td class="left"><input value="${ea.account}" onchange="proj.settings.expense_accounts[${i}].account=this.value;recalc()" style="width:140px"/></td>
+          <td><select onchange="proj.settings.expense_accounts[${i}].category=this.value;recalc()">
+            <option value="general" ${ea.category==="general"?"selected":""}>일반경비</option>
+            <option value="custom" ${ea.category==="custom"?"selected":""}>기타비용</option>
+          </select></td>
+          <td class="left"><input value="${ea.desc || ""}" onchange="proj.settings.expense_accounts[${i}].desc=this.value;recalc()" style="width:240px"/></td>
+          <td class="center"><button class="danger sm" onclick="proj.settings.expense_accounts.splice(${i},1);recalc()">×</button></td>
+        </tr>`).join("")}
+      </tbody></table>
+    </div>
+  `;
+  settingsArea.innerHTML = html;
+}
+
+async function saveSettingsAsDefault() {
+  const res = await fetch(`${API}/master-settings`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ settings: proj.settings })
+  });
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail || "저장 실패");
+  defaultSettings = JSON.parse(JSON.stringify(proj.settings));
+  notice.textContent = data.message;
+  alert(data.message);
+}
+
+async function initBootstrap() {
+  const res = await fetch(`${API}/bootstrap`);
+  const data = await res.json();
+  verBadge.textContent = data.version || "v4.0";
+  defaultSettings = data.default_settings;
+  if (!proj.settings) proj.settings = JSON.parse(JSON.stringify(defaultSettings));
+  renderProjectList(data.projects || []);
+  bindInfoUI();
+  recalc();
+}
+
+function renderProjectList(list) {
+  projectList.innerHTML = list.length
+    ? list.map(p => `<option value="${p.file_path}">${p.project_id} (${p.updated_at})</option>`).join("")
+    : `<option value="">저장된 프로젝트 없음</option>`;
+}
+
+async function loadSelected() {
+  if (!projectList.value) return;
+  const res = await fetch(`${API}/load`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ file_path: projectList.value })
+  });
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail || "불러오기 실패");
+  currentPath = projectList.value;
+  currentMtime = data.mtime;
+  proj = data.project;
+  bindInfoUI();
+  lastCalc = data.calc;
+  renderAll(lastCalc);
+  statusBadge.textContent = "로드 완료 (파일 닫힘)";
+  notice.textContent = `${proj.project_id} 로드 완료`;
+}
+
+async function deleteSelected() {
+  if (!projectList.value) return alert("제거할 프로젝트를 선택하세요.");
+  if (!confirm("선택한 프로젝트를 목록에서 제거할까요?\n(원본 엑셀은 data/backups/deleted/ 폴더로 안전 이동됩니다.)")) return;
+  const res = await fetch(`${API}/delete`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ file_path: projectList.value })
+  });
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail || "제거 실패");
+  if (currentPath === projectList.value) { currentPath = null; currentMtime = null; }
+  renderProjectList(data.projects || []);
+  notice.textContent = `목록에서 제거됨 (백업: ${data.backup_path})`;
+}
+
+async function saveAndClose() {
+  syncInfo();
+  const res = await fetch(`${API}/save`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ file_path: currentPath, project: proj, expected_mtime: currentMtime })
+  });
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail || "저장 실패");
+  currentPath = data.saved_path;
+  currentMtime = data.mtime;
+  renderProjectList(data.projects || []);
+  statusBadge.textContent = "저장 완료 (파일 닫힘)";
+  notice.textContent = `백업 후 저장 완료: ${data.saved_path}`;
+}
+
+async function exportReport() {
+  const res = await fetch(`${API}/export-report`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project: proj })
+  });
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail || "보고서 생성 실패");
+  alert(`2시트 보고용 엑셀 생성 완료:\n${data.report_path}`);
+}
+
+async function handleUpload(file) {
+  if (!file) return;
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch(`${API}/upload-excel`, { method: "POST", body: fd });
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail || "업로드 실패");
+  currentPath = null; currentMtime = null;
+  proj = data.project;
+  bindInfoUI();
+  lastCalc = data.calc;
+  renderAll(lastCalc);
+  statusBadge.textContent = "업로드 로드됨";
+  notice.textContent = "엑셀 업로드 완료 (저장 시 새 파일로 기록)";
+}
+
+initBootstrap();
+</script>
+</body>
+</html>
