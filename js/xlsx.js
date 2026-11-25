@@ -88,7 +88,7 @@
   };
   const FONT_NAME = "맑은 고딕";
   const argb = c => (String(c).length === 6 ? `FF${c}` : String(c));
-  const LINE = { thin: ["thin", "FF808080"], medium: ["medium", "FF000000"], light: ["thin", "FFCBD5E1"], black: ["thin", "FF000000"] };
+  const LINE = { thin: ["thin", "FF808080"], medium: ["medium", "FF000000"], light: ["thin", "FFCBD5E1"], black: ["thin", "FF000000"], soft: ["thin", "FFD3DAE4"], accent: ["medium", "FF1F3A5F"] };
   function Styles() {
     const fonts = [JSON.stringify({})], fills = ["none", "gray125"], borders = [JSON.stringify({})], fmts = [], xfs = [JSON.stringify({})], ids = new Map();
     const idx = (list, key) => { let i = list.indexOf(key); if (i < 0) { list.push(key); i = list.length - 1; } return i; };

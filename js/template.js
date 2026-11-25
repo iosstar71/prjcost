@@ -22,8 +22,17 @@
     ["노무비율", "노무비 ÷ 총 원가 (소수)"], ["외주비율", "외주비 ÷ 총 원가"], ["경비율", "경비 ÷ 총 원가"], ["AI예비비율", "AI예비비 ÷ 총 원가"], ["총원가율", "1 (100%)"],
     ["매출마진", "매출 − 총 원가"], ["수주마진율", "매출마진 ÷ 매출 (소수)"], ["허들", "목표 허들 이익률 (소수)"], ["Gap", "수주마진율 − 허들 (소수)"],
     ["최근버전이름", "가장 최근 저장한 버전 이름"], ["최근버전매출", "그 버전의 계약 매출"], ["최근버전마진율", "그 버전의 수주마진율 (소수)"],
-    ["작성일", "출력한 날 YYYY.MM.DD"], ["최종작성일", "프로젝트를 마지막으로 저장한 날 YYYY.MM.DD"]
+    ["작성일", "출력한 날 YYYY.MM.DD"], ["최종작성일", "프로젝트를 마지막으로 저장한 날 YYYY.MM.DD"],
+    // 원가상세 (달은 첫 달부터 M1 … M24 — 2년까지, 넘는 달은 빠짐)
+    ["월1 … 월24", "달 머리글 (예: 26.01) — 기간 밖은 빈칸"],
+    ["내부인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 직급 · 제안직무 · 제안등급 · 단가 · 총MM · 금액 · M1 … M24(MM)"],
+    ["외주인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 업체 · 기술등급 · 제안직무 · 제안등급 · 단가 · 총MM · 금액 · M1 … M24(MM)"],
+    ["경비항목.이름", "반복 줄: 구분 · 항목 · 방식 · 기준금액 · 금액 · M1 … M24(금액)"],
+    ["내부합계.이름 · 외주합계.이름", "총MM · 금액 · M1 … M24(MM) · C1 … C24(인건비)"],
+    ["경비합계.이름 · 월원가.이름 · 누적원가.이름", "금액 · M1 … M24 (원가: 내부 · 외주 인건비 + 경비)"]
   ];
+  const MAX_MONTHS = 24;
+  const MODE = { equal_total: "총액 균등", fill_all: "매달 같은 금액", manual: "월별 직접" };
   const AI_RESERVE = "AI예비비";
 
   const dot = s => String(s || "").slice(0, 10).replace(/-/g, ".");
@@ -58,8 +67,40 @@
       노무비율: ratio(b.internal_labor), 외주비율: ratio(b.external_labor), 경비율: ratio(expense), AI예비비율: ai ? ratio(ai) : "", 총원가율: total > 0 ? 1 : 0,
       매출마진: margin, 수주마진율: mRate, 허들: hurdle, Gap: mRate - hurdle,
       최근버전이름: last ? last.name || "" : "", 최근버전매출: lastRev, 최근버전마진율: lastRate,
-      작성일: dot(ymd(today)), 최종작성일: dot(ymd(saved))
+      작성일: dot(ymd(today)), 최종작성일: dot(ymd(saved)),
+      ...detailValues(project, calc)
     };
+  }
+
+  // 원가상세: 사람 · 경비 줄(반복)과 달별 합계 — 첫 달부터 M1 … M24
+  function detailValues(project, calc) {
+    const d = calc.details, months = calc.months.slice(0, MAX_MONTHS), out = {};
+    for (let i = 1; i <= MAX_MONTHS; i++) out[`월${i}`] = months[i - 1] ? `${months[i - 1].slice(2, 4)}.${months[i - 1].slice(5)}` : "";
+    const perMonth = (f, prefix) => Object.fromEntries(Array.from({ length: MAX_MONTHS }, (_, i) => [`${prefix || "M"}${i + 1}`, months[i] ? f(months[i]) : ""]));
+    const person = (r, kind) => Object.assign({
+      성명: r.name || "", 역할: r.role || "", 영역: r.area || "", 시스템: r.system || "", 부서: r.dept || "", 제안직무: r.prop_role || "", 제안등급: r.prop_level || "",
+      단가: months.length ? r.calc[months[0]].rate : "", 총MM: r.total_mm, 금액: r.total_cost
+    }, kind === "internal" ? { 직급: r.grade || "" } : { 업체: r.vendor || "", 기술등급: r.grade || "" }, perMonth(m => r.calc[m].mm || ""));
+    out.내부인력 = d.internal_labor.map(r => person(r, "internal"));
+    out.외주인력 = d.external_labor.map(r => person(r, "external"));
+    const sum = (rows, f) => pyRound(rows.reduce((a, r) => a + num(f(r)), 0), 2);
+    const laborTotal = rows => Object.assign({ 총MM: sum(rows, r => r.total_mm), 금액: sum(rows, r => r.total_cost) }, perMonth(m => sum(rows, r => r.calc[m].mm)), perMonth(m => sum(rows, r => r.calc[m].cost), "C"));
+    out.내부합계 = laborTotal(d.internal_labor);
+    out.외주합계 = laborTotal(d.external_labor);
+    const exp = [
+      ...d.general_expenses.map(e => ({ 구분: "일반경비", 항목: e.name || "", 방식: MODE[e.dist_mode] || "", 기준금액: e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), 금액: e.total_cost, m: e.calc_monthly })),
+      ...(d.mm_overheads || []).map(o => ({ 구분: o.category === "mm_internal" ? "인비례(내부)" : "인비례(외주)", 항목: o.account, 방식: "MM × 기준금액", 기준금액: o.unit_amount, 금액: o.total_cost, m: o.calc_monthly })),
+      ...d.custom_costs.map(e => ({ 구분: "기타경비", 항목: e.name || "", 방식: MODE[e.dist_mode] || "", 기준금액: e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), 금액: e.total_cost, m: e.calc_monthly }))
+    ];
+    out.경비항목 = exp.map(e => Object.assign({ 구분: e.구분, 항목: e.항목, 방식: e.방식, 기준금액: e.기준금액, 금액: e.금액 }, perMonth(m => num(e.m[m]))));
+    const expM = m => sum(exp, e => e.m[m]);
+    out.경비합계 = Object.assign({ 금액: sum(exp, e => e.금액) }, perMonth(expM));
+    const monthCost = m => pyRound(sum(d.internal_labor, r => r.calc[m].cost) + sum(d.external_labor, r => r.calc[m].cost) + expM(m), 2);
+    out.월원가 = Object.assign({ 금액: calc.summary.total_cost }, perMonth(monthCost));
+    let cum = 0;
+    out.누적원가 = Object.assign({ 금액: "" }, perMonth(m => (cum = pyRound(cum + monthCost(m), 2))));
+    out.기간초과 = calc.months.length > MAX_MONTHS ? `※ 기간 ${calc.months.length}개월 중 앞 ${MAX_MONTHS}개월만 표시` : "";
+    return out;
   }
 
   const PH = /\{\{\s*([^{}]+?)\s*\}\}/g;
@@ -70,42 +111,116 @@
     if (type === "str") { const m = /<v>([\s\S]*?)<\/v>/.exec(cXml); return m ? X.xmlUnesc(m[1]) : null; }
     return null;
   };
+  const CELL = /<c\b[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g;
+  const ROW = /<row\b[^>]*\/>|<row\b[^>]*>[\s\S]*?<\/row>/g;
+  const rowNo = rowXml => Number((/^<row\b[^>]*\br="(\d+)"/.exec(rowXml) || [])[1] || 0);
+  // 줄 번호 바꾸기: 줄 · 칸의 r 속성 (A5 → A7)
+  const renumber = (rowXml, n) => rowXml.replace(/^<row\b([^>]*?)\br="\d+"/, `<row$1r="${n}"`).replace(/(<c\b[^>]*?\br=")([A-Z]+)\d+"/g, `$1$2${n}"`);
 
-  // 양식(xlsx)을 채워 새 파일(Blob)로. → { blob, used: [자리표시], unknown: [모르는 이름], empty: [값이 없는 이름] }
+  // 양식(xlsx)을 채워 새 파일(Blob)로. → { blob, used, unknown(모르는 이름), empty(값이 없는 이름) }
+  //  {{이름}}: 값 하나 · {{묶음.이름}}: vals[묶음] 이 객체면 그 안의 값
+  //  {{목록.이름}}: vals[목록] 이 배열이면 그 줄을 항목 수만큼 복사해서 채움 (반복 줄 — 아래 줄 · 병합 · 인쇄 영역은 밀림)
   async function fill(src, vals) {
     const buf = src instanceof ArrayBuffer ? src : ArrayBuffer.isView(src) ? src.buffer.slice(src.byteOffset, src.byteOffset + src.byteLength) : await src.arrayBuffer();
     const files = await X.unzip(buf);
     const names = Object.keys(files);
     const text = n => dec.decode(files[n]);
-    const ssName = names.find(n => n.toLowerCase() === "xl/sharedstrings.xml");
+    const find = n => names.find(x => x.toLowerCase() === n.toLowerCase());
+    const ssName = find("xl/sharedStrings.xml");
     const shared = ssName ? (text(ssName).match(/<si\b[\s\S]*?<\/si>/g) || []).map(si => X.xmlUnesc((si.match(/<t\b[^>]*>([\s\S]*?)<\/t>/g) || []).map(t => t.replace(/^<t\b[^>]*>|<\/t>$/g, "")).join(""))) : [];
     const used = new Set(), unknown = new Set(), empty = new Set();
-    const has = k => Object.prototype.hasOwnProperty.call(vals, k);
-    const valueOf = k => { used.add(k); if (!has(k)) { unknown.add(k); return ""; } const v = vals[k]; if (v === "" || v === null || v === undefined) empty.add(k); return v; };
+    const has = (o, k) => o && Object.prototype.hasOwnProperty.call(o, k);
+    // 자리표시 이름 → 값 (item: 반복 줄의 항목)
+    const resolve = (key, list, item) => {
+      used.add(key);
+      const dotAt = key.indexOf(".");
+      let v, known = true;
+      if (dotAt > 0) {
+        const a = key.slice(0, dotAt), b = key.slice(dotAt + 1);
+        if (list && a === list) v = item ? item[b] : "";
+        else if (has(vals, a) && vals[a] && typeof vals[a] === "object" && !Array.isArray(vals[a])) { known = has(vals[a], b); v = vals[a][b]; }
+        else known = false;
+      } else if (has(vals, key)) v = vals[key];
+      else known = false;
+      if (!known) { unknown.add(key); return ""; }
+      // 값이 없는 칸 알림 — 기간 밖의 달(월N · …MN · …CN)과 반복 줄 · 안내 문구는 빼고
+      if ((v === "" || v === null || v === undefined) && !(list && key.startsWith(list + ".")) && !/^월\d+$|\.[MC]\d+$|^기간초과$/.test(key)) empty.add(key);
+      return v === null || v === undefined ? "" : v;
+    };
+    // 칸 하나 채우기
+    const fillCell = (cXml, list, item) => {
+      const tag = /^<c\b[^>]*?\/?>/.exec(cXml)[0];
+      if (/<f\b/.test(cXml)) return cXml;   // 수식 칸은 그대로
+      const type = (/\st="([^"]*)"/.exec(tag) || [])[1];
+      const t = cellText(cXml, type, shared);
+      if (t === null || t === undefined || !t.includes("{{")) return cXml;
+      const head = tag.replace(/\s+t="[^"]*"/, "").replace(/\/?>$/, "");   // r · s 등 나머지 속성은 그대로
+      const only = /^\s*\{\{\s*([^{}]+?)\s*\}\}\s*$/.exec(t);
+      const v = only ? resolve(only[1], list, item) : t.replace(PH, (m, k) => asText(resolve(k, list, item)));
+      if (v === "" || v === null || v === undefined) return `${head}/>`;
+      if (typeof v === "number" && Number.isFinite(v)) return `${head}><v>${v}</v></c>`;
+      return `${head} t="inlineStr"><is><t xml:space="preserve">${X.xmlEsc(v)}</t></is></c>`;
+    };
+    // 이 줄이 반복 줄인가: {{목록.이름}} 의 목록이 배열인 자리표시가 있으면 그 목록 이름
+    const repeatList = rowXml => {
+      for (const cXml of rowXml.match(CELL) || []) {
+        const tag = /^<c\b[^>]*?\/?>/.exec(cXml)[0], t = cellText(cXml, (/\st="([^"]*)"/.exec(tag) || [])[1], shared);
+        if (!t) continue;
+        for (const m of t.matchAll(PH)) { const a = m[1].split(".")[0]; if (m[1].includes(".") && Array.isArray(vals[a])) return a; }
+      }
+      return null;
+    };
+
+    // 시트 파일 → 시트 이름 (인쇄 영역 등 이름 정의를 밀 때)
+    const wbName = find("xl/workbook.xml"), relName = find("xl/_rels/workbook.xml.rels");
+    const rels = {};
+    if (relName) (text(relName).match(/<Relationship\b[^>]*>/g) || []).forEach(r => { const id = (/\bId="([^"]+)"/.exec(r) || [])[1], tg = (/\bTarget="([^"]+)"/.exec(r) || [])[1]; if (id && tg) rels[id] = tg.replace(/^\/?xl\//, ""); });
+    const sheetOf = {};
+    if (wbName) (text(wbName).match(/<sheet\b[^>]*>/g) || []).forEach(t => { const nm = X.xmlUnesc((/\bname="([^"]*)"/.exec(t) || [])[1] || ""), id = (/\br:id="([^"]+)"/.exec(t) || [])[1]; if (id && rels[id]) sheetOf[`xl/${rels[id]}`.toLowerCase()] = nm; });
+    const shifts = {};   // 시트 이름 → 줄 번호 바꾸기 함수
+
     names.filter(n => /^xl\/worksheets\/[^/]+\.xml$/i.test(n)).forEach(n => {
-      const xml = text(n);
+      let xml = text(n);
       if (!xml.includes("{{") && !shared.some(t => t && t.includes("{{"))) return;
-      const out = xml.replace(/<c\b[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g, cXml => {
-        const tag = /^<c\b[^>]*?\/?>/.exec(cXml)[0];
-        if (/<f\b/.test(cXml)) return cXml;   // 수식 칸은 그대로
-        const type = (/\st="([^"]*)"/.exec(tag) || [])[1];
-        const t = cellText(cXml, type, shared);
-        if (t === null || t === undefined || !t.includes("{{")) return cXml;
-        const head = tag.replace(/\s+t="[^"]*"/, "").replace(/\/?>$/, "");   // r · s 등 나머지 속성은 그대로
-        const only = /^\s*\{\{\s*([^{}]+?)\s*\}\}\s*$/.exec(t);
-        let v;
-        if (only) v = valueOf(only[1]);
-        else v = t.replace(PH, (m, k) => asText(valueOf(k)));
-        if (v === "" || v === null || v === undefined) return `${head}/>`;
-        if (typeof v === "number" && Number.isFinite(v)) return `${head}><v>${v}</v></c>`;
-        return `${head} t="inlineStr"><is><t xml:space="preserve">${X.xmlEsc(v)}</t></is></c>`;
-      });
-      files[n] = new TextEncoder().encode(out);
+      const grow = [];   // [템플릿 줄, 늘어난 줄 수]
+      let offset = 0;
+      xml = xml.replace(/<sheetData>([\s\S]*?)<\/sheetData>/, (m, body) => `<sheetData>${body.replace(ROW, rowXml => {
+        const r = rowNo(rowXml), list = repeatList(rowXml);
+        if (!list) { const out = renumber(rowXml, r + offset).replace(CELL, c => fillCell(c)); return out; }
+        const items = vals[list].length ? vals[list] : [null];   // 항목이 없으면 빈 줄 하나 (양식의 테두리는 남김)
+        const out = items.map((it, j) => renumber(rowXml, r + offset + j).replace(CELL, c => fillCell(c, list, it))).join("");
+        grow.push([r, items.length - 1]);
+        offset += items.length - 1;
+        return out;
+      })}</sheetData>`);
+      const newRow = old => old + grow.filter(([r]) => r < old).reduce((a, [, k]) => a + k, 0);
+      const shiftRef = ref => ref.replace(/(\$?[A-Z]+\$?)(\d+)/g, (m, col, row) => `${col}${newRow(Number(row))}`);
+      if (grow.length) {
+        // 병합: 반복 줄 안의 병합은 줄마다 복사, 아래 병합은 밀기
+        xml = xml.replace(/<mergeCells\b[^>]*>([\s\S]*?)<\/mergeCells>/, (m, body) => {
+          const refs = (body.match(/<mergeCell\b[^>]*\bref="([^"]+)"/g) || []).map(t => /ref="([^"]+)"/.exec(t)[1]);
+          const out = [];
+          refs.forEach(ref => {
+            const [a, b] = ref.split(":"), ra = Number(/\d+/.exec(a)[0]), rb = Number(/\d+/.exec(b || a)[0]);
+            const g = grow.find(([r]) => r === ra && ra === rb);
+            if (g) for (let j = 0; j <= g[1]; j++) out.push(`${a.replace(/\d+/, newRow(ra) + j)}:${(b || a).replace(/\d+/, newRow(ra) + j)}`);
+            else out.push(shiftRef(ref));
+          });
+          return `<mergeCells count="${out.length}">${out.map(r => `<mergeCell ref="${r}"/>`).join("")}</mergeCells>`;
+        });
+        xml = xml.replace(/<dimension\b[^>]*\/>/, "").replace(/\bsqref="([^"]+)"/g, (m, v) => `sqref="${shiftRef(v)}"`);
+        const sname = sheetOf[n.toLowerCase()];
+        if (sname) shifts[sname] = shiftRef;
+      }
+      files[n] = new TextEncoder().encode(xml);
     });
-    // 열 때 수식 다시 계산
-    const wbName = names.find(n => n.toLowerCase() === "xl/workbook.xml");
+    // 통합 문서: 반복 줄로 밀린 시트의 인쇄 영역 등 · 열 때 수식 다시 계산
     if (wbName) {
       let w = text(wbName);
+      w = w.replace(/(<definedName\b[^>]*>)([\s\S]*?)(<\/definedName>)/g, (m, a, body, c) => {
+        const val = X.xmlUnesc(body).replace(/('?)([^'!,]+)\1!([^,]+)/g, (mm, q, sh, ref) => (shifts[sh] ? `${q}${sh}${q}!${shifts[sh](ref)}` : mm));
+        return `${a}${X.xmlEsc(val)}${c}`;
+      });
       if (/<calcPr\b/.test(w)) w = w.replace(/<calcPr\b([^>]*?)(\/?)>/, (m, a, sl) => `<calcPr${a.replace(/\s+fullCalcOnLoad="[^"]*"/, "")} fullCalcOnLoad="1"${sl}>`);
       else if (/<\/definedNames>/.test(w)) w = w.replace("</definedNames>", `</definedNames><calcPr fullCalcOnLoad="1"/>`);
       else w = w.replace("</sheets>", `</sheets><calcPr fullCalcOnLoad="1"/>`);

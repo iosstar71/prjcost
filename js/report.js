@@ -13,17 +13,18 @@
 
   const ROMAN = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ"];
   const FMT = { won: '#,##0;-#,##0;"-"', mm: '0.00;-0.00;"-"', pct: '0.0%;-0.0%;"-"', pct2: "0.00%", int: '0;-0;"-"' };
-  const GRAY = "D9D9D9", LIGHT = "F2F2F2";
+  // 꾸밈: 남색 머리글 · 옅은 구분선 · 강조색 하나 (회사 양식보다 가볍고 깔끔하게)
+  const NAVY = "1F3A5F", LABEL = "EEF2F7", LIGHT = "F5F7FA", TOTAL = "DDE5F0";
   const ext = (a, b) => Object.assign({}, a, b, a.font || (b && b.font) ? { font: Object.assign({}, a.font, b && b.font) } : {});
-  const base = { border: "thin", v: "center" };
+  const base = { border: "soft", v: "center" };
   const S = {
-    title: { font: { b: 1, sz: 16 }, h: "center", v: "center" },
-    subtitle: { font: { sz: 11, color: "404040" }, h: "center", v: "center" },
-    meta: { font: { sz: 9, color: "7F7F7F" }, h: "right", v: "center" },
-    note: { font: { sz: 9, color: "7F7F7F" }, h: "left", v: "center" },
-    sec: { font: { b: 1, sz: 11 }, v: "center" },
-    th: ext(base, { fill: GRAY, h: "center", wrap: 1 }),
-    label: ext(base, { fill: GRAY, h: "center", wrap: 1 }),
+    title: { font: { b: 1, sz: 18, color: NAVY }, h: "left", v: "center" },
+    subtitle: { font: { sz: 11, color: "4B5563" }, h: "left", v: "center" },
+    meta: { font: { sz: 9, color: "8A94A6" }, h: "right", v: "center" },
+    note: { font: { sz: 9, color: "8A94A6" }, h: "left", v: "center" },
+    sec: { font: { b: 1, sz: 12, color: NAVY }, v: "bottom", border: { b: "accent" } },
+    th: ext(base, { fill: NAVY, font: { b: 1, color: "FFFFFF" }, h: "center", wrap: 1 }),
+    label: ext(base, { fill: LABEL, font: { color: NAVY }, h: "center", wrap: 1 }),
     text: ext(base, { h: "left", indent: 1 }),
     center: ext(base, { h: "center" }),
     wrapTop: ext(base, { h: "left", v: "top", wrap: 1, indent: 1 }),
@@ -33,9 +34,9 @@
     pct2: ext(base, { h: "right", fmt: FMT.pct2 }),
     int: ext(base, { h: "center", fmt: FMT.int })
   };
-  // 줄 꾸밈: 소계(옅은 회색 · 진하게), 합계(회색 · 진하게), 좋음 · 나쁨(글자색)
+  // 줄 꾸밈: 소계(옅은 바탕 · 진하게), 합계(푸른 바탕 · 진하게), 좋음 · 나쁨(글자색)
   const sub = st => ext(st, { fill: LIGHT, font: { b: 1 } });
-  const tot = st => ext(st, { fill: GRAY, font: { b: 1 } });
+  const tot = st => ext(st, { fill: TOTAL, font: { b: 1, color: NAVY } });
   const good = (st, ok) => ext(st, { font: { b: 1, color: ok ? "1E7B34" : "C00000" } });
   const ratio = (a, b) => (b ? a / b : 0);
   const dot = s => String(s || "").slice(0, 10).replace(/-/g, ".");
@@ -76,11 +77,13 @@
   const header = (C, r, spans, titles) => line(C, r, spans, titles.map(t => [t, S.th]));
   // 제목 세 줄 (제목 · 프로젝트 · 작성일)
   function heading(C, last, title, p) {
-    C.box(1, 2, 1, last, title, S.title); C.ht(1, 34);
-    C.box(2, 2, 2, last, `${p.project_name || ""}${p.project_id ? `  (${p.project_id})` : ""}`, S.subtitle);
-    C.box(3, 2, 3, last, `작성일 ${dot(new Date().toISOString())} · 금액 단위: 원 (VAT 별도)`, S.meta);
+    C.box(1, 2, 1, last, title, S.title); C.ht(1, 36);
+    C.box(2, 2, 2, last, `${p.project_name || ""}${p.project_id ? `  ·  ${p.project_id}` : ""}${p.client_name ? `  ·  ${p.client_name}` : ""}`, S.subtitle);
+    C.box(3, 2, 3, last, `작성일 ${dot(new Date().toISOString())}  ·  금액 단위: 원 (VAT 별도)`, ext(S.meta, { border: { b: "accent" } }));
+    SEC_LAST = last;
   }
-  const sec = (C, r, i, t) => { C.put(r, 2, `${ROMAN[i]}. ${t}`, S.sec); C.ht(r, 24); };
+  let SEC_LAST = 10;
+  const sec = (C, r, i, t) => { C.box(r, 2, r, SEC_LAST, `${ROMAN[i]}. ${t}`, S.sec); C.ht(r, 26); };
 
   // ---------------- 01_통합보고 ----------------
   function summarySheet(p, c) {
@@ -100,6 +103,8 @@
     pair("수행 기간", period(p, c.months), "프로젝트 Type", p.project_type || "-");
     pair("계약 매출", rev, "견적 공급가", est.supply_total || "", ext(S.won, { h: "left", indent: 1 }), ext(S.won, { h: "left", indent: 1 }));
     pair("목표 허들", num(p.target_hurdle_rate) / 100, depts.length ? "부서" : "분할계약", depts.length ? depts.join(" · ") : `${c.phases.length}회차`, ext(S.pct2, { h: "left", indent: 1 }));
+    const planMm = pyRound(c.details.internal_labor.concat(c.details.external_labor).reduce((a, x) => a + num(x.total_mm), 0), 2);
+    pair("대표 시스템", (st.systems || []).join(" · ") || "-", "투입 MM", `${planMm.toFixed(2)} MM (내부 ${c.details.internal_labor.length}명 · 외주 ${c.details.external_labor.length}명)`);
     wide("프로젝트 설명", p.description || "", S.wrapTop, textHeight(p.description, 8 * 13));
     r++;
 
@@ -132,6 +137,25 @@
     line(C, r++, [[2, 6], [7, 8], [9, 9], [10, 10]], [["총 원가", tot(S.center)], [cost, tot(S.won)], [cost ? 1 : 0, tot(S.pct)], [ratio(cost, rev), tot(S.pct)]]);
     r++;
 
+    // 견적 (고객 제안): 구분 B:C · 항목 D:F · 견적 MM/수량 G · 단가 H · 금액 I · 공급가 대비 J
+    if (est.labor.length || est.items.length) {
+      sec(C, r++, k++, "견적 (고객 제안)");
+      const ES = [[4, 6], [7, 7], [8, 8], [9, 9], [10, 10]];
+      header(C, r++, [[2, 3], ...ES], ["구분", "항목 (제안 직무 · 등급)", "견적 MM · 수량", "단가", "금액", "공급가 대비"]);
+      const group = (label, rows, subLabel, subAmt) => {
+        if (!rows.length) return;
+        const r0 = r;
+        rows.forEach(x => line(C, r++, ES, [[x[0], S.text], [x[1], x[3] ? S.mm : S.int], [x[2], S.won], [x[4], S.won], [ratio(x[4], est.supply_total), S.pct]]));
+        line(C, r++, ES, [[subLabel, sub(S.center)], ["", sub(S.center)], ["", sub(S.center)], [subAmt, sub(S.won)], [ratio(subAmt, est.supply_total), sub(S.pct)]]);
+        C.box(r0, 2, r - 1, 3, label, sub(S.center));
+      };
+      group("인건비", est.labor.map(l => [`${l.role || "?"} · ${l.level || "?"}`, l.mm, l.applied_rate, true, l.amount]), "인건비 소계", est.labor_total);
+      group("기타 항목", est.items.map(it => [it.item_name || "", it.qty, it.unit_price, false, it.amount]), "기타 소계", est.items_total);
+      line(C, r++, [[2, 6], [7, 7], [8, 8], [9, 9], [10, 10]], [["공급가액 (VAT 별도)", tot(S.center)], [pyRound(est.labor.reduce((a, l) => a + l.mm, 0), 2), tot(S.mm)], ["", tot(S.center)], [est.supply_total, tot(S.won)], [est.supply_total ? 1 : 0, tot(S.pct)]]);
+      C.box(r, 2, r, 10, `계약 매출 ${Math.round(rev).toLocaleString("ko-KR")}원 · 견적 대비 ${est.supply_total ? (ratio(rev, est.supply_total) * 100).toFixed(1) : "-"}%${est.applied_to_revenue ? " (견적을 매출에 적용)" : ""}`, S.note); r++;
+      r++;
+    }
+
     // Ⅳ. 분할계약: 회차 B:C · 기간 D · 매출 E · 원가 F · 내부 G · 외주 H · 경비 I · 이익률 J
     if (c.phases.length) {
       sec(C, r++, k++, "분할계약 현황");
@@ -148,9 +172,9 @@
     const by = multi ? "dept" : "area";
     const ss = PC.Calc.staffStats(c, { by, settings: st });
     if (ss.rows.length) {
-      sec(C, r++, k++, `인력 투입 (${multi ? "부서" : "담당 영역"}별)`);
+      sec(C, r++, k++, `인력 투입 (${multi ? "부서" : "영역"}별)`);
       const IS = [[2, 3], [4, 4], [5, 5], [6, 6], [7, 8], [9, 9], [10, 10]];
-      header(C, r++, IS, [multi ? "부서" : "담당 영역", "인원", "총 MM", "MM 비중", "인건비", "금액 비중", "MM당 단가"]);
+      header(C, r++, IS, [multi ? "부서" : "영역", "인원", "총 MM", "MM 비중", "인건비", "금액 비중", "MM당 단가"]);
       ss.rows.forEach(g => line(C, r++, IS, [[g.key, S.center], [g.people, S.int], [g.total_mm, S.mm], [g.mm_share / 100, S.pct], [g.cost, S.won], [g.share / 100, S.pct], [g.total_mm ? Math.round(g.cost / g.total_mm) : "", S.won]]));
       line(C, r++, IS, [["합계", tot(S.center)], [ss.total.people, tot(S.int)], [ss.total.total_mm, tot(S.mm)], [ss.total.total_mm ? 1 : 0, tot(S.pct)], [ss.total.cost, tot(S.won)], [ss.total.cost ? 1 : 0, tot(S.pct)], [ss.total.total_mm ? Math.round(ss.total.cost / ss.total.total_mm) : "", tot(S.won)]]);
       r++;
@@ -175,51 +199,52 @@
   const MODE = { equal_total: "총액 균등", fill_all: "매달 같은 금액", manual: "월별 직접" };
   function detailSheet(p, c) {
     const C = Canvas(), months = c.months, d = c.details, b = c.summary.breakdown;
-    const M0 = 7, cMM = M0 + months.length, cAmt = cMM + 1;   // G 부터 달, 그 뒤 총 MM · 금액
-    heading(C, cAmt, "원가 항목별 상세", p);
+    const M0 = 11, last = M0 + months.length - 1;   // B~J: 성명 · 역할 · 영역 · 대표 시스템 · 직급(업체 · 기술등급) · 제안 · 월 단가 · 총 MM · 금액, K 부터 달
+    heading(C, Math.max(last, 10), "원가 항목별 상세", p);
     let r = 5, k = 0;
     const mHead = months.map(m => `${m.slice(2, 4)}.${m.slice(5)}`);
     const monthSpans = months.map((m, i) => [M0 + i, M0 + i]);
+    const FRONT = [[2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9], [10, 10]];
 
     const labor = (title, rows, kind) => {
       sec(C, r++, k++, title);
-      const SP = [[2, 2], [3, 3], [4, 4], [5, 5], [6, 6], ...monthSpans, [cMM, cMM], [cAmt, cAmt]];
-      header(C, r++, SP, ["성명", "역할", kind === "internal" ? "담당 영역" : "외주업체", "등급", "월 단가", ...mHead, "총 MM", "인건비"]);
-      rows.forEach(x => line(C, r++, SP, [[x.name || "", S.text], [x.role || "", S.text], [(kind === "internal" ? x.area : x.vendor) || "", S.center], [x.grade || "", S.center],
-        [months.length ? x.calc[months[0]].rate : "", S.won], ...months.map(m => [x.calc[m].mm, S.mm]), [x.total_mm, S.mm], [x.total_cost, S.won]]));
+      header(C, r++, [...FRONT, ...monthSpans], ["성명", "역할", "영역", "대표 시스템", kind === "internal" ? "직급" : "업체 · 기술등급", "제안 직무 · 등급", "월 단가", "총 MM", "인건비", ...mHead]);
+      rows.forEach(x => line(C, r++, [...FRONT, ...monthSpans], [[x.name || "", S.text], [x.role || "", S.text], [x.area || "", S.center], [x.system || "", S.center],
+        [kind === "internal" ? x.grade || "" : `${x.vendor || ""} ${x.grade || ""}`.trim(), S.center], [x.prop_role ? `${x.prop_role} ${x.prop_level || ""}` : "", S.center],
+        [months.length ? x.calc[months[0]].rate : "", S.won], [x.total_mm, sub(S.mm)], [x.total_cost, sub(S.won)], ...months.map(m => [x.calc[m].mm, S.mm])]));
       const sumM = (f, m) => pyRound(rows.reduce((a, x) => a + num(x.calc[m][f]), 0), 2);
       const total = pyRound(rows.reduce((a, x) => a + num(x.total_cost), 0), 2), tmm = pyRound(rows.reduce((a, x) => a + num(x.total_mm), 0), 2);
-      line(C, r++, [[2, 6], ...monthSpans, [cMM, cMM], [cAmt, cAmt]], [["MM 합계", sub(S.center)], ...months.map(m => [sumM("mm", m), sub(S.mm)]), [tmm, sub(S.mm)], ["", sub(S.won)]]);
-      line(C, r++, [[2, 6], ...monthSpans, [cMM, cMM], [cAmt, cAmt]], [["월 인건비", tot(S.center)], ...months.map(m => [sumM("cost", m), tot(S.won)]), ["", tot(S.won)], [total, tot(S.won)]]);
+      line(C, r++, [[2, 8], [9, 9], [10, 10], ...monthSpans], [["MM 합계", sub(S.center)], [tmm, sub(S.mm)], ["", sub(S.won)], ...months.map(m => [sumM("mm", m), sub(S.mm)])]);
+      line(C, r++, [[2, 8], [9, 9], [10, 10], ...monthSpans], [["월 인건비", tot(S.center)], ["", tot(S.won)], [total, tot(S.won)], ...months.map(m => [sumM("cost", m), tot(S.won)])]);
       r++;
     };
     labor("내부 인력 투입 · 인건비", d.internal_labor, "internal");
     labor("외주 인력 투입 · 인건비", d.external_labor, "external");
 
     sec(C, r++, k++, "경비 (일반 · 인비례 · 기타)");
-    const ES = [[2, 2], [3, 4], [5, 5], [6, 6], ...monthSpans, [cMM, cAmt]];
-    header(C, r++, ES, ["구분", "계정 · 항목", "분배 방식", "기준 금액", ...mHead, "합계"]);
+    const ES = [[2, 2], [3, 5], [6, 7], [8, 8], [9, 9], [10, 10], ...monthSpans];
+    header(C, r++, ES, ["구분", "계정 · 항목", "분배 방식", "기준 금액", "", "금액", ...mHead]);
     const exp = [
       ...d.general_expenses.map(e => ["일반경비", e.name, MODE[e.dist_mode] || "", e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), e.calc_monthly, e.total_cost]),
       ...(d.mm_overheads || []).map(o => [o.category === "mm_internal" ? "인비례 (내부)" : "인비례 (외주)", o.account, "MM × 기준금액", o.unit_amount, o.calc_monthly, o.total_cost]),
       ...d.custom_costs.map(e => ["기타경비", e.name, MODE[e.dist_mode] || "", e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), e.calc_monthly, e.total_cost])
     ];
-    exp.forEach(([g, name, mode, basev, monthly, total]) => line(C, r++, ES, [[g, S.center], [name || "", S.text], [mode, S.center], [basev, S.won], ...months.map(m => [monthly[m], S.won]), [total, S.won]]));
+    exp.forEach(([g, name, mode, basev, monthly, total]) => line(C, r++, ES, [[g, S.center], [name || "", S.text], [mode, S.center], [basev, S.won], ["", S.center], [total, sub(S.won)], ...months.map(m => [monthly[m], S.won])]));
     const expTotal = pyRound(b.general_expense + b.internal_overhead + b.external_overhead + b.custom_cost, 2);
     const expM = m => pyRound(exp.reduce((a, x) => a + num(x[4][m]), 0), 2);
-    line(C, r++, [[2, 6], ...monthSpans, [cMM, cAmt]], [["경비 합계", tot(S.center)], ...months.map(m => [expM(m), tot(S.won)]), [expTotal, tot(S.won)]]);
+    line(C, r++, [[2, 9], [10, 10], ...monthSpans], [["경비 합계", tot(S.center)], [expTotal, tot(S.won)], ...months.map(m => [expM(m), tot(S.won)])]);
     r++;
 
     sec(C, r++, k++, "달별 원가 합계");
-    header(C, r++, [[2, 6], ...monthSpans, [cMM, cAmt]], ["구분", ...mHead, "합계"]);
+    header(C, r++, [[2, 9], [10, 10], ...monthSpans], ["구분", "합계", ...mHead]);
     const lab = (list, m) => pyRound(list.reduce((a, x) => a + num(x.calc[m].cost), 0), 2);
     const monthTotal = m => pyRound(lab(d.internal_labor, m) + lab(d.external_labor, m) + expM(m), 2);
     [["내부 인건비", m => lab(d.internal_labor, m), b.internal_labor], ["외주 인건비", m => lab(d.external_labor, m), b.external_labor], ["경비", expM, expTotal]]
-      .forEach(([name, f, t]) => line(C, r++, [[2, 6], ...monthSpans, [cMM, cAmt]], [[name, S.center], ...months.map(m => [f(m), S.won]), [t, S.won]]));
-    line(C, r++, [[2, 6], ...monthSpans, [cMM, cAmt]], [["월 원가 합계", tot(S.center)], ...months.map(m => [monthTotal(m), tot(S.won)]), [c.summary.total_cost, tot(S.won)]]);
+      .forEach(([name, f, t]) => line(C, r++, [[2, 9], [10, 10], ...monthSpans], [[name, S.center], [t, sub(S.won)], ...months.map(m => [f(m), S.won])]));
+    line(C, r++, [[2, 9], [10, 10], ...monthSpans], [["월 원가 합계", tot(S.center)], [c.summary.total_cost, tot(S.won)], ...months.map(m => [monthTotal(m), tot(S.won)])]);
     let cum = 0;
-    line(C, r++, [[2, 6], ...monthSpans, [cMM, cAmt]], [["누적 원가", sub(S.center)], ...months.map(m => { cum = pyRound(cum + monthTotal(m), 2); return [cum, sub(S.won)]; }), ["", sub(S.won)]]);
-    return C.sheet("02_항목별상세", { cols: [{ w: 2 }, 13, 12, 12, 12, 12, ...months.map(() => 11.5), 9, 14], freeze: { x: 6 }, page: { landscape: true, fitWidth: true } });
+    line(C, r++, [[2, 9], [10, 10], ...monthSpans], [["누적 원가", sub(S.center)], ["", sub(S.won)], ...months.map(m => { cum = pyRound(cum + monthTotal(m), 2); return [cum, sub(S.won)]; })]);
+    return C.sheet("02_항목별상세", { cols: [{ w: 2 }, 12, 11, 10, 11, 13, 14, 11, 8, 13, ...months.map(() => 11)], freeze: { x: 10 }, page: { landscape: true, fitWidth: true } });
   }
 
   // ---------------- 03_투입현황 ----------------
@@ -230,7 +255,7 @@
     let r = 5, k = 0;
     const mHead = months.map(m => `${m.slice(2, 4)}.${m.slice(5)}`);
     const SP = [[2, 2], [3, 3], ...months.map((m, i) => [M0 + i, M0 + i]), [cEnd, cEnd], [cEnd + 1, cEnd + 1], [cEnd + 2, cEnd + 2], [cEnd + 3, cEnd + 3]];
-    (multi ? [["dept", "부서"]] : []).concat([["area", "담당 영역"], ["grade", "등급"], ["vendor", "업체 (내부 / 외주업체)"], ["role", "역할"]]).forEach(([by, title]) => {
+    (multi ? [["dept", "부서"]] : []).concat([["area", "영역"], ["system", "대표 시스템"], ["grade", "직급 · 기술등급"], ["proposal", "제안 직무 · 등급"], ["vendor", "업체 (내부 / 외주업체)"], ["role", "역할"]]).forEach(([by, title]) => {
       const ss = PC.Calc.staffStats(c, { by, settings: st });
       if (!ss.rows.length) return;
       sec(C, r++, k++, `${title}별`);

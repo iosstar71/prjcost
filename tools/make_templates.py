@@ -177,6 +177,97 @@ ws.page_setup.paperSize = ws.PAPERSIZE_A4
 ws.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
 ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 1   # A4 한 장
 ws.print_area = "B1:J45"
+
+# ============================ 2번째 시트: 원가상세 ============================
+#  반복 줄: {{내부인력.이름}} · {{외주인력.이름}} · {{경비항목.이름}} 이 있는 줄은 인원 · 항목 수만큼 늘어남
+#  합계 열(총 MM · 금액)은 달 앞에, 달은 M1 … M24 (2년까지 — 쓰지 않는 달은 빈칸)
+ws = wb.create_sheet("원가상세")
+ws.sheet_format.defaultRowHeight = 18
+ws.sheet_format.customHeight = True
+ws.sheet_view.showGridLines = False
+NM = 24
+FIRST_M = 11                       # K 열부터 달
+LAST = FIRST_M + NM - 1            # AH
+from openpyxl.utils import get_column_letter as L
+widths = {"A": 2, "B": 12, "C": 11, "D": 9, "E": 10, "F": 12, "G": 14, "H": 11, "I": 7, "J": 13}
+for k, w in widths.items():
+    ws.column_dimensions[k].width = w
+ws.column_dimensions["A"].hidden = True
+for i in range(NM):
+    ws.column_dimensions[L(FIRST_M + i)].width = 11
+LC = L(LAST)
+MM_FMT, WON_FMT = '0.00;-0.00;""', '#,##0;-#,##0;""'
+GRAYB = Font(name=FONT, size=10, bold=True)
+
+merge(f"B1:{LC}1", "[원가 상세]", font=Font(name=FONT, size=14, bold=True), h="center")
+ws.row_dimensions[1].height = 26
+merge(f"B2:{LC}2", "{{과제명}} ({{프로젝트ID}})  ·  {{시작일}} ~ {{종료일}} ({{개월수}}개월)", h="center")
+merge(f"B3:{LC}3", "금액 단위: 원 · 투입: MM", font=Font(name=FONT, size=9, color="7F7F7F"), h="right")
+months_head = ["{{월%d}}" % (i + 1) for i in range(NM)]
+
+
+def head_row(r, titles, spans=None):
+    """회색 제목 줄. titles: B 부터 J 까지 9칸(병합 spans 는 [(첫 열, 끝 열, 제목)]) + 달"""
+    for col, t in titles.items():
+        cell(f"{col}{r}", t, fill=GRAY, h="center", wrap=True)
+    for a, b, t in spans or []:
+        ws.merge_cells(f"{a}{r}:{b}{r}")
+        cell(f"{a}{r}", t, fill=GRAY, h="center")
+    for i, t in enumerate(months_head):
+        cell(f"{L(FIRST_M + i)}{r}", t, fill=GRAY, h="center")
+    box(f"B{r}:{LC}{r}")
+
+
+def data_row(r, values, month_key, fmt, spans=None, fill=None, font=f10):
+    """values: {열: (값, 맞춤, 서식)}, month_key: '내부인력.M' 처럼 달 값 앞부분"""
+    for a, b in spans or []:
+        ws.merge_cells(f"{a}{r}:{b}{r}")
+    for col, (v, h, f) in values.items():
+        cell(f"{col}{r}", v, fill=fill, h=h, fmt=f, font=font)
+    for i in range(NM):
+        cell(f"{L(FIRST_M + i)}{r}", "{{%s%d}}" % (month_key, i + 1) if month_key else None, fill=fill, h="right", fmt=fmt, font=font)
+    box(f"B{r}:{LC}{r}")
+
+
+LIGHT2 = PatternFill("solid", fgColor="F2F2F2")
+r = 5
+# Ⅰ. 내부 인력
+cell(f"B{r}", "Ⅰ. 내부 인력 투입 · 인건비", font=Font(name=FONT, size=11, bold=True)); r += 1
+head_row(r, {"B": "성명", "C": "역할", "D": "영역", "E": "대표 시스템", "F": "직급", "G": "제안 직무 · 등급", "H": "월 단가", "I": "총 MM", "J": "인건비"}); r += 1
+data_row(r, {"B": ("{{내부인력.성명}}", "center", None), "C": ("{{내부인력.역할}}", "left", None), "D": ("{{내부인력.영역}}", "center", None), "E": ("{{내부인력.시스템}}", "center", None),
+             "F": ("{{내부인력.직급}}", "center", None), "G": ("{{내부인력.제안직무}} {{내부인력.제안등급}}", "center", None), "H": ("{{내부인력.단가}}", "right", WON_FMT),
+             "I": ("{{내부인력.총MM}}", "right", MM_FMT), "J": ("{{내부인력.금액}}", "right", WON_FMT)}, "내부인력.M", MM_FMT); r += 1
+data_row(r, {"B": ("MM 합계", "center", None), "I": ("{{내부합계.총MM}}", "right", MM_FMT), "J": (None, "right", WON_FMT)}, "내부합계.M", MM_FMT, spans=[("B", "H")], fill=LIGHT2, font=GRAYB); r += 1
+data_row(r, {"B": ("월 인건비", "center", None), "I": (None, "right", MM_FMT), "J": ("{{내부합계.금액}}", "right", WON_FMT)}, "내부합계.C", WON_FMT, spans=[("B", "H")], fill=GRAY, font=GRAYB); r += 2
+# Ⅱ. 외주 인력
+cell(f"B{r}", "Ⅱ. 외주 인력 투입 · 인건비", font=Font(name=FONT, size=11, bold=True)); r += 1
+head_row(r, {"B": "성명", "C": "역할", "D": "영역", "E": "대표 시스템", "F": "업체 · 기술등급", "G": "제안 직무 · 등급", "H": "월 단가", "I": "총 MM", "J": "인건비"}); r += 1
+data_row(r, {"B": ("{{외주인력.성명}}", "center", None), "C": ("{{외주인력.역할}}", "left", None), "D": ("{{외주인력.영역}}", "center", None), "E": ("{{외주인력.시스템}}", "center", None),
+             "F": ("{{외주인력.업체}} {{외주인력.기술등급}}", "center", None), "G": ("{{외주인력.제안직무}} {{외주인력.제안등급}}", "center", None), "H": ("{{외주인력.단가}}", "right", WON_FMT),
+             "I": ("{{외주인력.총MM}}", "right", MM_FMT), "J": ("{{외주인력.금액}}", "right", WON_FMT)}, "외주인력.M", MM_FMT); r += 1
+data_row(r, {"B": ("MM 합계", "center", None), "I": ("{{외주합계.총MM}}", "right", MM_FMT), "J": (None, "right", WON_FMT)}, "외주합계.M", MM_FMT, spans=[("B", "H")], fill=LIGHT2, font=GRAYB); r += 1
+data_row(r, {"B": ("월 인건비", "center", None), "I": (None, "right", MM_FMT), "J": ("{{외주합계.금액}}", "right", WON_FMT)}, "외주합계.C", WON_FMT, spans=[("B", "H")], fill=GRAY, font=GRAYB); r += 2
+# Ⅲ. 경비
+cell(f"B{r}", "Ⅲ. 경비 (일반 · 인비례 · 기타)", font=Font(name=FONT, size=11, bold=True)); r += 1
+head_row(r, {"B": "구분", "H": "기준 금액", "I": "", "J": "금액"}, spans=[("C", "E", "계정 · 항목"), ("F", "G", "분배 방식")]); r += 1
+data_row(r, {"B": ("{{경비항목.구분}}", "center", None), "C": ("{{경비항목.항목}}", "left", None), "F": ("{{경비항목.방식}}", "center", None), "H": ("{{경비항목.기준금액}}", "right", WON_FMT),
+             "I": (None, "right", None), "J": ("{{경비항목.금액}}", "right", WON_FMT)}, "경비항목.M", WON_FMT, spans=[("C", "E"), ("F", "G")]); r += 1
+data_row(r, {"B": ("경비 합계", "center", None), "I": (None, "right", None), "J": ("{{경비합계.금액}}", "right", WON_FMT)}, "경비합계.M", WON_FMT, spans=[("B", "H")], fill=GRAY, font=GRAYB); r += 2
+# Ⅳ. 달별 원가
+cell(f"B{r}", "Ⅳ. 달별 원가 합계", font=Font(name=FONT, size=11, bold=True)); r += 1
+head_row(r, {"I": "", "J": "합계"}, spans=[("B", "H", "구분")]); r += 1
+for name, key, fill_, font_ in [("내부 인건비", "내부합계", None, f10), ("외주 인건비", "외주합계", None, f10), ("경비", "경비합계", None, f10), ("월 원가 합계", "월원가", GRAY, GRAYB), ("누적 원가", "누적원가", LIGHT2, f10)]:
+    mk = "%s.C" % key if key in ("내부합계", "외주합계") else "%s.M" % key
+    data_row(r, {"B": (name, "center", None), "I": (None, "right", None), "J": ("{{%s.금액}}" % key if key != "누적원가" else None, "right", WON_FMT)}, mk, WON_FMT, spans=[("B", "H")], fill=fill_, font=font_)
+    r += 1
+cell(f"B{r + 1}", "{{기간초과}}", font=Font(name=FONT, size=9, color="C00000"))
+
+ws.freeze_panes = "K5"
+ws.page_setup.paperSize = 8        # A3
+ws.page_setup.orientation = "landscape"
+ws.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
+ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
+
 wb.save(OUT)
 b64 = base64.b64encode(open(OUT, "rb").read()).decode()
 js = os.path.join(ROOT, "js", "builtin-templates.js")

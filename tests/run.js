@@ -172,6 +172,11 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("template fill: numbers stay numbers, mixed text replaced, approvers, empty value cleared", [at("D8"), at("I8"), at("D9"), at("F4"), at("G4"), at("D13"), PC.pyRound(at("F13"), 4), at("E38"), String(at("D7")).split("\n")[0], filled.unknown.length],
     [240000000, "SI-AD", "2026.01.01 ~ 2026.06.30 (6개월)", "김철수", "", 79800000, 0.6234, 230000000, "1. 과제명 : 차세대 원가·공정 시스템 구축", 0]);
   eq("template fill: empty values reported", filled.empty.includes("결재2"), true);
+  // 원가상세 시트: 반복 줄(사람 · 경비 항목 수만큼), 합계 열은 달 앞, 달 머리글 · 기간 밖 달은 빈칸
+  const dsh = fwb.sheet("원가상세").rows, cellAt = (r, c) => (dsh[r - 1] || [])[c - 1];
+  const nInt = tp.internal_labor.length, extRow = 7 + nInt + 4;   // 외주 머리글 줄 (내부 줄 다음 MM 합계 · 월 인건비 · 빈 줄 · 소제목)
+  eq("detail sheet: one row per person, totals in front, month headers", [cellAt(7, 2), cellAt(8, 2), cellAt(7 + nInt, 2), cellAt(7, 9), cellAt(7, 10), cellAt(6, 11), cellAt(6, 16), cellAt(6, 17), cellAt(extRow + 1, 2)],
+    ["김철수", "이민지", "MM 합계", 6, 52200000, "26.01", "26.06", "", "외주개발1"]);
   const odd = await X.read(Buffer.from(await (await T.fill(X.build([{ name: "S", rows: [["{{없는값}}", "합계 {{매출액}}원"]] }]), tv)).blob.arrayBuffer()));
   eq("template fill: our own xlsx (inline strings) and unknown keys", odd.sheet("S").rows[0], ["", "합계 240,000,000원"]);
   eq("output name: 양식_ID_이름_최종작성일", T.outName("Offline사업검토서.xlsx", { project_id: "PRJ-1", project_name: "A/B 구축" }, new Date(2026, 10, 25)), "Offline사업검토서_PRJ-1_A_B 구축_20261125.xlsx");
