@@ -5,7 +5,7 @@
 (function (root) {
   "use strict";
   const PC = root.PC || require("./util.js");
-  const { clone, num, isBlank } = PC;
+  const { clone, num, isBlank, pyRound, monthRange } = PC;
 
   // 경비 계정 구분: 일반경비 · 기타경비 (금액을 직접 넣음) / 인비례 (인력 MM × 기준금액으로 자동)
   const CATEGORIES = [
@@ -17,7 +17,6 @@
   // 기준정보가 하나도 없을 때(새 폴더) 쓰는 값. 인비례 기준금액(원/MM)은 회사 기준으로 넣어 쓰도록 0
   function defaultSettings() {
     return {
-      default_promotion_month: "03",
       raise_month: "",   // 연봉 인상월(MM) — 등급의 인상단가가 이 달부터 (비우면 인상 없음)
       areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 담당 영역(시스템) — 투입 현황을 영역별로 볼 때 씀
       internal_grades: [{ grade: "수석", rate: 8500000 }, { grade: "책임", rate: 7200000 }, { grade: "선임", rate: 6000000 }, { grade: "전임", rate: 4800000 }],
@@ -73,9 +72,9 @@
       description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행",
       start_date: "2026-01", end_date: "2026-06", contract_revenue: 240000000, target_hurdle_rate: 18.0,
       internal_labor: [
-        { name: "김철수", role: "PM", area: "PMO", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6, promotions: [{ effective_ym: "2026-05", grade: "", rate: 9500000 }],
+        { name: "김철수", role: "PM", area: "PMO", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6,
           mm: { "2026-01": 1, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 1 } },
-        { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5, promotions: [],
+        { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5,
           mm: { "2026-01": 0.5, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 } }
       ],
       external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
@@ -100,13 +99,14 @@
     ensureMmAccounts(out.settings);
     if (!Array.isArray(out.settings.areas)) out.settings.areas = defaultSettings().areas;
     ["internal_labor", "external_labor", "general_expenses", "custom_costs", "phases"].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
-    // 승진(promotions, v4 이름 그대로)만 사람마다. 단가도 등급도 없는 빈 줄(예전 새 인력 기본값)은 뺌
-    //  단가 인상은 기준정보(내부 등급의 인상단가 + 연봉 인상월, 외주업체 단가의 인상월 · 인상단가)
+    // 단가 인상은 기준정보(내부 등급의 인상단가 + 연봉 인상월, 외주업체 단가의 인상월 · 인상단가)뿐
+    //  예전 사람별 승진(promotions, v4) · 인상(rate_changes, v0.9.1)은 더 쓰지 않음 — 열 때 알리고(legacyNote) 지움
     const list = v => (Array.isArray(v) ? v : []).filter(r => r && (!isBlank(r.rate) || r.grade));
-    out.internal_labor.forEach(m => {
-      m.promotions = list(m.promotions).concat(list(m.rate_changes));   // v0.9.1 의 사람별 인상 → 같은 효과의 승진 줄(단가만)
-      delete m.rate_changes;
-    });
+    out.internal_labor.forEach(m => { delete m.promotions; delete m.rate_changes; });
+    delete out.settings.default_promotion_month;
+    // 총 MM: 달별 계획의 합 (예전 파일에는 따로 넣은 값이 있을 수 있음)
+    const months = monthRange(String(out.start_date || "2026-01"), String(out.end_date || "2026-06"));
+    out.internal_labor.concat(out.external_labor).forEach(r => { r.target_mm = pyRound(months.reduce((a, m) => a + num((r.mm || {})[m]), 0), 2); });
     out.external_labor.forEach(e => {   // v0.9.1 의 사람별 협상 단가 → 그 업체 · 등급 단가의 인상(비어 있을 때)
       const r0 = list(e.rate_changes)[0], vr = (out.settings.vendor_rates || []).find(v => v.vendor === e.vendor && v.grade === e.grade);
       if (r0 && vr && isBlank(vr.raise_rate)) Object.assign(vr, { raise_ym: r0.effective_ym || "", raise_rate: num(r0.rate) });
@@ -134,12 +134,16 @@
     return out;
   }
 
-  // 예전(v4) 비율 방식 인비례 경비가 있던 자료인지 — 열 때 한 번 알림 (이제는 계정별 MM × 기준금액)
-  function legacyRatioNote(p) {
-    const st = (p && p.settings) || {};
+  // 파일의 원래 자료(normalize 전)에 더 쓰지 않는 계산이 있었는지 — 열 때 한 번 알림
+  //  ① 예전(v4) 비율 방식 인비례 경비 (이제는 계정별 MM × 기준금액) ② 사람별 승진 · 인상 단가 (이제는 기준정보의 등급 인상만)
+  function legacyNote(raw) {
+    const st = (raw && raw.settings) || {}, notes = [];
     const ratios = [["내부", st.internal_overhead_ratio], ["외주", st.external_overhead_ratio]].filter(([, r]) => num(r) > 0);
     const hasUnit = (st.expense_accounts || []).some(a => isMmCategory(a.category) && num(a.unit_amount) > 0);
-    return ratios.length && !hasUnit ? `이 프로젝트는 예전 방식(인건비의 ${ratios.map(([k, r]) => `${k} ${(num(r) * 100).toFixed(1)}%`).join(" · ")})으로 인비례 경비를 계산했습니다. 이제는 [기준정보 > 경비 계정]의 인비례 계정에 기준금액(원/MM)을 넣어야 계산됩니다.` : "";
+    if (ratios.length && !hasUnit) notes.push(`인비례 경비: 예전 방식(인건비의 ${ratios.map(([k, r]) => `${k} ${(num(r) * 100).toFixed(1)}%`).join(" · ")})은 더 쓰지 않습니다. [기준정보 > 경비 계정]의 인비례 계정에 기준금액(원/MM)을 넣으세요.`);
+    const promos = ((raw && raw.internal_labor) || []).flatMap(m => (m.promotions || []).concat(m.rate_changes || []).filter(r => r && (!isBlank(r.rate) || r.grade)).map(r => `${m.name || "?"} ${r.effective_ym || ""} ${isBlank(r.rate) ? r.grade : `${num(r.rate).toLocaleString("ko-KR")}원`}`));
+    if (promos.length) notes.push(`승진 단가(${promos.join(", ")})는 더 쓰지 않아 기준단가로 계산합니다. 단가가 바뀌어야 하면 [기준정보 > 내부 등급 · 단가]의 연봉 인상으로 넣으세요. 저장하면 파일에서도 빠집니다.`);
+    return notes.join("\n\n");
   }
 
   // 업로드 양식(Project_Upload_Template): 첫 시트의 A열 = 키, B열 = 값
@@ -157,6 +161,6 @@
     return p;
   }
 
-  PC.Model = { VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyRatioNote };
+  PC.Model = { VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyNote };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Model;
 })(typeof window !== "undefined" ? window : globalThis);

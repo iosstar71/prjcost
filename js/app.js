@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.2";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.3";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -142,11 +142,8 @@
     if ((m = /^internal_labor\.(\d+)\.grade$/.exec(path))) {   // 등급을 바꾸면 기준단가도 그 등급 단가로
       const g = (p.settings.internal_grades || []).find(x => x.grade === value);
       if (g) p.internal_labor[+m[1]].base_rate = num(g.rate);
-    } else if ((m = /^(internal_labor)\.(\d+)\.(promotions)\.0\./.exec(path))) {   // 승진단가 · 승진등급이 모두 비면 승진 없음
-      const l = p[m[1]][+m[2]][m[3]], r0 = l[0] || {};
-      const has = (r0.rate !== "" && r0.rate !== undefined) || r0.grade;
-      if (!r0.effective_ym && !has) l.shift();
-      else if (has && !r0.effective_ym) r0.effective_ym = `${String(p.start_date || "2026").slice(0, 4)}-${p.settings.default_promotion_month || "03"}`;   // 단가 · 등급만 넣었으면 기본 승진월
+    } else if ((m = /^(internal_labor|external_labor)\.(\d+)\.mm\./.exec(path))) {   // 달별 MM 을 고치면 총 MM 은 그 합
+      syncTotal(p[m[1]][+m[2]]);
     } else if ((m = /^(general_expenses|custom_costs)\.(\d+)\.dist_mode$/.exec(path)) && value === "manual") {   // 월별 직접 입력으로: 지금 달별 금액에서 시작
       const r = p[m[1]][+m[2]], prev = S.calc && S.calc.details[m[1]][+m[2]];
       if (prev && !Object.values(r.monthly || {}).some(v => num(v))) r.monthly = Object.assign({}, prev.calc_monthly);
@@ -155,6 +152,17 @@
       p.start_date = value === "date" ? toDate(p.start_date, false) : String(p.start_date || "").slice(0, 7);
       p.end_date = value === "date" ? toDate(p.end_date, true) : String(p.end_date || "").slice(0, 7);
     }
+  }
+  // 총 MM = 프로젝트 기간 달별 MM 의 합
+  function syncTotal(row) {
+    const months = (S.calc && S.calc.months) || [];
+    row.target_mm = PC.pyRound(months.reduce((a, mo) => a + num((row.mm || {})[mo]), 0), 2);
+  }
+  // 총 MM 을 고른 달들에 나눔: 0.01 단위로 내리고 남는 것은 마지막 달에
+  function spread(total, months) {
+    const per = Math.floor((total / months.length) * 100) / 100;
+    const rest = Math.round((total - per * months.length) * 100) / 100;
+    return Object.fromEntries(months.map((m, k) => [m, k === months.length - 1 ? Math.round((per + rest) * 100) / 100 : per]));
   }
   function onInput(e) {
     const el = e.target.closest("[data-bind]");
@@ -175,7 +183,7 @@
     internal_labor: p => {
       const g0 = (p.settings.internal_grades || [])[0] || { grade: "선임", rate: 6000000 };
       return { name: "신규인력", role: "개발", area: "", grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
-        promotions: [], mm: {} };
+        mm: {} };
     },
     external_labor: p => {
       const v0 = (p.settings.vendor_rates || [])[0] || { vendor: "파트너A", grade: "고급" };
@@ -240,13 +248,43 @@
     removeRow(list, i) { pushUndo(); listAt(list).splice(i, 1); render(); },
     undo, redo,
     // 총 MM 을 기간에 고르게 (끝자리는 마지막 달에)
-    distribute(list, i) {
+    distribute(list, i) {   // 총 MM 을 전체 기간에 고르게
       const row = S.proj[list][i], months = S.calc.months, total = num(row.target_mm);
       if (!months.length) return;
       pushUndo();
-      const per = Math.floor((total / months.length) * 100) / 100;
-      const rest = Math.round((total - per * months.length) * 100) / 100;
-      row.mm = Object.fromEntries(months.map((m, k) => [m, k === months.length - 1 ? Math.round((per + rest) * 100) / 100 : per]));
+      row.mm = spread(total, months);
+      syncTotal(row);
+      render();
+    },
+    // 기간을 골라 그 기간에만 나눔 (기간 밖의 달: 0 으로 / 그대로)
+    async distributeRange(list, i) {
+      const row = S.proj[list][i], months = S.calc.months;
+      if (!months.length) return;
+      const ch = months.map(m => ({ v: m, t: m }));
+      const f = await UI.form("기간 배분", `${row.name || ""} — 고른 기간의 달에 MM 을 고르게 나눕니다.`, [
+        { key: "from", label: "시작월", choices: ch, value: months[0] }, { key: "to", label: "종료월", choices: ch, value: months[months.length - 1] },
+        { key: "mm", label: "이 기간에 넣을 MM", value: String(num(row.target_mm) || "") },
+        { key: "rest", label: "기간 밖의 달", choices: [{ v: "zero", t: "0 으로 비움" }, { v: "keep", t: "지금 값 그대로" }], value: "zero" }], "배분");
+      if (!f) return;
+      const sel = months.filter(m => m >= (f.from < f.to ? f.from : f.to) && m <= (f.from < f.to ? f.to : f.from)), total = PC.pyRound(num(f.mm), 2);
+      if (!sel.length || !(total > 0)) return UI.toast("기간과 MM 을 확인하세요.", "error");
+      pushUndo();
+      row.mm = Object.assign(f.rest === "keep" ? Object.assign({}, row.mm) : {}, spread(total, sel));
+      syncTotal(row);
+      render();
+      UI.toast(`${sel[0]} ~ ${sel[sel.length - 1]} (${sel.length}개월)에 ${total} MM 을 나눴습니다 — 총 MM ${row.target_mm}`, "ok");
+    },
+    sortRows(list) {   // 기준정보 순서로 줄 세우기
+      pushUndo();
+      S.proj[list] = Calc.orderRows(list, S.proj[list], S.proj.settings);
+      render();
+      UI.toast("기준정보에 등록한 순서로 줄을 세웠습니다. Ctrl+Z 로 되돌릴 수 있습니다.");
+    },
+    moveRow(list, i, dir) {   // 기준정보 목록의 순서 바꾸기
+      const l = listAt(list), j = i + dir;
+      if (j < 0 || j >= l.length) return;
+      pushUndo();
+      [l[i], l[j]] = [l[j], l[i]];
       render();
     },
     applyEstimate() {
@@ -337,9 +375,9 @@
     try {
       const r = await Store.loadProject(file, S.master);
       setProject(r.project, file, r.mtime);
-      const note = S.noted.has(file) ? "" : M.legacyRatioNote(r.project);
+      const note = S.noted.has(file) ? "" : M.legacyNote(r.raw);
       S.noted.add(file);
-      if (note) UI.choose("인비례 경비 계산 방식이 바뀌었습니다", note, [{ id: "ok", label: "확인", cls: "primary" }]);
+      if (note) UI.choose("계산 방식이 바뀐 자료가 있습니다", note, [{ id: "ok", label: "확인", cls: "primary" }]);
       else UI.toast(`${r.project.project_id} 을(를) 열었습니다.`);
     } catch (e) { UI.toast(e.message, "error"); await refreshList(); }
   }

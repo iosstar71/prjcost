@@ -282,47 +282,47 @@
    ],
    "summary": {
     "revenue": 240000000,
-    "total_cost": 125700000,
-    "profit": 114300000,
-    "margin_rate": 47.62,
+    "total_cost": 123700000,
+    "profit": 116300000,
+    "margin_rate": 48.46,
     "hurdle_rate": 18,
-    "hurdle_gap": 29.62,
+    "hurdle_gap": 30.46,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 80000000,
-      "share": 63.64,
+      "amount": 78000000,
+      "share": 63.06,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 31200000,
-      "share": 24.82,
+      "share": 25.22,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 12100000,
-      "share": 9.63,
+      "share": 9.78,
       "items": [
        {
         "name": "출장비",
         "amount": 9000000,
-        "share": 7.16
+        "share": 7.28
        },
        {
         "name": "복리후생비",
         "amount": 1800000,
-        "share": 1.43
+        "share": 1.46
        },
        {
         "name": "사무공간·장비",
         "amount": 900000,
-        "share": 0.72
+        "share": 0.73
        },
        {
         "name": "외주 관리비",
@@ -335,18 +335,18 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 2400000,
-      "share": 1.91,
+      "share": 1.94,
       "items": [
        {
         "name": "사전심의·인증비",
         "amount": 2400000,
-        "share": 1.91
+        "share": 1.94
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 80000000,
+     "internal_labor": 78000000,
      "external_labor": 31200000,
      "general_expense": 9000000,
      "internal_overhead": 2700000,
@@ -388,27 +388,27 @@
        },
        "2026-03": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2026-04": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2026-05": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2026-06": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000,
+        "cost": 8500000
        }
       },
       "total_mm": 6,
-      "total_cost": 53000000
+      "total_cost": 51000000
      },
      {
       "name": "이민지",
@@ -639,13 +639,18 @@
      "start_ym": "2026-01",
      "end_ym": "2026-03",
      "revenue": 110000000,
-     "cost": 63850000,
-     "profit": 46150000,
-     "margin_rate": 41.95,
+     "cost": 63350000,
+     "calc_cost": 63350000,
+     "overridden": false,
+     "internal_labor": 40500000,
+     "external_labor": 15600000,
+     "expense": 7250000,
+     "profit": 46650000,
+     "margin_rate": 42.41,
      "cum_revenue": 110000000,
-     "cum_cost": 63850000,
+     "cum_cost": 63350000,
      "rem_revenue": 130000000,
-     "rem_cost": 61850000
+     "rem_cost": 60350000
     },
     {
      "phase_no": 2,
@@ -653,11 +658,16 @@
      "start_ym": "2026-04",
      "end_ym": "2026-06",
      "revenue": 130000000,
-     "cost": 61850000,
-     "profit": 68150000,
-     "margin_rate": 52.42,
+     "cost": 60350000,
+     "calc_cost": 60350000,
+     "overridden": false,
+     "internal_labor": 37500000,
+     "external_labor": 15600000,
+     "expense": 7250000,
+     "profit": 69650000,
+     "margin_rate": 53.58,
      "cum_revenue": 240000000,
-     "cum_cost": 125700000,
+     "cum_cost": 123700000,
      "rem_revenue": 0,
      "rem_cost": 0
     }
@@ -1004,43 +1014,33 @@
    ],
    "summary": {
     "revenue": 99999999,
-    "total_cost": 17334060,
-    "profit": 82665939,
-    "margin_rate": 82.67,
+    "total_cost": 16944060,
+    "profit": 83055939,
+    "margin_rate": 83.06,
     "hurdle_rate": 0,
-    "hurdle_gap": 82.67,
+    "hurdle_gap": 83.06,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 2550000,
-      "share": 14.71,
+      "amount": 2160000,
+      "share": 12.75,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 5725309.41,
-      "share": 33.03,
+      "share": 33.79,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 9058750.59,
-      "share": 52.26,
+      "share": 53.46,
       "items": [
-       {
-        "name": "X0",
-        "amount": 9000000,
-        "share": 51.92
-       },
-       {
-        "name": "X1",
-        "amount": 0,
-        "share": 0
-       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -1054,7 +1054,17 @@
        {
         "name": "외주 관리비",
         "amount": 43750.44,
-        "share": 0.25
+        "share": 0.26
+       },
+       {
+        "name": "X0",
+        "amount": 9000000,
+        "share": 53.12
+       },
+       {
+        "name": "X1",
+        "amount": 0,
+        "share": 0
        }
       ]
      },
@@ -1073,7 +1083,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 2550000,
+     "internal_labor": 2160000,
      "external_labor": 5725309.41,
      "general_expense": 9000000,
      "internal_overhead": 15000.15,
@@ -1121,7 +1131,7 @@
       "calc": {
        "2025-11": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 7200000,
         "cost": 0
        }
       },
@@ -1148,12 +1158,12 @@
       "calc": {
        "2025-11": {
         "mm": 0.3,
-        "rate": 8500000,
-        "cost": 2550000
+        "rate": 7200000,
+        "cost": 2160000
        }
       },
       "total_mm": 0.3,
-      "total_cost": 2550000
+      "total_cost": 2160000
      }
     ],
     "external_labor": [
@@ -1273,11 +1283,16 @@
      "start_ym": "2025-11",
      "end_ym": "2025-11",
      "revenue": 0,
-     "cost": 17334060,
-     "profit": -17334060,
+     "cost": 16944060,
+     "calc_cost": 16944060,
+     "overridden": false,
+     "internal_labor": 2160000,
+     "external_labor": 5725309.41,
+     "expense": 9058750.59,
+     "profit": -16944060,
      "margin_rate": 0,
      "cum_revenue": 0,
-     "cum_cost": 17334060,
+     "cum_cost": 16944060,
      "rem_revenue": 99999999,
      "rem_cost": 0
     },
@@ -1288,10 +1303,15 @@
      "end_ym": "2025-11",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 16944060,
+     "overridden": true,
+     "internal_labor": 2160000,
+     "external_labor": 5725309.41,
+     "expense": 9058750.59,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 50000000,
-     "cum_cost": 47334060,
+     "cum_cost": 46944060,
      "rem_revenue": 49999999,
      "rem_cost": -30000000
     },
@@ -1301,13 +1321,18 @@
      "start_ym": "2025-11",
      "end_ym": "2025-11",
      "revenue": 0,
-     "cost": 17334060,
-     "profit": -17334060,
+     "cost": 16944060,
+     "calc_cost": 16944060,
+     "overridden": false,
+     "internal_labor": 2160000,
+     "external_labor": 5725309.41,
+     "expense": 9058750.59,
+     "profit": -16944060,
      "margin_rate": 0,
      "cum_revenue": 50000000,
-     "cum_cost": 64668120,
+     "cum_cost": 63888120,
      "rem_revenue": 49999999,
-     "rem_cost": -47334060
+     "rem_cost": -46944060
     },
     {
      "phase_no": 4,
@@ -1315,13 +1340,18 @@
      "start_ym": "2025-11",
      "end_ym": "2025-11",
      "revenue": 50000000,
-     "cost": 17334060,
-     "profit": 32665940,
-     "margin_rate": 65.33,
+     "cost": 16944060,
+     "calc_cost": 16944060,
+     "overridden": false,
+     "internal_labor": 2160000,
+     "external_labor": 5725309.41,
+     "expense": 9058750.59,
+     "profit": 33055940,
+     "margin_rate": 66.11,
      "cum_revenue": 100000000,
-     "cum_cost": 82002180,
+     "cum_cost": 80832180,
      "rem_revenue": -1,
-     "rem_cost": -64668120
+     "rem_cost": -63888120
     }
    ],
    "estimate": {
@@ -1784,11 +1814,6 @@
       "share": 0.59,
       "items": [
        {
-        "name": "X0",
-        "amount": 333333.36,
-        "share": 0.18
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -1802,6 +1827,11 @@
         "name": "외주 관리비",
         "amount": 758307.58,
         "share": 0.41
+       },
+       {
+        "name": "X0",
+        "amount": 333333.36,
+        "share": 0.18
        }
       ]
      },
@@ -2491,6 +2521,11 @@
      "end_ym": "2026-03",
      "revenue": 123456789,
      "cost": 108155094.2,
+     "calc_cost": 108155094.2,
+     "overridden": false,
+     "internal_labor": 49617600,
+     "external_labor": 57848526.23,
+     "expense": 688967.97,
      "profit": 15301694.8,
      "margin_rate": 12.39,
      "cum_revenue": 123456789,
@@ -2505,6 +2540,11 @@
      "end_ym": "2026-03",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 50146107.52,
+     "overridden": true,
+     "internal_labor": 22797600,
+     "external_labor": 27043090.03,
+     "expense": 305417.49,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 173456789,
@@ -2519,6 +2559,11 @@
      "end_ym": "2026-01",
      "revenue": 50000000,
      "cost": 58008986.68,
+     "calc_cost": 58008986.68,
+     "overridden": false,
+     "internal_labor": 26820000,
+     "external_labor": 30805436.2,
+     "expense": 383550.48,
      "profit": -8008986.68,
      "margin_rate": -16.02,
      "cum_revenue": 223456789,
@@ -2533,6 +2578,11 @@
      "end_ym": "2026-03",
      "revenue": 50000000,
      "cost": 108155094.2,
+     "calc_cost": 108155094.2,
+     "overridden": false,
+     "internal_labor": 49617600,
+     "external_labor": 57848526.23,
+     "expense": 688967.97,
      "profit": -58155094.2,
      "margin_rate": -116.31,
      "cum_revenue": 273456789,
@@ -2939,48 +2989,33 @@
    ],
    "summary": {
     "revenue": 240000000,
-    "total_cost": 55373011.59,
-    "profit": 184626988.41,
-    "margin_rate": 76.93,
+    "total_cost": 49635511.59,
+    "profit": 190364488.41,
+    "margin_rate": 79.32,
     "hurdle_rate": 18,
-    "hurdle_gap": 58.93,
+    "hurdle_gap": 61.32,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 34462500.53,
-      "share": 62.24,
+      "amount": 28725000.53,
+      "share": 57.87,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 18688921.08,
-      "share": 33.75,
+      "share": 37.65,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 2184552.97,
-      "share": 3.95,
+      "share": 4.4,
       "items": [
-       {
-        "name": "X0",
-        "amount": 1000,
-        "share": 0
-       },
-       {
-        "name": "X1",
-        "amount": 1000001.01,
-        "share": 1.81
-       },
-       {
-        "name": "X2",
-        "amount": 0,
-        "share": 0
-       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -2989,12 +3024,27 @@
        {
         "name": "사무공간·장비",
         "amount": 196251.96,
-        "share": 0.35
+        "share": 0.4
        },
        {
         "name": "외주 관리비",
         "amount": 987300,
-        "share": 1.78
+        "share": 1.99
+       },
+       {
+        "name": "X0",
+        "amount": 1000,
+        "share": 0
+       },
+       {
+        "name": "X1",
+        "amount": 1000001.01,
+        "share": 2.01
+       },
+       {
+        "name": "X2",
+        "amount": 0,
+        "share": 0
        }
       ]
      },
@@ -3013,7 +3063,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 34462500.53,
+     "internal_labor": 28725000.53,
      "external_labor": 18688921.08,
      "general_expense": 1001001.01,
      "internal_overhead": 196251.96,
@@ -3046,22 +3096,22 @@
       "calc": {
        "2026-04": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2026-05": {
         "mm": 0,
-        "rate": 4800000,
+        "rate": 6000000,
         "cost": 0
        },
        "2026-06": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 6000000,
         "cost": 0
        }
       },
       "total_mm": 1,
-      "total_cost": 4800000
+      "total_cost": 6000000
      },
      {
       "name": "I1",
@@ -3095,7 +3145,7 @@
        },
        "2026-06": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 8500000.5,
         "cost": 0
        }
       },
@@ -3126,17 +3176,17 @@
        },
        "2026-05": {
         "mm": 0.875,
-        "rate": 8500000,
-        "cost": 7437500
+        "rate": 4800000,
+        "cost": 4200000
        },
        "2026-06": {
         "mm": 1,
-        "rate": 8500000,
-        "cost": 8500000
+        "rate": 4800000,
+        "cost": 4800000
        }
       },
       "total_mm": 2.88,
-      "total_cost": 20737500
+      "total_cost": 13800000
      }
     ],
     "external_labor": [
@@ -3436,11 +3486,16 @@
      "start_ym": "2026-04",
      "end_ym": "2026-06",
      "revenue": 0,
-     "cost": 55373011.59,
-     "profit": -55373011.59,
+     "cost": 49635511.59,
+     "calc_cost": 49635511.59,
+     "overridden": false,
+     "internal_labor": 28725000.53,
+     "external_labor": 18688921.08,
+     "expense": 2221589.98,
+     "profit": -49635511.59,
      "margin_rate": 0,
      "cum_revenue": 0,
-     "cum_cost": 55373011.59,
+     "cum_cost": 49635511.59,
      "rem_revenue": 240000000,
      "rem_cost": 0
     }
@@ -4721,6 +4776,11 @@
      "end_ym": "2026-08",
      "revenue": 0,
      "cost": 117758734.92,
+     "calc_cost": 117758734.92,
+     "overridden": false,
+     "internal_labor": 29112500,
+     "external_labor": 87869436.22,
+     "expense": 776798.7,
      "profit": -117758734.92,
      "margin_rate": 0,
      "cum_revenue": 0,
@@ -6381,6 +6441,11 @@
      "end_ym": "2027-01",
      "revenue": 123456789,
      "cost": 118473328.96,
+     "calc_cost": 118473328.96,
+     "overridden": false,
+     "internal_labor": 24300000,
+     "external_labor": 90734421.51,
+     "expense": 3438907.45,
      "profit": 4983460.04,
      "margin_rate": 4.04,
      "cum_revenue": 123456789,
@@ -6395,6 +6460,11 @@
      "end_ym": "2027-02",
      "revenue": 123456789,
      "cost": 154219107.04,
+     "calc_cost": 154219107.04,
+     "overridden": false,
+     "internal_labor": 25800000,
+     "external_labor": 123938547.05,
+     "expense": 4480559.99,
      "profit": -30762318.04,
      "margin_rate": -24.92,
      "cum_revenue": 246913578,
@@ -6409,6 +6479,11 @@
      "end_ym": "2026-02",
      "revenue": 50000000,
      "cost": 39653307.31,
+     "calc_cost": 39653307.31,
+     "overridden": false,
+     "internal_labor": 5100000,
+     "external_labor": 32707904.38,
+     "expense": 1845402.93,
      "profit": 10346692.69,
      "margin_rate": 20.69,
      "cum_revenue": 296913578,
@@ -6423,6 +6498,11 @@
      "end_ym": "2026-01",
      "revenue": 123456789,
      "cost": 16179723.68,
+     "calc_cost": 16179723.68,
+     "overridden": false,
+     "internal_labor": 4500000,
+     "external_labor": 10794322.35,
+     "expense": 885401.33,
      "profit": 107277065.32,
      "margin_rate": 86.89,
      "cum_revenue": 420370367,
@@ -6910,33 +6990,48 @@
    ],
    "summary": {
     "revenue": 99999999,
-    "total_cost": 331615493.2,
-    "profit": -231615494.2,
-    "margin_rate": -231.62,
+    "total_cost": 338695493.2,
+    "profit": -238695494.2,
+    "margin_rate": -238.7,
     "hurdle_rate": 18,
-    "hurdle_gap": -249.62,
+    "hurdle_gap": -256.7,
     "hurdle_met": false,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 120350000,
-      "share": 36.29,
+      "amount": 127430000,
+      "share": 37.62,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 201667739.85,
-      "share": 60.81,
+      "share": 59.54,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 9597753.35,
-      "share": 2.89,
+      "share": 2.83,
       "items": [
+       {
+        "name": "복리후생비",
+        "amount": 5269500,
+        "share": 1.56
+       },
+       {
+        "name": "사무공간·장비",
+        "amount": 0,
+        "share": 0
+       },
+       {
+        "name": "외주 관리비",
+        "amount": 3300246.65,
+        "share": 0.97
+       },
        {
         "name": "X0",
         "amount": 13002.36,
@@ -6951,21 +7046,6 @@
         "name": "X2",
         "amount": 15003.36,
         "share": 0
-       },
-       {
-        "name": "복리후생비",
-        "amount": 5269500,
-        "share": 1.59
-       },
-       {
-        "name": "사무공간·장비",
-        "amount": 0,
-        "share": 0
-       },
-       {
-        "name": "외주 관리비",
-        "amount": 3300246.65,
-        "share": 1
        }
       ]
      },
@@ -6978,7 +7058,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 120350000,
+     "internal_labor": 127430000,
      "external_labor": 201667739.85,
      "general_expense": 1028006.7,
      "internal_overhead": 5269500,
@@ -7060,57 +7140,57 @@
        },
        "2028-02": {
         "mm": 0.75,
-        "rate": 4800000,
-        "cost": 3600000
+        "rate": 6000000,
+        "cost": 4500000
        },
        "2028-03": {
         "mm": 0.3,
-        "rate": 4800000,
-        "cost": 1440000
+        "rate": 6000000,
+        "cost": 1800000
        },
        "2028-04": {
         "mm": 0.1,
-        "rate": 4800000,
-        "cost": 480000
+        "rate": 6000000,
+        "cost": 600000
        },
        "2028-05": {
         "mm": 0.75,
-        "rate": 4800000,
-        "cost": 3600000
+        "rate": 6000000,
+        "cost": 4500000
        },
        "2028-06": {
         "mm": 0.125,
-        "rate": 4800000,
-        "cost": 600000
+        "rate": 6000000,
+        "cost": 750000
        },
        "2028-07": {
         "mm": 0,
-        "rate": 4800000,
+        "rate": 6000000,
         "cost": 0
        },
        "2028-08": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2028-09": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2028-10": {
         "mm": 0.875,
-        "rate": 4800000,
-        "cost": 4200000
+        "rate": 6000000,
+        "cost": 5250000
        },
        "2028-11": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 6000000,
+        "cost": 6000000
        }
       },
       "total_mm": 8.75,
-      "total_cost": 45414000
+      "total_cost": 52494000
      },
      {
       "name": "I1",
@@ -8032,12 +8112,17 @@
      "end_ym": "2028-07",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 168115911.18,
+     "overridden": true,
+     "internal_labor": 55846000,
+     "external_labor": 107702811.62,
+     "expense": 4567099.56,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 123456789,
      "cum_cost": 30000000,
      "rem_revenue": -23456790,
-     "rem_cost": 301615493.2
+     "rem_cost": 308695493.2
     },
     {
      "phase_no": 2,
@@ -8045,13 +8130,18 @@
      "start_ym": "2027-06",
      "end_ym": "2028-10",
      "revenue": 50000000,
-     "cost": 317134258.35,
-     "profit": -267134258.35,
-     "margin_rate": -534.27,
+     "cost": 323014258.35,
+     "calc_cost": 323014258.35,
+     "overridden": false,
+     "internal_labor": 113992500,
+     "external_labor": 200069838.51,
+     "expense": 8951919.84,
+     "profit": -273014258.35,
+     "margin_rate": -546.03,
      "cum_revenue": 173456789,
-     "cum_cost": 347134258.35,
+     "cum_cost": 353014258.35,
      "rem_revenue": -73456790,
-     "rem_cost": -15518765.15
+     "rem_cost": -14318765.15
     },
     {
      "phase_no": 3,
@@ -8059,13 +8149,18 @@
      "start_ym": "2027-10",
      "end_ym": "2028-08",
      "revenue": 0,
-     "cost": 181310540.34,
-     "profit": -181310540.34,
+     "cost": 184940540.34,
+     "calc_cost": 184940540.34,
+     "overridden": false,
+     "internal_labor": 64676500,
+     "external_labor": 115118614.31,
+     "expense": 5145426.03,
+     "profit": -184940540.34,
      "margin_rate": 0,
      "cum_revenue": 173456789,
-     "cum_cost": 528444798.69,
+     "cum_cost": 537954798.69,
      "rem_revenue": -73456790,
-     "rem_cost": -196829305.49
+     "rem_cost": -199259305.49
     },
     {
      "phase_no": 4,
@@ -8073,13 +8168,18 @@
      "start_ym": "2027-12",
      "end_ym": "2028-08",
      "revenue": 50000000,
-     "cost": 132824214,
-     "profit": -82824214,
-     "margin_rate": -165.65,
+     "cost": 136454214,
+     "calc_cost": 136454214,
+     "overridden": false,
+     "internal_labor": 52180500,
+     "external_labor": 80309600.87,
+     "expense": 3964113.13,
+     "profit": -86454214,
+     "margin_rate": -172.91,
      "cum_revenue": 223456789,
-     "cum_cost": 661269012.69,
+     "cum_cost": 674409012.69,
      "rem_revenue": -123456790,
-     "rem_cost": -329653519.49
+     "rem_cost": -335713519.49
     },
     {
      "phase_no": 5,
@@ -8088,12 +8188,17 @@
      "end_ym": "2027-11",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 121847900.05,
+     "overridden": true,
+     "internal_labor": 38449500,
+     "external_labor": 80217224.2,
+     "expense": 3181175.85,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 223456789,
-     "cum_cost": 691269012.69,
+     "cum_cost": 704409012.69,
      "rem_revenue": -123456790,
-     "rem_cost": -359653519.49
+     "rem_cost": -365713519.49
     }
    ],
    "estimate": {
@@ -8557,33 +8662,48 @@
    ],
    "summary": {
     "revenue": 240000000,
-    "total_cost": 158716595.59,
-    "profit": 81283404.41,
-    "margin_rate": 33.87,
+    "total_cost": 157830863.46,
+    "profit": 82169136.54,
+    "margin_rate": 34.24,
     "hurdle_rate": 18,
-    "hurdle_gap": 15.87,
+    "hurdle_gap": 16.24,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 100023132.13,
-      "share": 63.02,
+      "amount": 99137400,
+      "share": 62.81,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 45785000,
-      "share": 28.85,
+      "share": 29.01,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 12571629.48,
-      "share": 7.92,
+      "share": 7.97,
       "items": [
+       {
+        "name": "복리후생비",
+        "amount": 1784814.68,
+        "share": 1.13
+       },
+       {
+        "name": "사무공간·장비",
+        "amount": 1784814.68,
+        "share": 1.13
+       },
+       {
+        "name": "외주 관리비",
+        "amount": 0,
+        "share": 0
+       },
        {
         "name": "X0",
         "amount": 0,
@@ -8597,22 +8717,7 @@
        {
         "name": "X2",
         "amount": 9000000,
-        "share": 5.67
-       },
-       {
-        "name": "복리후생비",
-        "amount": 1784814.68,
-        "share": 1.12
-       },
-       {
-        "name": "사무공간·장비",
-        "amount": 1784814.68,
-        "share": 1.12
-       },
-       {
-        "name": "외주 관리비",
-        "amount": 0,
-        "share": 0
+        "share": 5.7
        }
       ]
      },
@@ -8636,7 +8741,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 100023132.13,
+     "internal_labor": 99137400,
      "external_labor": 45785000,
      "general_expense": 9002000.12,
      "internal_overhead": 3569629.36,
@@ -8888,47 +8993,47 @@
        },
        "2025-05": {
         "mm": 0.125,
-        "rate": 7777777,
-        "cost": 972222.12
+        "rate": 7200000,
+        "cost": 900000
        },
        "2025-06": {
         "mm": 0.1,
-        "rate": 7777777,
-        "cost": 777777.7
+        "rate": 7200000,
+        "cost": 720000
        },
        "2025-07": {
         "mm": 0.25,
-        "rate": 7777777,
-        "cost": 1944444.25
+        "rate": 7200000,
+        "cost": 1800000
        },
        "2025-08": {
         "mm": 0.125,
-        "rate": 7777777,
-        "cost": 972222.12
+        "rate": 7200000,
+        "cost": 900000
        },
        "2025-09": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 7200000,
         "cost": 0
        },
        "2025-10": {
         "mm": 0.1,
-        "rate": 7777777,
-        "cost": 777777.7
+        "rate": 7200000,
+        "cost": 720000
        },
        "2025-11": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 7200000,
+        "cost": 3600000
        },
        "2025-12": {
         "mm": 0.333,
-        "rate": 7777777,
-        "cost": 2589999.74
+        "rate": 7200000,
+        "cost": 2397600
        }
       },
       "total_mm": 1.53,
-      "total_cost": 11923332.13
+      "total_cost": 11037600
      },
      {
       "name": "I4",
@@ -9377,13 +9482,18 @@
      "start_ym": "2025-07",
      "end_ym": "2025-10",
      "revenue": 0,
-     "cost": 66875034.61,
-     "profit": -66875034.61,
+     "cost": 66600590.54,
+     "calc_cost": 66600590.54,
+     "overridden": false,
+     "internal_labor": 42994300,
+     "external_labor": 17925000,
+     "expense": 5681290.54,
+     "profit": -66600590.54,
      "margin_rate": 0,
      "cum_revenue": 0,
-     "cum_cost": 66875034.61,
+     "cum_cost": 66600590.54,
      "rem_revenue": 240000000,
-     "rem_cost": 91841560.98
+     "rem_cost": 91230272.92
     },
     {
      "phase_no": 2,
@@ -9392,12 +9502,17 @@
      "end_ym": "2025-07",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 69741369.26,
+     "overridden": true,
+     "internal_labor": 40050900,
+     "external_labor": 24025000,
+     "expense": 5665469.26,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 50000000,
-     "cum_cost": 96875034.61,
+     "cum_cost": 96600590.54,
      "rem_revenue": 190000000,
-     "rem_cost": 61841560.98
+     "rem_cost": 61230272.92
     },
     {
      "phase_no": 3,
@@ -9406,12 +9521,17 @@
      "end_ym": "2025-10",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 66600590.54,
+     "overridden": true,
+     "internal_labor": 42994300,
+     "external_labor": 17925000,
+     "expense": 5681290.54,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 100000000,
-     "cum_cost": 126875034.61,
+     "cum_cost": 126600590.54,
      "rem_revenue": 140000000,
-     "rem_cost": 31841560.98
+     "rem_cost": 31230272.92
     }
    ],
    "estimate": {
@@ -9843,16 +9963,6 @@
       "share": 0.91,
       "items": [
        {
-        "name": "X0",
-        "amount": 0,
-        "share": 0
-       },
-       {
-        "name": "X1",
-        "amount": 1000000.95,
-        "share": 0.91
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -9866,6 +9976,16 @@
         "name": "외주 관리비",
         "amount": 0,
         "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 0,
+        "share": 0
+       },
+       {
+        "name": "X1",
+        "amount": 1000000.95,
+        "share": 0.91
        }
       ]
      },
@@ -10540,6 +10660,11 @@
      "end_ym": "2028-01",
      "revenue": 0,
      "cost": 98499013.94,
+     "calc_cost": 98499013.94,
+     "overridden": false,
+     "internal_labor": 32400000,
+     "external_labor": 65275000,
+     "expense": 824013.94,
      "profit": -98499013.94,
      "margin_rate": 0,
      "cum_revenue": 0,
@@ -11055,43 +11180,33 @@
    ],
    "summary": {
     "revenue": 99999999,
-    "total_cost": 185179114.88,
-    "profit": -85179115.88,
-    "margin_rate": -85.18,
+    "total_cost": 183022273.34,
+    "profit": -83022274.34,
+    "margin_rate": -83.02,
     "hurdle_rate": 12.5,
-    "hurdle_gap": -97.68,
+    "hurdle_gap": -95.52,
     "hurdle_met": false,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 83682441.54,
-      "share": 45.19,
+      "amount": 81525600,
+      "share": 44.54,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 79923881.55,
-      "share": 43.16,
+      "share": 43.67,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 3572791.87,
-      "share": 1.93,
+      "share": 1.95,
       "items": [
-       {
-        "name": "X0",
-        "amount": 1000000.96,
-        "share": 0.54
-       },
-       {
-        "name": "X1",
-        "amount": 6001,
-        "share": 0
-       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -11100,11 +11215,21 @@
        {
         "name": "사무공간·장비",
         "amount": 2566789.91,
-        "share": 1.39
+        "share": 1.4
        },
        {
         "name": "외주 관리비",
         "amount": 0,
+        "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 1000000.96,
+        "share": 0.55
+       },
+       {
+        "name": "X1",
+        "amount": 6001,
         "share": 0
        }
       ]
@@ -11113,23 +11238,23 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 17999999.92,
-      "share": 9.72,
+      "share": 9.83,
       "items": [
        {
         "name": "X0",
         "amount": 8999999.96,
-        "share": 4.86
+        "share": 4.92
        },
        {
         "name": "X1",
         "amount": 8999999.96,
-        "share": 4.86
+        "share": 4.92
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 83682441.54,
+     "internal_labor": 81525600,
      "external_labor": 79923881.55,
      "general_expense": 1006001.96,
      "internal_overhead": 2566789.91,
@@ -11279,62 +11404,62 @@
        },
        "2026-07": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 7200000,
+        "cost": 7200000
        },
        "2026-08": {
         "mm": 0.333,
-        "rate": 7777777,
-        "cost": 2589999.74
+        "rate": 7200000,
+        "cost": 2397600
        },
        "2026-09": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 7200000,
+        "cost": 3600000
        },
        "2026-10": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 7200000,
+        "cost": 3600000
        },
        "2026-11": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 7200000,
         "cost": 0
        },
        "2026-12": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 7200000,
         "cost": 0
        },
        "2027-01": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 7200000,
         "cost": 0
        },
        "2027-02": {
         "mm": 0.3,
-        "rate": 7777777,
-        "cost": 2333333.1
+        "rate": 7200000,
+        "cost": 2160000
        },
        "2027-03": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 7200000,
+        "cost": 7200000
        },
        "2027-04": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 7200000,
         "cost": 0
        },
        "2027-05": {
         "mm": 0.1,
-        "rate": 7777777,
-        "cost": 777777.7
+        "rate": 7200000,
+        "cost": 720000
        }
       },
       "total_mm": 5.23,
-      "total_cost": 39834441.54
+      "total_cost": 37677600
      },
      {
       "name": "I2",
@@ -12300,13 +12425,18 @@
      "start_ym": "2027-04",
      "end_ym": "2027-05",
      "revenue": 123456789,
-     "cost": 27751972.38,
-     "profit": 95704816.62,
-     "margin_rate": 77.52,
+     "cost": 27694194.68,
+     "calc_cost": 27694194.68,
+     "overridden": false,
+     "internal_labor": 7320000,
+     "external_labor": 17197531.83,
+     "expense": 3176662.85,
+     "profit": 95762594.32,
+     "margin_rate": 77.57,
      "cum_revenue": 123456789,
-     "cum_cost": 27751972.38,
+     "cum_cost": 27694194.68,
      "rem_revenue": -23456790,
-     "rem_cost": 157427142.5
+     "rem_cost": 155328078.66
     },
     {
      "phase_no": 2,
@@ -12314,13 +12444,18 @@
      "start_ym": "2026-06",
      "end_ym": "2027-02",
      "revenue": 123456789,
-     "cost": 112408800.97,
-     "profit": 11047988.03,
-     "margin_rate": 8.95,
+     "cost": 110887514.13,
+     "calc_cost": 110887514.13,
+     "overridden": false,
+     "internal_labor": 49305600,
+     "external_labor": 47726349.72,
+     "expense": 13855564.41,
+     "profit": 12569274.87,
+     "margin_rate": 10.18,
      "cum_revenue": 246913578,
-     "cum_cost": 140160773.35,
+     "cum_cost": 138581708.81,
      "rem_revenue": -146913579,
-     "rem_cost": 45018341.53
+     "rem_cost": 44440564.53
     },
     {
      "phase_no": 3,
@@ -12329,12 +12464,17 @@
      "end_ym": "2027-05",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 27694194.68,
+     "overridden": true,
+     "internal_labor": 7320000,
+     "external_labor": 17197531.83,
+     "expense": 3176662.85,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 246913578,
-     "cum_cost": 170160773.35,
+     "cum_cost": 168581708.81,
      "rem_revenue": -146913579,
-     "rem_cost": 15018341.53
+     "rem_cost": 14440564.53
     }
    ],
    "estimate": {
@@ -12746,21 +12886,6 @@
       "share": 4.96,
       "items": [
        {
-        "name": "X0",
-        "amount": 2800000,
-        "share": 3.65
-       },
-       {
-        "name": "X1",
-        "amount": 1000001.03,
-        "share": 1.3
-       },
-       {
-        "name": "X2",
-        "amount": 0,
-        "share": 0
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -12772,6 +12897,21 @@
        },
        {
         "name": "외주 관리비",
+        "amount": 0,
+        "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 2800000,
+        "share": 3.65
+       },
+       {
+        "name": "X1",
+        "amount": 1000001.03,
+        "share": 1.3
+       },
+       {
+        "name": "X2",
         "amount": 0,
         "share": 0
        }
@@ -13274,6 +13414,11 @@
      "end_ym": "2028-02",
      "revenue": 50000000,
      "cost": 31654745.84,
+     "calc_cost": 31654745.84,
+     "overridden": false,
+     "internal_labor": 5520000,
+     "external_labor": 24506173.97,
+     "expense": 1628571.87,
      "profit": 18345254.16,
      "margin_rate": 36.69,
      "cum_revenue": 50000000,
@@ -13288,6 +13433,11 @@
      "end_ym": "2028-01",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 38010548.53,
+     "overridden": true,
+     "internal_labor": 9240000,
+     "external_labor": 27141976.66,
+     "expense": 1628571.87,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 50000000,
@@ -13302,6 +13452,11 @@
      "end_ym": "2028-01",
      "revenue": 50000000,
      "cost": 38010548.53,
+     "calc_cost": 38010548.53,
+     "overridden": false,
+     "internal_labor": 9240000,
+     "external_labor": 27141976.66,
+     "expense": 1628571.87,
      "profit": 11989451.47,
      "margin_rate": 23.98,
      "cum_revenue": 100000000,
@@ -13316,6 +13471,11 @@
      "end_ym": "2027-12",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 45244763.67,
+     "overridden": true,
+     "internal_labor": 9240000,
+     "external_labor": 33833334.51,
+     "expense": 2171429.16,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 100000000,
@@ -13330,6 +13490,11 @@
      "end_ym": "2027-12",
      "revenue": 50000000,
      "cost": 40430301,
+     "calc_cost": 40430301,
+     "overridden": false,
+     "internal_labor": 9240000,
+     "external_labor": 29561729.13,
+     "expense": 1628571.87,
      "profit": 9569699,
      "margin_rate": 19.14,
      "cum_revenue": 150000000,
@@ -13716,16 +13881,6 @@
       "share": 24.29,
       "items": [
        {
-        "name": "X0",
-        "amount": 9000000,
-        "share": 16.72
-       },
-       {
-        "name": "X1",
-        "amount": 0,
-        "share": 0
-       },
-       {
         "name": "복리후생비",
         "amount": 2037300,
         "share": 3.79
@@ -13737,6 +13892,16 @@
        },
        {
         "name": "외주 관리비",
+        "amount": 0,
+        "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 9000000,
+        "share": 16.72
+       },
+       {
+        "name": "X1",
         "amount": 0,
         "share": 0
        }
@@ -14103,6 +14268,11 @@
      "end_ym": "2028-11",
      "revenue": 123456789,
      "cost": 22410000,
+     "calc_cost": 22410000,
+     "overridden": false,
+     "internal_labor": 17100000,
+     "external_labor": 0,
+     "expense": 5310000,
      "profit": 101046789,
      "margin_rate": 81.85,
      "cum_revenue": 123456789,
@@ -14117,6 +14287,11 @@
      "end_ym": "2028-10",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 14010000,
+     "overridden": true,
+     "internal_labor": 11100000,
+     "external_labor": 0,
+     "expense": 2910000,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 173456789,
@@ -14131,6 +14306,11 @@
      "end_ym": "2028-12",
      "revenue": 123456789,
      "cost": 27360000,
+     "calc_cost": 27360000,
+     "overridden": false,
+     "internal_labor": 21600000,
+     "external_labor": 0,
+     "expense": 5760000,
      "profit": 96096789,
      "margin_rate": 77.84,
      "cum_revenue": 296913578,
@@ -14145,6 +14325,11 @@
      "end_ym": "2028-05",
      "revenue": 50000000,
      "cost": 14827800,
+     "calc_cost": 14827800,
+     "overridden": false,
+     "internal_labor": 11298000,
+     "external_labor": 0,
+     "expense": 3529800,
      "profit": 35172200,
      "margin_rate": 70.34,
      "cum_revenue": 346913578,
@@ -14159,6 +14344,11 @@
      "end_ym": "2028-08",
      "revenue": 0,
      "cost": 8400000,
+     "calc_cost": 8400000,
+     "overridden": false,
+     "internal_labor": 6000000,
+     "external_labor": 0,
+     "expense": 2400000,
      "profit": -8400000,
      "margin_rate": 0,
      "cum_revenue": 346913578,
@@ -14776,8 +14966,8 @@
    ],
    "summary": {
     "revenue": 0,
-    "total_cost": 559605854.12,
-    "profit": -559605854.12,
+    "total_cost": 560528610.83,
+    "profit": -560528610.83,
     "margin_rate": 0,
     "hurdle_rate": 12.5,
     "hurdle_gap": -12.5,
@@ -14786,23 +14976,38 @@
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 263621508.03,
-      "share": 47.11,
+      "amount": 264544264.74,
+      "share": 47.2,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 272012509.26,
-      "share": 48.61,
+      "share": 48.53,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 22971835.85,
-      "share": 4.11,
+      "share": 4.1,
       "items": [
+       {
+        "name": "복리후생비",
+        "amount": 1730717.3,
+        "share": 0.31
+       },
+       {
+        "name": "사무공간·장비",
+        "amount": 10384200,
+        "share": 1.85
+       },
+       {
+        "name": "외주 관리비",
+        "amount": 1856918.55,
+        "share": 0.33
+       },
        {
         "name": "X0",
         "amount": 0,
@@ -14817,21 +15022,6 @@
         "name": "X2",
         "amount": 9000000,
         "share": 1.61
-       },
-       {
-        "name": "복리후생비",
-        "amount": 1730717.3,
-        "share": 0.31
-       },
-       {
-        "name": "사무공간·장비",
-        "amount": 10384200,
-        "share": 1.86
-       },
-       {
-        "name": "외주 관리비",
-        "amount": 1856918.55,
-        "share": 0.33
        }
       ]
      },
@@ -14855,7 +15045,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 263621508.03,
+     "internal_labor": 264544264.74,
      "external_labor": 272012509.26,
      "general_expense": 9000000,
      "internal_overhead": 12114917.3,
@@ -15064,47 +15254,47 @@
        },
        "2027-08": {
         "mm": 1,
-        "rate": 8500000,
-        "cost": 8500000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2027-09": {
         "mm": 1,
-        "rate": 8500000,
-        "cost": 8500000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2027-10": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 6000000,
         "cost": 0
        },
        "2027-11": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 6000000,
         "cost": 0
        },
        "2027-12": {
         "mm": 0.875,
-        "rate": 8500000,
-        "cost": 7437500
+        "rate": 6000000,
+        "cost": 5250000
        },
        "2028-01": {
         "mm": 0.3,
-        "rate": 8500000,
-        "cost": 2550000
+        "rate": 6000000,
+        "cost": 1800000
        },
        "2028-02": {
         "mm": 0.125,
-        "rate": 8500000,
-        "cost": 1062500
+        "rate": 6000000,
+        "cost": 750000
        },
        "2028-03": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 6000000,
         "cost": 0
        }
       },
       "total_mm": 8.26,
-      "total_cost": 57798000
+      "total_cost": 49548000
      },
      {
       "name": "I2",
@@ -15275,87 +15465,87 @@
        },
        "2026-12": {
         "mm": 0.25,
-        "rate": 9000000,
-        "cost": 2250000
+        "rate": 7200000,
+        "cost": 1800000
        },
        "2027-01": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 7200000,
+        "cost": 7200000
        },
        "2027-02": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 7200000,
         "cost": 0
        },
        "2027-03": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 7200000,
+        "cost": 7200000
        },
        "2027-04": {
         "mm": 0,
-        "rate": 4800000,
+        "rate": 7200000,
         "cost": 0
        },
        "2027-05": {
         "mm": 0.875,
-        "rate": 4800000,
-        "cost": 4200000
+        "rate": 7200000,
+        "cost": 6300000
        },
        "2027-06": {
         "mm": 0.3,
-        "rate": 4800000,
-        "cost": 1440000
+        "rate": 7200000,
+        "cost": 2160000
        },
        "2027-07": {
         "mm": 0.25,
-        "rate": 4800000,
-        "cost": 1200000
+        "rate": 7200000,
+        "cost": 1800000
        },
        "2027-08": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 7200000,
+        "cost": 7200000
        },
        "2027-09": {
         "mm": 0.3,
-        "rate": 4800000,
-        "cost": 1440000
+        "rate": 7200000,
+        "cost": 2160000
        },
        "2027-10": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 7200000,
+        "cost": 7200000
        },
        "2027-11": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 7200000,
+        "cost": 7200000
        },
        "2027-12": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 7200000,
+        "cost": 7200000
        },
        "2028-01": {
         "mm": 0.333,
-        "rate": 4800000,
-        "cost": 1598400
+        "rate": 7200000,
+        "cost": 2397600
        },
        "2028-02": {
         "mm": 0.3,
-        "rate": 4800000,
-        "cost": 1440000
+        "rate": 7200000,
+        "cost": 2160000
        },
        "2028-03": {
         "mm": 0.25,
-        "rate": 4800000,
-        "cost": 1200000
+        "rate": 7200000,
+        "cost": 1800000
        }
       },
       "total_mm": 9.28,
-      "total_cost": 55028400
+      "total_cost": 66837600
      },
      {
       "name": "I4",
@@ -15444,42 +15634,42 @@
        },
        "2027-09": {
         "mm": 0.3,
-        "rate": 7777777,
-        "cost": 2333333.1
+        "rate": 6000000,
+        "cost": 1800000
        },
        "2027-10": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 6000000,
         "cost": 0
        },
        "2027-11": {
         "mm": 0.25,
-        "rate": 7777777,
-        "cost": 1944444.25
+        "rate": 6000000,
+        "cost": 1500000
        },
        "2027-12": {
         "mm": 0.3,
-        "rate": 7777777,
-        "cost": 2333333.1
+        "rate": 6000000,
+        "cost": 1800000
        },
        "2028-01": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 6000000,
         "cost": 0
        },
        "2028-02": {
         "mm": 0.3,
-        "rate": 7777777,
-        "cost": 2333333.1
+        "rate": 6000000,
+        "cost": 1800000
        },
        "2028-03": {
         "mm": 0.333,
-        "rate": 7777777,
-        "cost": 2589999.74
+        "rate": 6000000,
+        "cost": 1998000
        }
       },
       "total_mm": 5.82,
-      "total_cost": 37532443.29
+      "total_cost": 34896000
      },
      {
       "name": "I5",
@@ -16867,18 +17057,18 @@
    ],
    "summary": {
     "revenue": 240000000,
-    "total_cost": 46611080.22,
-    "profit": 193388919.78,
-    "margin_rate": 80.58,
+    "total_cost": 38342330.22,
+    "profit": 201657669.78,
+    "margin_rate": 84.02,
     "hurdle_rate": 25,
-    "hurdle_gap": 55.58,
+    "hurdle_gap": 59.02,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 42525000,
-      "share": 91.23,
+      "amount": 34256250,
+      "share": 89.34,
       "items": []
      },
      {
@@ -16892,27 +17082,27 @@
       "key": "expense",
       "label": "경비",
       "amount": 3752746.86,
-      "share": 8.05,
+      "share": 9.79,
       "items": [
-       {
-        "name": "X0",
-        "amount": 333333.36,
-        "share": 0.72
-       },
        {
         "name": "복리후생비",
         "amount": 996913.5,
-        "share": 2.14
+        "share": 2.6
        },
        {
         "name": "사무공간·장비",
         "amount": 2422500,
-        "share": 5.2
+        "share": 6.32
        },
        {
         "name": "외주 관리비",
         "amount": 0,
         "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 333333.36,
+        "share": 0.87
        }
       ]
      },
@@ -16920,18 +17110,18 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 333333.36,
-      "share": 0.72,
+      "share": 0.87,
       "items": [
        {
         "name": "X0",
         "amount": 333333.36,
-        "share": 0.72
+        "share": 0.87
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 42525000,
+     "internal_labor": 34256250,
      "external_labor": 0,
      "general_expense": 333333.36,
      "internal_overhead": 3419413.5,
@@ -16967,37 +17157,37 @@
       "calc": {
        "2025-08": {
         "mm": 0.1,
-        "rate": 9000000,
-        "cost": 900000
+        "rate": 7250000,
+        "cost": 725000
        },
        "2025-09": {
         "mm": 0.75,
-        "rate": 9000000,
-        "cost": 6750000
+        "rate": 7250000,
+        "cost": 5437500
        },
        "2025-10": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 7250000,
+        "cost": 7250000
        },
        "2025-11": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 7250000,
+        "cost": 7250000
        },
        "2025-12": {
         "mm": 0.875,
-        "rate": 9000000,
-        "cost": 7875000
+        "rate": 7250000,
+        "cost": 6343750
        },
        "2026-01": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 7250000,
+        "cost": 7250000
        }
       },
       "total_mm": 4.72,
-      "total_cost": 42525000
+      "total_cost": 34256250
      },
      {
       "name": "I1",
@@ -17555,38 +17745,33 @@
    ],
    "summary": {
     "revenue": 240000000,
-    "total_cost": 109293422.35,
-    "profit": 130706577.65,
-    "margin_rate": 54.46,
+    "total_cost": 112471203.56,
+    "profit": 127528796.44,
+    "margin_rate": 53.14,
     "hurdle_rate": 0,
-    "hurdle_gap": 54.46,
+    "hurdle_gap": 53.14,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 58370718.79,
-      "share": 53.41,
+      "amount": 61548500,
+      "share": 54.72,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 48493000,
-      "share": 44.37,
+      "share": 43.12,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 2424702.2,
-      "share": 2.22,
+      "share": 2.16,
       "items": [
-       {
-        "name": "X0",
-        "amount": 0,
-        "share": 0
-       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -17600,7 +17785,12 @@
        {
         "name": "외주 관리비",
         "amount": 2204700,
-        "share": 2.02
+        "share": 1.96
+       },
+       {
+        "name": "X0",
+        "amount": 0,
+        "share": 0
        }
       ]
      },
@@ -17619,7 +17809,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 58370718.79,
+     "internal_labor": 61548500,
      "external_labor": 48493000,
      "general_expense": 0,
      "internal_overhead": 220002.2,
@@ -17659,57 +17849,57 @@
       "calc": {
        "2025-10": {
         "mm": 0.125,
-        "rate": 7777777,
-        "cost": 972222.12
+        "rate": 8500000,
+        "cost": 1062500
        },
        "2025-11": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 8500000,
+        "cost": 4250000
        },
        "2025-12": {
         "mm": 0.1,
-        "rate": 7777777,
-        "cost": 777777.7
+        "rate": 8500000,
+        "cost": 850000
        },
        "2026-01": {
         "mm": 0.75,
-        "rate": 7777777,
-        "cost": 5833332.75
+        "rate": 8500000,
+        "cost": 6375000
        },
        "2026-02": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 8500000,
+        "cost": 4250000
        },
        "2026-03": {
         "mm": 0.125,
-        "rate": 7777777,
-        "cost": 972222.12
+        "rate": 8500000,
+        "cost": 1062500
        },
        "2026-04": {
         "mm": 0.3,
-        "rate": 7777777,
-        "cost": 2333333.1
+        "rate": 8500000,
+        "cost": 2550000
        },
        "2026-05": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2026-06": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2026-07": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 8500000,
         "cost": 0
        }
       },
       "total_mm": 4.4,
-      "total_cost": 34222218.79
+      "total_cost": 37400000
      },
      {
       "name": "I1",
@@ -18117,13 +18307,18 @@
      "start_ym": "2025-12",
      "end_ym": "2026-06",
      "revenue": 123456789,
-     "cost": 90851660.92,
-     "profit": 32605128.08,
-     "margin_rate": 26.41,
+     "cost": 93578052.75,
+     "calc_cost": 93578052.75,
+     "overridden": false,
+     "internal_labor": 52343000,
+     "external_labor": 39329000,
+     "expense": 1906052.75,
+     "profit": 29878736.25,
+     "margin_rate": 24.2,
      "cum_revenue": 123456789,
-     "cum_cost": 90851660.92,
+     "cum_cost": 93578052.75,
      "rem_revenue": 116543211,
-     "rem_cost": 18441761.43
+     "rem_cost": 18893150.81
     },
     {
      "phase_no": 2,
@@ -18131,13 +18326,18 @@
      "start_ym": "2026-03",
      "end_ym": "2026-06",
      "revenue": 0,
-     "cost": 60922361.17,
-     "profit": -60922361.17,
+     "cost": 62673751.95,
+     "calc_cost": 62673751.95,
+     "overridden": false,
+     "internal_labor": 34425000,
+     "external_labor": 27000000,
+     "expense": 1248751.95,
+     "profit": -62673751.95,
      "margin_rate": 0,
      "cum_revenue": 123456789,
-     "cum_cost": 151774022.09,
+     "cum_cost": 156251804.7,
      "rem_revenue": 116543211,
-     "rem_cost": -42480599.74
+     "rem_cost": -43780601.14
     },
     {
      "phase_no": 3,
@@ -18145,13 +18345,18 @@
      "start_ym": "2026-03",
      "end_ym": "2026-04",
      "revenue": 123456789,
-     "cost": 27241805.93,
-     "profit": 96214983.07,
-     "margin_rate": 77.93,
+     "cost": 27548750.71,
+     "calc_cost": 27548750.71,
+     "overridden": false,
+     "internal_labor": 13175000,
+     "external_labor": 13750000,
+     "expense": 623750.71,
+     "profit": 95908038.29,
+     "margin_rate": 77.69,
      "cum_revenue": 246913578,
-     "cum_cost": 179015828.02,
+     "cum_cost": 183800555.41,
      "rem_revenue": -6913578,
-     "rem_cost": -69722405.67
+     "rem_cost": -71329351.85
     }
    ],
    "estimate": {
@@ -18505,8 +18710,8 @@
    ],
    "summary": {
     "revenue": 0,
-    "total_cost": 92492180.11,
-    "profit": -92492180.11,
+    "total_cost": 87617180.11,
+    "profit": -87617180.11,
     "margin_rate": 0,
     "hurdle_rate": 25,
     "hurdle_gap": -25,
@@ -18515,22 +18720,22 @@
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 38043000,
-      "share": 41.13,
+      "amount": 33168000,
+      "share": 37.86,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 53555229.57,
-      "share": 57.9,
+      "share": 61.12,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 893950.54,
-      "share": 0.97,
+      "share": 1.02,
       "items": [
        {
         "name": "복리후생비",
@@ -18545,7 +18750,7 @@
        {
         "name": "외주 관리비",
         "amount": 893950.54,
-        "share": 0.97
+        "share": 1.02
        }
       ]
      },
@@ -18558,7 +18763,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 38043000,
+     "internal_labor": 33168000,
      "external_labor": 53555229.57,
      "general_expense": 0,
      "internal_overhead": 0,
@@ -18645,17 +18850,17 @@
        },
        "2028-03": {
         "mm": 0.75,
-        "rate": 9000000,
-        "cost": 6750000
+        "rate": 6000000,
+        "cost": 4500000
        },
        "2028-04": {
         "mm": 0.875,
-        "rate": 9000000,
-        "cost": 7875000
+        "rate": 6000000,
+        "cost": 5250000
        }
       },
       "total_mm": 1.96,
-      "total_cost": 16623000
+      "total_cost": 11748000
      }
     ],
     "external_labor": [
@@ -18928,12 +19133,17 @@
      "end_ym": "2028-01",
      "revenue": 50000000,
      "cost": 40420779.37,
+     "calc_cost": 40420779.37,
+     "overridden": false,
+     "internal_labor": 9918000,
+     "external_labor": 29993520.16,
+     "expense": 509259.21,
      "profit": 9579220.63,
      "margin_rate": 19.16,
      "cum_revenue": 50000000,
      "cum_cost": 40420779.37,
      "rem_revenue": -50000000,
-     "rem_cost": 52071400.74
+     "rem_cost": 47196400.74
     },
     {
      "phase_no": 2,
@@ -18941,13 +19151,18 @@
      "start_ym": "2028-01",
      "end_ym": "2028-03",
      "revenue": 123456789,
-     "cost": 53247771.97,
-     "profit": 70209017.03,
-     "margin_rate": 56.87,
+     "cost": 50997771.97,
+     "calc_cost": 50997771.97,
+     "overridden": false,
+     "internal_labor": 18900000,
+     "external_labor": 31565920.16,
+     "expense": 531851.81,
+     "profit": 72459017.03,
+     "margin_rate": 58.69,
      "cum_revenue": 173456789,
-     "cum_cost": 93668551.34,
+     "cum_cost": 91418551.34,
      "rem_revenue": -173456789,
-     "rem_cost": -1176371.23
+     "rem_cost": -3801371.23
     }
    ],
    "estimate": {
@@ -19340,43 +19555,33 @@
    ],
    "summary": {
     "revenue": 150000000.5,
-    "total_cost": 52715802.41,
-    "profit": 97284198.09,
-    "margin_rate": 64.86,
+    "total_cost": 49415802.41,
+    "profit": 100584198.09,
+    "margin_rate": 67.06,
     "hurdle_rate": 25,
-    "hurdle_gap": 39.86,
+    "hurdle_gap": 42.06,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 16680000,
-      "share": 31.64,
+      "amount": 13380000,
+      "share": 27.08,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 25900000,
-      "share": 49.13,
+      "share": 52.41,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 802469.08,
-      "share": 1.52,
+      "share": 1.62,
       "items": [
-       {
-        "name": "X0",
-        "amount": 333333.33,
-        "share": 0.63
-       },
-       {
-        "name": "X1",
-        "amount": 0,
-        "share": 0
-       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -19390,7 +19595,17 @@
        {
         "name": "외주 관리비",
         "amount": 469135.75,
-        "share": 0.89
+        "share": 0.95
+       },
+       {
+        "name": "X0",
+        "amount": 333333.33,
+        "share": 0.67
+       },
+       {
+        "name": "X1",
+        "amount": 0,
+        "share": 0
        }
       ]
      },
@@ -19398,23 +19613,23 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 9333333.33,
-      "share": 17.71,
+      "share": 18.89,
       "items": [
        {
         "name": "X0",
         "amount": 333333.33,
-        "share": 0.63
+        "share": 0.67
        },
        {
         "name": "X1",
         "amount": 9000000,
-        "share": 17.07
+        "share": 18.21
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 16680000,
+     "internal_labor": 13380000,
      "external_labor": 25900000,
      "general_expense": 333333.33,
      "internal_overhead": 0,
@@ -19492,12 +19707,12 @@
        },
        "2027-02": {
         "mm": 0.1,
-        "rate": 9000000,
-        "cost": 900000
+        "rate": 6000000,
+        "cost": 600000
        }
       },
       "total_mm": 0.35,
-      "total_cost": 2400000
+      "total_cost": 2100000
      },
      {
       "name": "I2",
@@ -19518,22 +19733,22 @@
       "calc": {
        "2026-12": {
         "mm": 0.25,
-        "rate": 9000000,
-        "cost": 2250000
+        "rate": 6000000,
+        "cost": 1500000
        },
        "2027-01": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 6000000,
         "cost": 0
        },
        "2027-02": {
         "mm": 0.75,
-        "rate": 9000000,
-        "cost": 6750000
+        "rate": 6000000,
+        "cost": 4500000
        }
       },
       "total_mm": 1,
-      "total_cost": 9000000
+      "total_cost": 6000000
      },
      {
       "name": "I3",
@@ -19767,12 +19982,17 @@
      "end_ym": "2027-02",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 49415802.41,
+     "overridden": true,
+     "internal_labor": 13380000,
+     "external_labor": 25900000,
+     "expense": 10135802.41,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 0,
      "cum_cost": 30000000,
      "rem_revenue": 150000000.5,
-     "rem_cost": 22715802.41
+     "rem_cost": 19415802.41
     },
     {
      "phase_no": 2,
@@ -19781,12 +20001,17 @@
      "end_ym": "2027-02",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 31152530.83,
+     "overridden": true,
+     "internal_labor": 10380000,
+     "external_labor": 14075000,
+     "expense": 6697530.83,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 123456789,
      "cum_cost": 60000000,
      "rem_revenue": 26543211.5,
-     "rem_cost": -7284197.59
+     "rem_cost": -10584197.59
     },
     {
      "phase_no": 3,
@@ -19794,13 +20019,18 @@
      "start_ym": "2027-01",
      "end_ym": "2027-02",
      "revenue": 50000000,
-     "cost": 33702530.83,
-     "profit": 16297469.17,
-     "margin_rate": 32.59,
+     "cost": 31152530.83,
+     "calc_cost": 31152530.83,
+     "overridden": false,
+     "internal_labor": 10380000,
+     "external_labor": 14075000,
+     "expense": 6697530.83,
+     "profit": 18847469.17,
+     "margin_rate": 37.69,
      "cum_revenue": 173456789,
-     "cum_cost": 93702530.83,
+     "cum_cost": 91152530.83,
      "rem_revenue": -23456788.5,
-     "rem_cost": -40986728.42
+     "rem_cost": -41736728.42
     },
     {
      "phase_no": 4,
@@ -19808,11 +20038,16 @@
      "start_ym": "2026-12",
      "end_ym": "2027-01",
      "revenue": 123456789,
-     "cost": 34756543.16,
-     "profit": 88700245.84,
-     "margin_rate": 71.85,
+     "cost": 34006543.16,
+     "calc_cost": 34006543.16,
+     "overridden": false,
+     "internal_labor": 3480000,
+     "external_labor": 23650000,
+     "expense": 6876543.16,
+     "profit": 89450245.84,
+     "margin_rate": 72.45,
      "cum_revenue": 296913578,
-     "cum_cost": 128459073.99,
+     "cum_cost": 125159073.99,
      "rem_revenue": -146913577.5,
      "rem_cost": -75743271.58
     },
@@ -19823,10 +20058,15 @@
      "end_ym": "2027-02",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 31152530.83,
+     "overridden": true,
+     "internal_labor": 10380000,
+     "external_labor": 14075000,
+     "expense": 6697530.83,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 346913578,
-     "cum_cost": 158459073.99,
+     "cum_cost": 155159073.99,
      "rem_revenue": -196913577.5,
      "rem_cost": -105743271.58
     }
@@ -20134,11 +20374,6 @@
       "share": 0.75,
       "items": [
        {
-        "name": "X0",
-        "amount": 2500.62,
-        "share": 0.02
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -20152,6 +20387,11 @@
         "name": "외주 관리비",
         "amount": 107501.08,
         "share": 0.73
+       },
+       {
+        "name": "X0",
+        "amount": 2500.62,
+        "share": 0.02
        }
       ]
      },
@@ -20331,6 +20571,11 @@
      "end_ym": "2026-05",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 8989060.17,
+     "overridden": true,
+     "internal_labor": 0,
+     "external_labor": 8925309.41,
+     "expense": 63750.76,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 123456789,
@@ -20345,6 +20590,11 @@
      "end_ym": "2026-04",
      "revenue": 0,
      "cost": 13955620.35,
+     "calc_cost": 13955620.35,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 13850618.82,
+     "expense": 105001.53,
      "profit": -13955620.35,
      "margin_rate": 0,
      "cum_revenue": 123456789,
@@ -20359,6 +20609,11 @@
      "end_ym": "2026-04",
      "revenue": 0,
      "cost": 13955620.35,
+     "calc_cost": 13955620.35,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 13850618.82,
+     "expense": 105001.53,
      "profit": -13955620.35,
      "margin_rate": 0,
      "cum_revenue": 123456789,
@@ -20373,6 +20628,11 @@
      "end_ym": "2026-04",
      "revenue": 123456789,
      "cost": 13955620.35,
+     "calc_cost": 13955620.35,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 13850618.82,
+     "expense": 105001.53,
      "profit": 109501168.65,
      "margin_rate": 88.7,
      "cum_revenue": 246913578,
@@ -20773,16 +21033,6 @@
       "share": 5.41,
       "items": [
        {
-        "name": "X0",
-        "amount": 3000.36,
-        "share": 0
-       },
-       {
-        "name": "X1",
-        "amount": 4800000,
-        "share": 3.84
-       },
-       {
         "name": "복리후생비",
         "amount": 982469.05,
         "share": 0.79
@@ -20796,6 +21046,16 @@
         "name": "외주 관리비",
         "amount": 0,
         "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 3000.36,
+        "share": 0
+       },
+       {
+        "name": "X1",
+        "amount": 4800000,
+        "share": 3.84
        }
       ]
      },
@@ -21364,6 +21624,11 @@
      "end_ym": "2027-09",
      "revenue": 0,
      "cost": 88917245.76,
+     "calc_cost": 88917245.76,
+     "overridden": false,
+     "internal_labor": 36149998.88,
+     "external_labor": 47984000,
+     "expense": 4783246.88,
      "profit": -88917245.76,
      "margin_rate": 0,
      "cum_revenue": 0,
@@ -21378,6 +21643,11 @@
      "end_ym": "2027-07",
      "revenue": 50000000,
      "cost": 88448937.05,
+     "calc_cost": 88448937.05,
+     "overridden": false,
+     "internal_labor": 37231332.13,
+     "external_labor": 46784000,
+     "expense": 4433604.92,
      "profit": -38448937.05,
      "margin_rate": -76.9,
      "cum_revenue": 50000000,
@@ -21392,6 +21662,11 @@
      "end_ym": "2027-09",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 70998530.11,
+     "overridden": true,
+     "internal_labor": 27599999.25,
+     "external_labor": 39800000,
+     "expense": 3598530.86,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 100000000,
@@ -21763,11 +22038,6 @@
       "share": 20.93,
       "items": [
        {
-        "name": "X0",
-        "amount": 9000000,
-        "share": 19.02
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -21781,6 +22051,11 @@
         "name": "외주 관리비",
         "amount": 902222.16,
         "share": 1.91
+       },
+       {
+        "name": "X0",
+        "amount": 9000000,
+        "share": 19.02
        }
       ]
      },
@@ -22102,6 +22377,11 @@
      "end_ym": "2027-09",
      "revenue": 0,
      "cost": 31980618.96,
+     "calc_cost": 31980618.96,
+     "overridden": false,
+     "internal_labor": 3999999.75,
+     "external_labor": 20572224.19,
+     "expense": 7408395.02,
      "profit": -31980618.96,
      "margin_rate": 0,
      "cum_revenue": 0,
@@ -22116,6 +22396,11 @@
      "end_ym": "2027-07",
      "revenue": 123456789,
      "cost": 26957470.49,
+     "calc_cost": 26957470.49,
+     "overridden": false,
+     "internal_labor": 7333332.88,
+     "external_labor": 14715742.58,
+     "expense": 4908395.03,
      "profit": 96499318.51,
      "margin_rate": 78.16,
      "cum_revenue": 123456789,
@@ -22479,18 +22764,18 @@
    ],
    "summary": {
     "revenue": 150000000.5,
-    "total_cost": 43853125.92,
-    "profit": 106146874.58,
-    "margin_rate": 70.76,
+    "total_cost": 4195525.92,
+    "profit": 145804474.58,
+    "margin_rate": 97.2,
     "hurdle_rate": 25,
-    "hurdle_gap": 45.76,
+    "hurdle_gap": 72.2,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 39657600,
-      "share": 90.43,
+      "amount": 0,
+      "share": 0,
       "items": []
      },
      {
@@ -22504,27 +22789,12 @@
       "key": "expense",
       "label": "경비",
       "amount": 4195525.92,
-      "share": 9.57,
+      "share": 100,
       "items": [
-       {
-        "name": "X0",
-        "amount": 15002.12,
-        "share": 0.03
-       },
-       {
-        "name": "X1",
-        "amount": 222222.06,
-        "share": 0.51
-       },
-       {
-        "name": "X2",
-        "amount": 8501.74,
-        "share": 0.02
-       },
        {
         "name": "복리후생비",
         "amount": 2629800,
-        "share": 6
+        "share": 62.68
        },
        {
         "name": "사무공간·장비",
@@ -22534,7 +22804,22 @@
        {
         "name": "외주 관리비",
         "amount": 1320000,
-        "share": 3.01
+        "share": 31.46
+       },
+       {
+        "name": "X0",
+        "amount": 15002.12,
+        "share": 0.36
+       },
+       {
+        "name": "X1",
+        "amount": 222222.06,
+        "share": 5.3
+       },
+       {
+        "name": "X2",
+        "amount": 8501.74,
+        "share": 0.2
        }
       ]
      },
@@ -22547,7 +22832,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 39657600,
+     "internal_labor": 0,
      "external_labor": 0,
      "general_expense": 245725.92,
      "internal_overhead": 2629800,
@@ -22623,62 +22908,62 @@
        },
        "2025-12": {
         "mm": 1,
-        "rate": 7200000,
-        "cost": 7200000
+        "rate": 0,
+        "cost": 0
        },
        "2026-01": {
         "mm": 0.25,
-        "rate": 7200000,
-        "cost": 1800000
+        "rate": 0,
+        "cost": 0
        },
        "2026-02": {
         "mm": 0.333,
-        "rate": 7200000,
-        "cost": 2397600
+        "rate": 0,
+        "cost": 0
        },
        "2026-03": {
         "mm": 0.125,
-        "rate": 7200000,
-        "cost": 900000
+        "rate": 0,
+        "cost": 0
        },
        "2026-04": {
         "mm": 0,
-        "rate": 7200000,
+        "rate": 0,
         "cost": 0
        },
        "2026-05": {
         "mm": 0.875,
-        "rate": 7200000,
-        "cost": 6300000
+        "rate": 0,
+        "cost": 0
        },
        "2026-06": {
         "mm": 1,
-        "rate": 7200000,
-        "cost": 7200000
+        "rate": 0,
+        "cost": 0
        },
        "2026-07": {
         "mm": 1,
-        "rate": 7200000,
-        "cost": 7200000
+        "rate": 0,
+        "cost": 0
        },
        "2026-08": {
         "mm": 0.125,
-        "rate": 7200000,
-        "cost": 900000
+        "rate": 0,
+        "cost": 0
        },
        "2026-09": {
         "mm": 0.5,
-        "rate": 7200000,
-        "cost": 3600000
+        "rate": 0,
+        "cost": 0
        },
        "2026-10": {
         "mm": 0.3,
-        "rate": 7200000,
-        "cost": 2160000
+        "rate": 0,
+        "cost": 0
        }
       },
       "total_mm": 8.77,
-      "total_cost": 39657600
+      "total_cost": 0
      }
     ],
     "external_labor": [
@@ -23543,48 +23828,33 @@
    ],
    "summary": {
     "revenue": 150000000.5,
-    "total_cost": 175117333.53,
-    "profit": -25117333.03,
-    "margin_rate": -16.74,
+    "total_cost": 172511778.65,
+    "profit": -22511778.15,
+    "margin_rate": -15.01,
     "hurdle_rate": 25,
-    "hurdle_gap": -41.74,
+    "hurdle_gap": -40.01,
     "hurdle_met": false,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 87745554.88,
-      "share": 50.11,
+      "amount": 85140000,
+      "share": 49.35,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 74141976.66,
-      "share": 42.34,
+      "share": 42.98,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 13229801.99,
-      "share": 7.55,
+      "share": 7.67,
       "items": [
-       {
-        "name": "X0",
-        "amount": 0,
-        "share": 0
-       },
-       {
-        "name": "X1",
-        "amount": 9000000,
-        "share": 5.14
-       },
-       {
-        "name": "X2",
-        "amount": 2000.24,
-        "share": 0
-       },
        {
         "name": "복리후생비",
         "amount": 10950,
@@ -23593,12 +23863,27 @@
        {
         "name": "사무공간·장비",
         "amount": 1351851.75,
-        "share": 0.77
+        "share": 0.78
        },
        {
         "name": "외주 관리비",
         "amount": 2865000,
-        "share": 1.64
+        "share": 1.66
+       },
+       {
+        "name": "X0",
+        "amount": 0,
+        "share": 0
+       },
+       {
+        "name": "X1",
+        "amount": 9000000,
+        "share": 5.22
+       },
+       {
+        "name": "X2",
+        "amount": 2000.24,
+        "share": 0
        }
       ]
      },
@@ -23611,7 +23896,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 87745554.88,
+     "internal_labor": 85140000,
      "external_labor": 74141976.66,
      "general_expense": 9002000.24,
      "internal_overhead": 1362801.75,
@@ -23927,12 +24212,12 @@
        },
        "2026-09": {
         "mm": 0.875,
-        "rate": 7777777,
-        "cost": 6805554.88
+        "rate": 4800000,
+        "cost": 4200000
        }
       },
       "total_mm": 4.25,
-      "total_cost": 23005554.88
+      "total_cost": 20400000
      }
     ],
     "external_labor": [
@@ -24388,12 +24673,17 @@
      "end_ym": "2026-07",
      "revenue": 50000000,
      "cost": 146119282.46,
+     "calc_cost": 146119282.46,
+     "overridden": false,
+     "internal_labor": 71280000,
+     "external_labor": 64506173.97,
+     "expense": 10333108.49,
      "profit": -96119282.46,
      "margin_rate": -192.24,
      "cum_revenue": 50000000,
      "cum_cost": 146119282.46,
      "rem_revenue": 100000000.5,
-     "rem_cost": 28998051.07
+     "rem_cost": 26392496.19
     },
     {
      "phase_no": 2,
@@ -24402,12 +24692,17 @@
      "end_ym": "2026-04",
      "revenue": 123456789,
      "cost": 85552540.65,
+     "calc_cost": 85552540.65,
+     "overridden": false,
+     "internal_labor": 36420000,
+     "external_labor": 43543210.75,
+     "expense": 5589329.9,
      "profit": 37904248.35,
      "margin_rate": 30.7,
      "cum_revenue": 173456789,
      "cum_cost": 231671823.11,
      "rem_revenue": -23456788.5,
-     "rem_cost": -56554489.58
+     "rem_cost": -59160044.46
     },
     {
      "phase_no": 3,
@@ -24416,12 +24711,17 @@
      "end_ym": "2026-05",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 93990069.41,
+     "overridden": true,
+     "internal_labor": 41580000,
+     "external_labor": 45506173.97,
+     "expense": 6903895.44,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 173456789,
      "cum_cost": 261671823.11,
      "rem_revenue": -23456788.5,
-     "rem_cost": -86554489.58
+     "rem_cost": -89160044.46
     }
    ],
    "estimate": {
@@ -24790,21 +25090,6 @@
       "share": 30.83,
       "items": [
        {
-        "name": "X0",
-        "amount": 9000000,
-        "share": 30.82
-       },
-       {
-        "name": "X1",
-        "amount": 2500.62,
-        "share": 0.01
-       },
-       {
-        "name": "X2",
-        "amount": 0,
-        "share": 0
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -24816,6 +25101,21 @@
        },
        {
         "name": "외주 관리비",
+        "amount": 0,
+        "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 9000000,
+        "share": 30.82
+       },
+       {
+        "name": "X1",
+        "amount": 2500.62,
+        "share": 0.01
+       },
+       {
+        "name": "X2",
         "amount": 0,
         "share": 0
        }
@@ -25102,6 +25402,11 @@
      "end_ym": "2026-05",
      "revenue": 123456789,
      "cost": 29200033.45,
+     "calc_cost": 29200033.45,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 19197531.83,
+     "expense": 10002501.62,
      "profit": 94256755.55,
      "margin_rate": 76.35,
      "cum_revenue": 123456789,
@@ -25116,6 +25421,11 @@
      "end_ym": "2026-05",
      "revenue": 0,
      "cost": 29200033.45,
+     "calc_cost": 29200033.45,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 19197531.83,
+     "expense": 10002501.62,
      "profit": -29200033.45,
      "margin_rate": 0,
      "cum_revenue": 123456789,
@@ -25505,38 +25815,33 @@
    ],
    "summary": {
     "revenue": 99999999,
-    "total_cost": 65200599.1,
-    "profit": 34799399.9,
-    "margin_rate": 34.8,
+    "total_cost": 65150599.1,
+    "profit": 34849399.9,
+    "margin_rate": 34.85,
     "hurdle_rate": 25,
-    "hurdle_gap": 9.8,
+    "hurdle_gap": 9.85,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 20790167.11,
-      "share": 31.89,
+      "amount": 20740167.11,
+      "share": 31.83,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 25175000,
-      "share": 38.61,
+      "share": 38.64,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 10235431.99,
-      "share": 15.7,
+      "share": 15.71,
       "items": [
-       {
-        "name": "X0",
-        "amount": 9000000,
-        "share": 13.8
-       },
        {
         "name": "복리후생비",
         "amount": 356913.55,
@@ -25551,6 +25856,11 @@
         "name": "외주 관리비",
         "amount": 521604.89,
         "share": 0.8
+       },
+       {
+        "name": "X0",
+        "amount": 9000000,
+        "share": 13.81
        }
       ]
      },
@@ -25558,12 +25868,12 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 9000000,
-      "share": 13.8,
+      "share": 13.81,
       "items": [
        {
         "name": "X0",
         "amount": 9000000,
-        "share": 13.8
+        "share": 13.81
        },
        {
         "name": "X1",
@@ -25574,7 +25884,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 20790167.11,
+     "internal_labor": 20740167.11,
      "external_labor": 25175000,
      "general_expense": 9000000,
      "internal_overhead": 713827.1,
@@ -25657,12 +25967,12 @@
        },
        "2027-06": {
         "mm": 0.1,
-        "rate": 9000000,
-        "cost": 900000
+        "rate": 8500000,
+        "cost": 850000
        }
       },
       "total_mm": 0.43,
-      "total_cost": 3730500
+      "total_cost": 3680500
      },
      {
       "name": "I3",
@@ -25964,12 +26274,17 @@
      "end_ym": "2027-06",
      "revenue": 123456789,
      "cost": 0,
+     "calc_cost": 0,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 0,
+     "expense": 0,
      "profit": 123456789,
      "margin_rate": 100,
      "cum_revenue": 123456789,
      "cum_cost": 0,
      "rem_revenue": -23456790,
-     "rem_cost": 65200599.1
+     "rem_cost": 65150599.1
     },
     {
      "phase_no": 2,
@@ -25977,11 +26292,16 @@
      "start_ym": "2027-05",
      "end_ym": "2027-06",
      "revenue": 0,
-     "cost": 65200599.1,
-     "profit": -65200599.1,
+     "cost": 65150599.1,
+     "calc_cost": 65150599.1,
+     "overridden": false,
+     "internal_labor": 20740167.11,
+     "external_labor": 25175000,
+     "expense": 19235431.99,
+     "profit": -65150599.1,
      "margin_rate": 0,
      "cum_revenue": 123456789,
-     "cum_cost": 65200599.1,
+     "cum_cost": 65150599.1,
      "rem_revenue": -23456790,
      "rem_cost": 0
     }
@@ -26498,21 +26818,6 @@
       "share": 1.58,
       "items": [
        {
-        "name": "X0",
-        "amount": 21004.12,
-        "share": 0.01
-       },
-       {
-        "name": "X1",
-        "amount": 10001.36,
-        "share": 0
-       },
-       {
-        "name": "X2",
-        "amount": 259259.07,
-        "share": 0.09
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -26526,6 +26831,21 @@
         "name": "외주 관리비",
         "amount": 4060246.59,
         "share": 1.47
+       },
+       {
+        "name": "X0",
+        "amount": 21004.12,
+        "share": 0.01
+       },
+       {
+        "name": "X1",
+        "amount": 10001.36,
+        "share": 0
+       },
+       {
+        "name": "X2",
+        "amount": 259259.07,
+        "share": 0.09
        }
       ]
      },
@@ -27680,6 +28000,11 @@
      "end_ym": "2026-11",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 120895724.97,
+     "overridden": true,
+     "internal_labor": 23250000,
+     "external_labor": 95378600,
+     "expense": 2267124.97,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 123456789,
@@ -27694,6 +28019,11 @@
      "end_ym": "2027-11",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 96926678.57,
+     "overridden": true,
+     "internal_labor": 24498000,
+     "external_labor": 70404000,
+     "expense": 2024678.57,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 123456789,
@@ -27708,6 +28038,11 @@
      "end_ym": "2027-06",
      "revenue": 123456789,
      "cost": 70569013.01,
+     "calc_cost": 70569013.01,
+     "overridden": false,
+     "internal_labor": 30000000,
+     "external_labor": 39365000,
+     "expense": 1204013.01,
      "profit": 52887775.99,
      "margin_rate": 42.84,
      "cum_revenue": 246913578,
@@ -28110,17 +28445,17 @@
    ],
    "summary": {
     "revenue": 99999999,
-    "total_cost": 139464940.68,
-    "profit": -39464941.68,
-    "margin_rate": -39.46,
+    "total_cost": 139502440.68,
+    "profit": -39502441.68,
+    "margin_rate": -39.5,
     "hurdle_rate": 0,
-    "hurdle_gap": -39.46,
+    "hurdle_gap": -39.5,
     "hurdle_met": false,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 129619582.23,
+      "amount": 129657082.23,
       "share": 92.94,
       "items": []
      },
@@ -28138,11 +28473,6 @@
       "share": 7.06,
       "items": [
        {
-        "name": "X0",
-        "amount": 9000000,
-        "share": 6.45
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -28156,6 +28486,11 @@
         "name": "외주 관리비",
         "amount": 0,
         "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 9000000,
+        "share": 6.45
        }
       ]
      },
@@ -28168,7 +28503,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 129619582.23,
+     "internal_labor": 129657082.23,
      "external_labor": 0,
      "general_expense": 9000000,
      "internal_overhead": 845358.45,
@@ -28552,17 +28887,17 @@
        },
        "2027-10": {
         "mm": 0,
-        "rate": 7200000,
+        "rate": 7250000,
         "cost": 0
        },
        "2027-11": {
         "mm": 0.75,
-        "rate": 7200000,
-        "cost": 5400000
+        "rate": 7250000,
+        "cost": 5437500
        }
       },
       "total_mm": 4.28,
-      "total_cost": 31014250
+      "total_cost": 31051750
      }
     ],
     "external_labor": [],
@@ -28718,12 +29053,17 @@
      "end_ym": "2027-04",
      "revenue": 0,
      "cost": 27800001.18,
+     "calc_cost": 27800001.18,
+     "overridden": false,
+     "internal_labor": 25843749.62,
+     "external_labor": 0,
+     "expense": 1956251.56,
      "profit": -27800001.18,
      "margin_rate": 0,
      "cum_revenue": 0,
      "cum_cost": 27800001.18,
      "rem_revenue": 99999999,
-     "rem_cost": 111664939.5
+     "rem_cost": 111702439.5
     },
     {
      "phase_no": 2,
@@ -28732,12 +29072,17 @@
      "end_ym": "2027-11",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 100543272.35,
+     "overridden": true,
+     "internal_labor": 94509166.01,
+     "external_labor": 0,
+     "expense": 6034106.34,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 123456789,
      "cum_cost": 57800001.18,
      "rem_revenue": -23456790,
-     "rem_cost": 81664939.5
+     "rem_cost": 81702439.5
     },
     {
      "phase_no": 3,
@@ -28746,12 +29091,17 @@
      "end_ym": "2027-10",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 109964105.83,
+     "overridden": true,
+     "internal_labor": 102073748.93,
+     "external_labor": 0,
+     "expense": 7890356.9,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 173456789,
      "cum_cost": 87800001.18,
      "rem_revenue": -73456790,
-     "rem_cost": 51664939.5
+     "rem_cost": 51702439.5
     }
    ],
    "estimate": {
@@ -29913,6 +30263,11 @@
      "end_ym": "2026-07",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 71020374.69,
+     "overridden": true,
+     "internal_labor": 11250000,
+     "external_labor": 55788893.23,
+     "expense": 3981481.46,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 123456789,
@@ -30371,8 +30726,8 @@
    ],
    "summary": {
     "revenue": 0,
-    "total_cost": 337137891.53,
-    "profit": -337137891.53,
+    "total_cost": 308253454.62,
+    "profit": -308253454.62,
     "margin_rate": 0,
     "hurdle_rate": 0,
     "hurdle_gap": 0,
@@ -30381,27 +30736,27 @@
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 84242836.91,
-      "share": 24.99,
+      "amount": 55358400,
+      "share": 17.96,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 247169202.36,
-      "share": 73.31,
+      "share": 80.18,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 3725850.06,
-      "share": 1.11,
+      "share": 1.21,
       "items": [
        {
         "name": "복리후생비",
         "amount": 1423827.04,
-        "share": 0.42
+        "share": 0.46
        },
        {
         "name": "사무공간·장비",
@@ -30411,7 +30766,7 @@
        {
         "name": "외주 관리비",
         "amount": 2302023.02,
-        "share": 0.68
+        "share": 0.75
        }
       ]
      },
@@ -30419,23 +30774,23 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 2000002.2,
-      "share": 0.59,
+      "share": 0.65,
       "items": [
        {
         "name": "X0",
         "amount": 1000001.1,
-        "share": 0.3
+        "share": 0.32
        },
        {
         "name": "X1",
         "amount": 1000001.1,
-        "share": 0.3
+        "share": 0.32
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 84242836.91,
+     "internal_labor": 55358400,
      "external_labor": 247169202.36,
      "general_expense": 0,
      "internal_overhead": 1423827.04,
@@ -30501,87 +30856,87 @@
        },
        "2027-09": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 4800000,
         "cost": 0
        },
        "2027-10": {
         "mm": 0.75,
-        "rate": 7777777,
-        "cost": 5833332.75
+        "rate": 4800000,
+        "cost": 3600000
        },
        "2027-11": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 4800000,
+        "cost": 4800000
        },
        "2027-12": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 4800000,
+        "cost": 4800000
        },
        "2028-01": {
         "mm": 0.1,
-        "rate": 7777777,
-        "cost": 777777.7
+        "rate": 4800000,
+        "cost": 480000
        },
        "2028-02": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 4800000,
+        "cost": 4800000
        },
        "2028-03": {
         "mm": 0.875,
-        "rate": 7777777,
-        "cost": 6805554.88
+        "rate": 4800000,
+        "cost": 4200000
        },
        "2028-04": {
         "mm": 0.1,
-        "rate": 7777777,
-        "cost": 777777.7
+        "rate": 4800000,
+        "cost": 480000
        },
        "2028-05": {
         "mm": 0.875,
-        "rate": 7777777,
-        "cost": 6805554.88
+        "rate": 4800000,
+        "cost": 4200000
        },
        "2028-06": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 4800000,
+        "cost": 4800000
        },
        "2028-07": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 4800000,
         "cost": 0
        },
        "2028-08": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 4800000,
+        "cost": 4800000
        },
        "2028-09": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 4800000,
+        "cost": 4800000
        },
        "2028-10": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 4800000,
+        "cost": 4800000
        },
        "2028-11": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 4800000,
         "cost": 0
        },
        "2028-12": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 4800000,
         "cost": 0
        }
       },
       "total_mm": 11.53,
-      "total_cost": 84242836.91
+      "total_cost": 55358400
      }
     ],
     "external_labor": [
@@ -32095,8 +32450,8 @@
    ],
    "summary": {
     "revenue": 240000000,
-    "total_cost": 382163925.61,
-    "profit": -142163925.61,
+    "total_cost": 382163927.81,
+    "profit": -142163927.81,
     "margin_rate": -59.23,
     "hurdle_rate": 18,
     "hurdle_gap": -77.23,
@@ -32105,7 +32460,7 @@
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 181908901.36,
+      "amount": 181908903.56,
       "share": 47.6,
       "items": []
      },
@@ -32123,21 +32478,6 @@
       "share": 0.84,
       "items": [
        {
-        "name": "X0",
-        "amount": 259259.07,
-        "share": 0.07
-       },
-       {
-        "name": "X1",
-        "amount": 10001.36,
-        "share": 0
-       },
-       {
-        "name": "X2",
-        "amount": 0,
-        "share": 0
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -32151,6 +32491,21 @@
         "name": "외주 관리비",
         "amount": 2932962.72,
         "share": 0.77
+       },
+       {
+        "name": "X0",
+        "amount": 259259.07,
+        "share": 0.07
+       },
+       {
+        "name": "X1",
+        "amount": 10001.36,
+        "share": 0
+       },
+       {
+        "name": "X2",
+        "amount": 0,
+        "share": 0
        }
       ]
      },
@@ -32174,7 +32529,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 181908901.36,
+     "internal_labor": 181908903.56,
      "external_labor": 187652800,
      "general_expense": 269260.43,
      "internal_overhead": 0,
@@ -32536,72 +32891,72 @@
        },
        "2026-10": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2026-11": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2026-12": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2027-01": {
         "mm": 0.1,
-        "rate": 8500000,
-        "cost": 850000
+        "rate": 8500000.5,
+        "cost": 850000.05
        },
        "2027-02": {
         "mm": 0.3,
-        "rate": 8500000,
-        "cost": 2550000
+        "rate": 8500000.5,
+        "cost": 2550000.15
        },
        "2027-03": {
         "mm": 0.75,
-        "rate": 8500000,
-        "cost": 6375000
+        "rate": 8500000.5,
+        "cost": 6375000.38
        },
        "2027-04": {
         "mm": 0.1,
-        "rate": 8500000,
-        "cost": 850000
+        "rate": 8500000.5,
+        "cost": 850000.05
        },
        "2027-05": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2027-06": {
         "mm": 0.75,
-        "rate": 8500000,
-        "cost": 6375000
+        "rate": 8500000.5,
+        "cost": 6375000.38
        },
        "2027-07": {
         "mm": 0.125,
-        "rate": 8500000,
-        "cost": 1062500
+        "rate": 8500000.5,
+        "cost": 1062500.06
        },
        "2027-08": {
         "mm": 0.5,
-        "rate": 8500000,
-        "cost": 4250000
+        "rate": 8500000.5,
+        "cost": 4250000.25
        },
        "2027-09": {
         "mm": 0.75,
-        "rate": 8500000,
-        "cost": 6375000
+        "rate": 8500000.5,
+        "cost": 6375000.38
        },
        "2027-10": {
         "mm": 1,
-        "rate": 8500000,
-        "cost": 8500000
+        "rate": 8500000.5,
+        "cost": 8500000.5
        }
       },
       "total_mm": 7.08,
-      "total_cost": 60205501.36
+      "total_cost": 60205503.56
      },
      {
       "name": "I3",
@@ -33892,8 +34247,8 @@
    ],
    "summary": {
     "revenue": 0,
-    "total_cost": 176589913.62,
-    "profit": -176589913.62,
+    "total_cost": 171507413.62,
+    "profit": -171507413.62,
     "margin_rate": 0,
     "hurdle_rate": 18,
     "hurdle_gap": -18,
@@ -33902,32 +34257,27 @@
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 38580500,
-      "share": 21.85,
+      "amount": 33498000,
+      "share": 19.53,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 136038000,
-      "share": 77.04,
+      "share": 79.32,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 1968413.02,
-      "share": 1.11,
+      "share": 1.15,
       "items": [
-       {
-        "name": "X0",
-        "amount": 1000001.04,
-        "share": 0.57
-       },
        {
         "name": "복리후생비",
         "amount": 689259.19,
-        "share": 0.39
+        "share": 0.4
        },
        {
         "name": "사무공간·장비",
@@ -33938,6 +34288,11 @@
         "name": "외주 관리비",
         "amount": 0,
         "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 1000001.04,
+        "share": 0.58
        }
       ]
      },
@@ -33961,7 +34316,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 38580500,
+     "internal_labor": 33498000,
      "external_labor": 136038000,
      "general_expense": 1000001.04,
      "internal_overhead": 968411.98,
@@ -34028,37 +34383,37 @@
        },
        "2026-03": {
         "mm": 0.3,
-        "rate": 8500000,
-        "cost": 2550000
+        "rate": 6000000,
+        "cost": 1800000
        },
        "2026-04": {
         "mm": 0.3,
-        "rate": 8500000,
-        "cost": 2550000
+        "rate": 6000000,
+        "cost": 1800000
        },
        "2026-05": {
         "mm": 0.333,
-        "rate": 8500000,
-        "cost": 2830500
+        "rate": 6000000,
+        "cost": 1998000
        },
        "2026-06": {
         "mm": 1,
-        "rate": 8500000,
-        "cost": 8500000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2026-07": {
         "mm": 0,
-        "rate": 8500000,
+        "rate": 6000000,
         "cost": 0
        },
        "2026-08": {
         "mm": 0.1,
-        "rate": 8500000,
-        "cost": 850000
+        "rate": 6000000,
+        "cost": 600000
        }
       },
       "total_mm": 5.58,
-      "total_cost": 38580500
+      "total_cost": 33498000
      }
     ],
     "external_labor": [
@@ -34718,12 +35073,17 @@
      "end_ym": "2025-11",
      "revenue": 50000000,
      "cost": 40217161.3,
+     "calc_cost": 40217161.3,
+     "overridden": false,
+     "internal_labor": 7800000,
+     "external_labor": 32025000,
+     "expense": 392161.3,
      "profit": 9782838.7,
      "margin_rate": 19.57,
      "cum_revenue": 50000000,
      "cum_cost": 40217161.3,
      "rem_revenue": -50000000,
-     "rem_cost": 136372752.32
+     "rem_cost": 131290252.32
     },
     {
      "phase_no": 2,
@@ -34732,12 +35092,17 @@
      "end_ym": "2026-05",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 50889460.14,
+     "overridden": true,
+     "internal_labor": 11598000,
+     "external_labor": 38537500,
+     "expense": 753960.14,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 100000000,
      "cum_cost": 70217161.3,
      "rem_revenue": -100000000,
-     "rem_cost": 106372752.32
+     "rem_cost": 101290252.32
     },
     {
      "phase_no": 3,
@@ -34745,13 +35110,18 @@
      "start_ym": "2025-12",
      "end_ym": "2026-04",
      "revenue": 123456789,
-     "cost": 59153563.17,
-     "profit": 64303225.83,
-     "margin_rate": 52.09,
+     "cost": 57653563.17,
+     "calc_cost": 57653563.17,
+     "overridden": false,
+     "internal_labor": 11100000,
+     "external_labor": 45814000,
+     "expense": 739563.17,
+     "profit": 65803225.83,
+     "margin_rate": 53.3,
      "cum_revenue": 223456789,
-     "cum_cost": 129370724.47,
+     "cum_cost": 127870724.47,
      "rem_revenue": -223456789,
-     "rem_cost": 47219189.15
+     "rem_cost": 43636689.15
     },
     {
      "phase_no": 4,
@@ -34760,12 +35130,17 @@
      "end_ym": "2026-08",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 126468832.1,
+     "overridden": true,
+     "internal_labor": 21498000,
+     "external_labor": 103513000,
+     "expense": 1457832.1,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 273456789,
-     "cum_cost": 159370724.47,
+     "cum_cost": 157870724.47,
      "rem_revenue": -273456789,
-     "rem_cost": 17219189.15
+     "rem_cost": 13636689.15
     }
    ],
    "estimate": {
@@ -35125,16 +35500,6 @@
       "share": 17.24,
       "items": [
        {
-        "name": "X0",
-        "amount": 1000001.04,
-        "share": 17.24
-       },
-       {
-        "name": "X1",
-        "amount": 0,
-        "share": 0
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -35146,6 +35511,16 @@
        },
        {
         "name": "외주 관리비",
+        "amount": 0,
+        "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 1000001.04,
+        "share": 17.24
+       },
+       {
+        "name": "X1",
         "amount": 0,
         "share": 0
        }
@@ -35409,6 +35784,11 @@
      "end_ym": "2027-03",
      "revenue": 50000000,
      "cost": 5316667.62,
+     "calc_cost": 5316667.62,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 0,
+     "expense": 5316667.62,
      "profit": 44683332.38,
      "margin_rate": 89.37,
      "cum_revenue": 50000000,
@@ -35423,6 +35803,11 @@
      "end_ym": "2026-10",
      "revenue": 50000000,
      "cost": 2416667.1,
+     "calc_cost": 2416667.1,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 0,
+     "expense": 2416667.1,
      "profit": 47583332.9,
      "margin_rate": 95.17,
      "cum_revenue": 100000000,
@@ -35437,6 +35822,11 @@
      "end_ym": "2026-11",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 3383333.94,
+     "overridden": true,
+     "internal_labor": 0,
+     "external_labor": 0,
+     "expense": 3383333.94,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 150000000,
@@ -35451,6 +35841,11 @@
      "end_ym": "2026-10",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 3383333.94,
+     "overridden": true,
+     "internal_labor": 0,
+     "external_labor": 0,
+     "expense": 3383333.94,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 150000000,
@@ -35465,6 +35860,11 @@
      "end_ym": "2026-12",
      "revenue": 50000000,
      "cost": 0,
+     "calc_cost": 0,
+     "overridden": false,
+     "internal_labor": 0,
+     "external_labor": 0,
+     "expense": 0,
      "profit": 50000000,
      "margin_rate": 100,
      "cum_revenue": 200000000,
@@ -35878,52 +36278,52 @@
    ],
    "summary": {
     "revenue": 240000000,
-    "total_cost": 195420510.5,
-    "profit": 44579489.5,
-    "margin_rate": 18.57,
+    "total_cost": 169770510.5,
+    "profit": 70229489.5,
+    "margin_rate": 29.26,
     "hurdle_rate": 25,
-    "hurdle_gap": -6.43,
-    "hurdle_met": false,
+    "hurdle_gap": 4.26,
+    "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 55044000,
-      "share": 28.17,
+      "amount": 29394000,
+      "share": 17.31,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 134508700,
-      "share": 68.83,
+      "share": 79.23,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 5867810.5,
-      "share": 3,
+      "share": 3.46,
       "items": [
-       {
-        "name": "X0",
-        "amount": 5001.24,
-        "share": 0
-       },
        {
         "name": "복리후생비",
         "amount": 462854.63,
-        "share": 0.24
+        "share": 0.27
        },
        {
         "name": "사무공간·장비",
         "amount": 462854.63,
-        "share": 0.24
+        "share": 0.27
        },
        {
         "name": "외주 관리비",
         "amount": 4937100,
-        "share": 2.53
+        "share": 2.91
+       },
+       {
+        "name": "X0",
+        "amount": 5001.24,
+        "share": 0
        }
       ]
      },
@@ -35942,7 +36342,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 55044000,
+     "internal_labor": 29394000,
      "external_labor": 134508700,
      "general_expense": 5001.24,
      "internal_overhead": 925709.26,
@@ -36012,57 +36412,57 @@
        },
        "2025-08": {
         "mm": 0.3,
-        "rate": 9000000,
-        "cost": 2700000
+        "rate": 0,
+        "cost": 0
        },
        "2025-09": {
         "mm": 0.125,
-        "rate": 9000000,
-        "cost": 1125000
+        "rate": 0,
+        "cost": 0
        },
        "2025-10": {
         "mm": 0.125,
-        "rate": 9000000,
-        "cost": 1125000
+        "rate": 0,
+        "cost": 0
        },
        "2025-11": {
         "mm": 0.875,
-        "rate": 9000000,
-        "cost": 7875000
+        "rate": 0,
+        "cost": 0
        },
        "2025-12": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 0,
+        "cost": 0
        },
        "2026-01": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 0,
         "cost": 0
        },
        "2026-02": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 0,
         "cost": 0
        },
        "2026-03": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 0,
         "cost": 0
        },
        "2026-04": {
         "mm": 0.125,
-        "rate": 9000000,
-        "cost": 1125000
+        "rate": 0,
+        "cost": 0
        },
        "2026-05": {
         "mm": 0.3,
-        "rate": 9000000,
-        "cost": 2700000
+        "rate": 0,
+        "cost": 0
        }
       },
       "total_mm": 4.36,
-      "total_cost": 25650000
+      "total_cost": 0
      },
      {
       "name": "I1",
@@ -36635,11 +37035,16 @@
      "start_ym": "2025-06",
      "end_ym": "2026-05",
      "revenue": 123456789,
-     "cost": 153688408.66,
-     "profit": -30231619.66,
-     "margin_rate": -24.49,
+     "cost": 128038408.66,
+     "calc_cost": 128038408.66,
+     "overridden": false,
+     "internal_labor": 25596000,
+     "external_labor": 98101200,
+     "expense": 4341208.66,
+     "profit": -4581619.66,
+     "margin_rate": -3.71,
      "cum_revenue": 123456789,
-     "cum_cost": 153688408.66,
+     "cum_cost": 128038408.66,
      "rem_revenue": 116543211,
      "rem_cost": 41732101.84
     },
@@ -36650,10 +37055,15 @@
      "end_ym": "2025-10",
      "revenue": 0,
      "cost": 30000000,
+     "calc_cost": 26152001.34,
+     "overridden": true,
+     "internal_labor": 5850000,
+     "external_labor": 19427100,
+     "expense": 874901.34,
      "profit": -30000000,
      "margin_rate": 0,
      "cum_revenue": 123456789,
-     "cum_cost": 183688408.66,
+     "cum_cost": 158038408.66,
      "rem_revenue": 116543211,
      "rem_cost": 11732101.84
     },
@@ -36663,13 +37073,18 @@
      "start_ym": "2025-08",
      "end_ym": "2025-10",
      "revenue": 50000000,
-     "cost": 37037901.94,
-     "profit": 12962098.06,
-     "margin_rate": 25.92,
+     "cost": 32087901.94,
+     "calc_cost": 32087901.94,
+     "overridden": false,
+     "internal_labor": 7650000,
+     "external_labor": 23365600,
+     "expense": 1072301.94,
+     "profit": 17912098.06,
+     "margin_rate": 35.82,
      "cum_revenue": 173456789,
-     "cum_cost": 220726310.6,
+     "cum_cost": 190126310.6,
      "rem_revenue": 66543211,
-     "rem_cost": -25305800.1
+     "rem_cost": -20355800.1
     }
    ],
    "estimate": {
@@ -37346,33 +37761,48 @@
    ],
    "summary": {
     "revenue": 99999999,
-    "total_cost": 691616199.56,
-    "profit": -591616200.56,
-    "margin_rate": -591.62,
+    "total_cost": 698696426.15,
+    "profit": -598696427.15,
+    "margin_rate": -598.7,
     "hurdle_rate": 25,
-    "hurdle_gap": -616.62,
+    "hurdle_gap": -623.7,
     "hurdle_met": false,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 360648108.48,
-      "share": 52.15,
+      "amount": 367728335.07,
+      "share": 52.63,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 298926489.98,
-      "share": 43.22,
+      "share": 42.78,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 32041601.1,
-      "share": 4.63,
+      "share": 4.59,
       "items": [
+       {
+        "name": "복리후생비",
+        "amount": 7944900,
+        "share": 1.14
+       },
+       {
+        "name": "사무공간·장비",
+        "amount": 7944900,
+        "share": 1.14
+       },
+       {
+        "name": "외주 관리비",
+        "amount": 15151800,
+        "share": 2.17
+       },
        {
         "name": "X0",
         "amount": 1000001.1,
@@ -37387,21 +37817,6 @@
         "name": "X2",
         "amount": 0,
         "share": 0
-       },
-       {
-        "name": "복리후생비",
-        "amount": 7944900,
-        "share": 1.15
-       },
-       {
-        "name": "사무공간·장비",
-        "amount": 7944900,
-        "share": 1.15
-       },
-       {
-        "name": "외주 관리비",
-        "amount": 15151800,
-        "share": 2.19
        }
       ]
      },
@@ -37414,7 +37829,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 360648108.48,
+     "internal_labor": 367728335.07,
      "external_labor": 298926489.98,
      "general_expense": 1000001.1,
      "internal_overhead": 15889800,
@@ -37825,27 +38240,27 @@
        },
        "2027-05": {
         "mm": 0.3,
-        "rate": 7777777,
-        "cost": 2333333.1
+        "rate": 7200000,
+        "cost": 2160000
        },
        "2027-06": {
         "mm": 0.875,
-        "rate": 7777777,
-        "cost": 6805554.88
+        "rate": 7200000,
+        "cost": 6300000
        },
        "2027-07": {
         "mm": 0.125,
-        "rate": 7777777,
-        "cost": 972222.12
+        "rate": 7200000,
+        "cost": 900000
        },
        "2027-08": {
         "mm": 0.1,
-        "rate": 7777777,
-        "cost": 777777.7
+        "rate": 7200000,
+        "cost": 720000
        }
       },
       "total_mm": 7.92,
-      "total_cost": 57868887.8
+      "total_cost": 57060000
      },
      {
       "name": "I3",
@@ -37944,47 +38359,47 @@
        },
        "2027-01": {
         "mm": 0.75,
-        "rate": 7777777,
-        "cost": 5833332.75
+        "rate": 6000000,
+        "cost": 4500000
        },
        "2027-02": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2027-03": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 6000000,
         "cost": 0
        },
        "2027-04": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 6000000,
         "cost": 0
        },
        "2027-05": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2027-06": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 6000000,
         "cost": 0
        },
        "2027-07": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 6000000,
         "cost": 0
        },
        "2027-08": {
         "mm": 0.333,
-        "rate": 7777777,
-        "cost": 2589999.74
+        "rate": 6000000,
+        "cost": 1998000
        }
       },
       "total_mm": 9.76,
-      "total_cost": 64022886.49
+      "total_cost": 58542000
      },
      {
       "name": "I4",
@@ -38096,37 +38511,37 @@
        },
        "2027-03": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2027-04": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000.5,
+        "cost": 8500000.5
        },
        "2027-05": {
         "mm": 0.75,
-        "rate": 9000000,
-        "cost": 6750000
+        "rate": 8500000.5,
+        "cost": 6375000.38
        },
        "2027-06": {
         "mm": 0,
-        "rate": 6000000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2027-07": {
         "mm": 0,
-        "rate": 6000000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2027-08": {
         "mm": 0,
-        "rate": 6000000,
+        "rate": 8500000.5,
         "cost": 0
        }
       },
       "total_mm": 8.46,
-      "total_cost": 72768003.36
+      "total_cost": 71893004.24
      },
      {
       "name": "I5",
@@ -38224,52 +38639,52 @@
        },
        "2026-12": {
         "mm": 0,
-        "rate": 4800000,
+        "rate": 8500000,
         "cost": 0
        },
        "2027-01": {
         "mm": 0.875,
-        "rate": 4800000,
-        "cost": 4200000
+        "rate": 8500000,
+        "cost": 7437500
        },
        "2027-02": {
         "mm": 0.75,
-        "rate": 4800000,
-        "cost": 3600000
+        "rate": 8500000,
+        "cost": 6375000
        },
        "2027-03": {
         "mm": 0.25,
-        "rate": 4800000,
-        "cost": 1200000
+        "rate": 8500000,
+        "cost": 2125000
        },
        "2027-04": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2027-05": {
         "mm": 0.1,
-        "rate": 4800000,
-        "cost": 480000
+        "rate": 8500000,
+        "cost": 850000
        },
        "2027-06": {
         "mm": 0.875,
-        "rate": 4800000,
-        "cost": 4200000
+        "rate": 8500000,
+        "cost": 7437500
        },
        "2027-07": {
         "mm": 0,
-        "rate": 4800000,
+        "rate": 8500000,
         "cost": 0
        },
        "2027-08": {
         "mm": 0,
-        "rate": 4800000,
+        "rate": 8500000,
         "cost": 0
        }
       },
       "total_mm": 9.4,
-      "total_cost": 65655000
+      "total_cost": 79900000
      }
     ],
     "external_labor": [
@@ -39319,12 +39734,17 @@
      "end_ym": "2027-07",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 99583066.96,
+     "overridden": true,
+     "internal_labor": 50022500.25,
+     "external_labor": 44015309.41,
+     "expense": 5545257.3,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 50000000,
      "cum_cost": 30000000,
      "rem_revenue": 49999999,
-     "rem_cost": 661616199.56
+     "rem_cost": 668696426.15
     },
     {
      "phase_no": 2,
@@ -39332,13 +39752,18 @@
      "start_ym": "2026-05",
      "end_ym": "2027-04",
      "revenue": 0,
-     "cost": 371598814.24,
-     "profit": -371598814.24,
+     "cost": 378625204.99,
+     "calc_cost": 378625204.99,
+     "overridden": false,
+     "internal_labor": 214372334.2,
+     "external_labor": 147654541.59,
+     "expense": 16598329.2,
+     "profit": -378625204.99,
      "margin_rate": 0,
      "cum_revenue": 50000000,
-     "cum_cost": 401598814.24,
+     "cum_cost": 408625204.99,
      "rem_revenue": 49999999,
-     "rem_cost": 290017385.32
+     "rem_cost": 290071221.16
     },
     {
      "phase_no": 3,
@@ -39346,13 +39771,18 @@
      "start_ym": "2025-12",
      "end_ym": "2027-01",
      "revenue": 0,
-     "cost": 478106061.31,
-     "profit": -478106061.31,
+     "cost": 480010228.56,
+     "calc_cost": 480010228.56,
+     "overridden": false,
+     "internal_labor": 256021167.58,
+     "external_labor": 202785593.58,
+     "expense": 21203467.4,
+     "profit": -480010228.56,
      "margin_rate": 0,
      "cum_revenue": 50000000,
-     "cum_cost": 879704875.55,
+     "cum_cost": 888635433.55,
      "rem_revenue": 49999999,
-     "rem_cost": -188088675.99
+     "rem_cost": -189939007.4
     },
     {
      "phase_no": 4,
@@ -39360,13 +39790,18 @@
      "start_ym": "2026-02",
      "end_ym": "2027-03",
      "revenue": 50000000,
-     "cost": 432890089.62,
-     "profit": -382890089.62,
-     "margin_rate": -765.78,
+     "cost": 436716479.87,
+     "calc_cost": 436716479.87,
+     "overridden": false,
+     "internal_labor": 233653167.77,
+     "external_labor": 184009944.7,
+     "expense": 19053367.4,
+     "profit": -386716479.87,
+     "margin_rate": -773.43,
      "cum_revenue": 100000000,
-     "cum_cost": 1312594965.17,
+     "cum_cost": 1325351913.42,
      "rem_revenue": -1,
-     "rem_cost": -620978765.61
+     "rem_cost": -626655487.27
     },
     {
      "phase_no": 5,
@@ -39375,12 +39810,17 @@
      "end_ym": "2026-11",
      "revenue": 50000000,
      "cost": 155867075.49,
+     "calc_cost": 155867075.49,
+     "overridden": false,
+     "internal_labor": 80854833.38,
+     "external_labor": 68234446.61,
+     "expense": 6777795.5,
      "profit": -105867075.49,
      "margin_rate": -211.73,
      "cum_revenue": 150000000,
-     "cum_cost": 1468462040.66,
+     "cum_cost": 1481218988.91,
      "rem_revenue": -50000001,
-     "rem_cost": -776845841.1
+     "rem_cost": -782522562.76
     }
    ],
    "estimate": {
@@ -39746,18 +40186,18 @@
    ],
    "summary": {
     "revenue": 150000000.5,
-    "total_cost": 113722532.52,
-    "profit": 36277467.98,
-    "margin_rate": 24.18,
+    "total_cost": 127242535.73,
+    "profit": 22757464.77,
+    "margin_rate": 15.17,
     "hurdle_rate": 0,
-    "hurdle_gap": 24.18,
+    "hurdle_gap": 15.17,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 92712832.53,
-      "share": 81.53,
+      "amount": 106232835.74,
+      "share": 83.49,
       "items": []
      },
      {
@@ -39771,13 +40211,8 @@
       "key": "expense",
       "label": "경비",
       "amount": 12009700,
-      "share": 10.56,
+      "share": 9.44,
       "items": [
-       {
-        "name": "X0",
-        "amount": 7600000,
-        "share": 6.68
-       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -39786,12 +40221,17 @@
        {
         "name": "사무공간·장비",
         "amount": 4409700,
-        "share": 3.88
+        "share": 3.47
        },
        {
         "name": "외주 관리비",
         "amount": 0,
         "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 7600000,
+        "share": 5.97
        }
       ]
      },
@@ -39799,18 +40239,18 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 8999999.99,
-      "share": 7.91,
+      "share": 7.07,
       "items": [
        {
         "name": "X0",
         "amount": 8999999.99,
-        "share": 7.91
+        "share": 7.07
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 92712832.53,
+     "internal_labor": 106232835.74,
      "external_labor": 0,
      "general_expense": 7600000,
      "internal_overhead": 4409700,
@@ -39876,82 +40316,82 @@
        },
        "2027-10": {
         "mm": 0.25,
-        "rate": 6000000,
-        "cost": 1500000
+        "rate": 8500000.5,
+        "cost": 2125000.12
        },
        "2027-11": {
         "mm": 0,
-        "rate": 6000000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2027-12": {
         "mm": 1,
-        "rate": 6000000,
-        "cost": 6000000
+        "rate": 8500000.5,
+        "cost": 8500000.5
        },
        "2028-01": {
         "mm": 0.125,
-        "rate": 6000000,
-        "cost": 750000
+        "rate": 8500000.5,
+        "cost": 1062500.06
        },
        "2028-02": {
         "mm": 0.333,
-        "rate": 6000000,
-        "cost": 1998000
+        "rate": 8500000.5,
+        "cost": 2830500.17
        },
        "2028-03": {
         "mm": 0.25,
-        "rate": 6000000,
-        "cost": 1500000
+        "rate": 8500000.5,
+        "cost": 2125000.12
        },
        "2028-04": {
         "mm": 0.125,
-        "rate": 6000000,
-        "cost": 750000
+        "rate": 8500000.5,
+        "cost": 1062500.06
        },
        "2028-05": {
         "mm": 1,
-        "rate": 6000000,
-        "cost": 6000000
+        "rate": 8500000.5,
+        "cost": 8500000.5
        },
        "2028-06": {
         "mm": 0,
-        "rate": 6000000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2028-07": {
         "mm": 0.125,
-        "rate": 6000000,
-        "cost": 750000
+        "rate": 8500000.5,
+        "cost": 1062500.06
        },
        "2028-08": {
         "mm": 0.25,
-        "rate": 6000000,
-        "cost": 1500000
+        "rate": 8500000.5,
+        "cost": 2125000.12
        },
        "2028-09": {
         "mm": 1,
-        "rate": 6000000,
-        "cost": 6000000
+        "rate": 8500000.5,
+        "cost": 8500000.5
        },
        "2028-10": {
         "mm": 0.25,
-        "rate": 6000000,
-        "cost": 1500000
+        "rate": 8500000.5,
+        "cost": 2125000.12
        },
        "2028-11": {
         "mm": 0.875,
-        "rate": 6000000,
-        "cost": 5250000
+        "rate": 8500000.5,
+        "cost": 7437500.44
        },
        "2028-12": {
         "mm": 0.875,
-        "rate": 9000000,
-        "cost": 7875000
+        "rate": 8500000.5,
+        "cost": 7437500.44
        }
       },
       "total_mm": 8.79,
-      "total_cost": 61203501.17
+      "total_cost": 74723504.38
      },
      {
       "name": "I1",
@@ -40479,13 +40919,18 @@
      "start_ym": "2027-06",
      "end_ym": "2028-08",
      "revenue": 0,
-     "cost": 82224462.73,
-     "profit": -82224462.73,
+     "cost": 90869464.44,
+     "calc_cost": 90869464.44,
+     "overridden": false,
+     "internal_labor": 74599501.29,
+     "external_labor": 0,
+     "expense": 16269963.15,
+     "profit": -90869464.44,
      "margin_rate": 0,
      "cum_revenue": 0,
-     "cum_cost": 82224462.73,
+     "cum_cost": 90869464.44,
      "rem_revenue": 150000000.5,
-     "rem_cost": 31498069.79
+     "rem_cost": 36373071.29
     },
     {
      "phase_no": 2,
@@ -40494,12 +40939,17 @@
      "end_ym": "2028-07",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 87795780.11,
+     "overridden": true,
+     "internal_labor": 72474501.17,
+     "external_labor": 0,
+     "expense": 15321278.94,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 123456789,
-     "cum_cost": 112224462.73,
+     "cum_cost": 120869464.44,
      "rem_revenue": 26543211.5,
-     "rem_cost": 1498069.79
+     "rem_cost": 6373071.29
     }
    ],
    "estimate": {
@@ -41875,6 +42325,11 @@
      "end_ym": "2029-07",
      "revenue": 123456789,
      "cost": 184765129.77,
+     "calc_cost": 184765129.77,
+     "overridden": false,
+     "internal_labor": 41786002.47,
+     "external_labor": 142979127.3,
+     "expense": 0,
      "profit": -61308340.77,
      "margin_rate": -49.66,
      "cum_revenue": 123456789,
@@ -42272,43 +42727,33 @@
    ],
    "summary": {
     "revenue": 150000000.5,
-    "total_cost": 113507722.88,
-    "profit": 36492277.62,
-    "margin_rate": 24.33,
+    "total_cost": 117219822.88,
+    "profit": 32780177.62,
+    "margin_rate": 21.85,
     "hurdle_rate": 25,
-    "hurdle_gap": -0.67,
+    "hurdle_gap": -3.15,
     "hurdle_met": false,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 45148400,
-      "share": 39.78,
+      "amount": 48860500,
+      "share": 41.68,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 58322286.06,
-      "share": 51.38,
+      "share": 49.75,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 9938271.46,
-      "share": 8.76,
+      "share": 8.48,
       "items": [
-       {
-        "name": "X0",
-        "amount": 98765.36,
-        "share": 0.09
-       },
-       {
-        "name": "X1",
-        "amount": 9000000,
-        "share": 7.93
-       },
        {
         "name": "복리후생비",
         "amount": 0,
@@ -42317,12 +42762,22 @@
        {
         "name": "사무공간·장비",
         "amount": 839506.1,
-        "share": 0.74
+        "share": 0.72
        },
        {
         "name": "외주 관리비",
         "amount": 0,
         "share": 0
+       },
+       {
+        "name": "X0",
+        "amount": 98765.36,
+        "share": 0.08
+       },
+       {
+        "name": "X1",
+        "amount": 9000000,
+        "share": 7.68
        }
       ]
      },
@@ -42330,18 +42785,18 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 98765.36,
-      "share": 0.09,
+      "share": 0.08,
       "items": [
        {
         "name": "X0",
         "amount": 98765.36,
-        "share": 0.09
+        "share": 0.08
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 45148400,
+     "internal_labor": 48860500,
      "external_labor": 58322286.06,
      "general_expense": 9098765.36,
      "internal_overhead": 839506.1,
@@ -42379,42 +42834,42 @@
        },
        "2027-09": {
         "mm": 0.5,
-        "rate": 4800000,
-        "cost": 2400000
+        "rate": 6000000,
+        "cost": 3000000
        },
        "2027-10": {
         "mm": 0.333,
-        "rate": 4800000,
-        "cost": 1598400
+        "rate": 6000000,
+        "cost": 1998000
        },
        "2027-11": {
         "mm": 0.5,
-        "rate": 4800000,
-        "cost": 2400000
+        "rate": 6000000,
+        "cost": 3000000
        },
        "2027-12": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2028-01": {
         "mm": 0.875,
-        "rate": 4800000,
-        "cost": 4200000
+        "rate": 6000000,
+        "cost": 5250000
        },
        "2028-02": {
         "mm": 1,
-        "rate": 4800000,
-        "cost": 4800000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2028-03": {
         "mm": 0.125,
-        "rate": 4800000,
-        "cost": 600000
+        "rate": 6000000,
+        "cost": 750000
        }
       },
       "total_mm": 4.46,
-      "total_cost": 21548400
+      "total_cost": 26748000
      },
      {
       "name": "I1",
@@ -42456,37 +42911,37 @@
        },
        "2027-10": {
         "mm": 0.1,
-        "rate": 9000000,
-        "cost": 900000
+        "rate": 7250000,
+        "cost": 725000
        },
        "2027-11": {
         "mm": 0.5,
-        "rate": 9000000,
-        "cost": 4500000
+        "rate": 7250000,
+        "cost": 3625000
        },
        "2027-12": {
         "mm": 0.3,
-        "rate": 9000000,
-        "cost": 2700000
+        "rate": 7250000,
+        "cost": 2175000
        },
        "2028-01": {
         "mm": 0.875,
-        "rate": 7200000,
-        "cost": 6300000
+        "rate": 7250000,
+        "cost": 6343750
        },
        "2028-02": {
         "mm": 0.125,
-        "rate": 7200000,
-        "cost": 900000
+        "rate": 7250000,
+        "cost": 906250
        },
        "2028-03": {
         "mm": 0.75,
-        "rate": 7200000,
-        "cost": 5400000
+        "rate": 7250000,
+        "cost": 5437500
        }
       },
       "total_mm": 3.05,
-      "total_cost": 23600000
+      "total_cost": 22112500
      },
      {
       "name": "I2",
@@ -42917,12 +43372,17 @@
      "end_ym": "2028-01",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 42034059.56,
+     "overridden": true,
+     "internal_labor": 19768750,
+     "external_labor": 19651112.09,
+     "expense": 2614197.47,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 123456789,
      "cum_cost": 30000000,
      "rem_revenue": 26543211.5,
-     "rem_cost": 83507722.88
+     "rem_cost": 87219822.88
     },
     {
      "phase_no": 2,
@@ -42930,13 +43390,18 @@
      "start_ym": "2027-10",
      "end_ym": "2028-03",
      "revenue": 123456789,
-     "cost": 92395993.67,
-     "profit": 31060795.33,
-     "margin_rate": 25.16,
+     "cost": 95508093.67,
+     "calc_cost": 95508093.67,
+     "overridden": false,
+     "internal_labor": 42210500,
+     "external_labor": 45779075.31,
+     "expense": 7518518.36,
+     "profit": 27948695.33,
+     "margin_rate": 22.64,
      "cum_revenue": 246913578,
-     "cum_cost": 122395993.67,
+     "cum_cost": 125508093.67,
      "rem_revenue": -96913577.5,
-     "rem_cost": -8888270.79
+     "rem_cost": -8288270.79
     }
    ],
    "estimate": {
@@ -43346,8 +43811,8 @@
    ],
    "summary": {
     "revenue": 0,
-    "total_cost": 151897484.07,
-    "profit": -151897484.07,
+    "total_cost": 158648877.06,
+    "profit": -158648877.06,
     "margin_rate": 0,
     "hurdle_rate": 12.5,
     "hurdle_gap": -12.5,
@@ -43356,22 +43821,22 @@
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 60543709.75,
-      "share": 39.86,
+      "amount": 67295102.74,
+      "share": 42.42,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 89273874.32,
-      "share": 58.77,
+      "share": 56.27,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 2079900,
-      "share": 1.37,
+      "share": 1.31,
       "items": [
        {
         "name": "복리후생비",
@@ -43381,7 +43846,7 @@
        {
         "name": "사무공간·장비",
         "amount": 2079900,
-        "share": 1.37
+        "share": 1.31
        },
        {
         "name": "외주 관리비",
@@ -43405,7 +43870,7 @@
      }
     ],
     "breakdown": {
-     "internal_labor": 60543709.75,
+     "internal_labor": 67295102.74,
      "external_labor": 89273874.32,
      "general_expense": 0,
      "internal_overhead": 2079900,
@@ -43449,17 +43914,17 @@
        },
        "2026-09": {
         "mm": 0.25,
-        "rate": 7777777,
-        "cost": 1944444.25
+        "rate": 8500000.5,
+        "cost": 2125000.12
        },
        "2026-10": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 8500000.5,
+        "cost": 4250000.25
        }
       },
       "total_mm": 1.8,
-      "total_cost": 14758333.28
+      "total_cost": 15300000.9
      },
      {
       "name": "I1",
@@ -43485,27 +43950,27 @@
       "calc": {
        "2026-07": {
         "mm": 0.75,
-        "rate": 7777777,
-        "cost": 5833332.75
+        "rate": 8500000.5,
+        "cost": 6375000.38
        },
        "2026-08": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 8500000.5,
+        "cost": 4250000.25
        },
        "2026-09": {
         "mm": 0.3,
-        "rate": 7777777,
-        "cost": 2333333.1
+        "rate": 8500000.5,
+        "cost": 2550000.15
        },
        "2026-10": {
         "mm": 0.125,
-        "rate": 7777777,
-        "cost": 972222.12
+        "rate": 8500000.5,
+        "cost": 1062500.06
        }
       },
       "total_mm": 1.68,
-      "total_cost": 13027776.47
+      "total_cost": 14237500.84
      },
      {
       "name": "I2",
@@ -43564,27 +44029,27 @@
       "calc": {
        "2026-07": {
         "mm": 0,
-        "rate": 6000000,
+        "rate": 8500000.5,
         "cost": 0
        },
        "2026-08": {
         "mm": 1,
-        "rate": 6000000,
-        "cost": 6000000
+        "rate": 8500000.5,
+        "cost": 8500000.5
        },
        "2026-09": {
         "mm": 1,
-        "rate": 6000000,
-        "cost": 6000000
+        "rate": 8500000.5,
+        "cost": 8500000.5
        },
        "2026-10": {
         "mm": 0,
-        "rate": 6000000,
+        "rate": 8500000.5,
         "cost": 0
        }
       },
       "total_mm": 2,
-      "total_cost": 12000000
+      "total_cost": 17000001
      },
      {
       "name": "I4",
@@ -43619,12 +44084,12 @@
        },
        "2026-09": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 6000000,
         "cost": 0
        },
        "2026-10": {
         "mm": 0,
-        "rate": 9000000,
+        "rate": 6000000,
         "cost": 0
        }
       },
@@ -43928,13 +44393,18 @@
      "start_ym": "2026-07",
      "end_ym": "2026-08",
      "revenue": 50000000,
-     "cost": 77123748.15,
-     "profit": -27123748.15,
-     "margin_rate": -54.25,
+     "cost": 80526528.03,
+     "calc_cost": 80526528.03,
+     "overridden": false,
+     "internal_labor": 39210001.66,
+     "external_labor": 40161526.37,
+     "expense": 1155000,
+     "profit": -30526528.03,
+     "margin_rate": -61.05,
      "cum_revenue": 50000000,
-     "cum_cost": 77123748.15,
+     "cum_cost": 80526528.03,
      "rem_revenue": -50000000,
-     "rem_cost": 74773735.92
+     "rem_cost": 78122349.03
     },
     {
      "phase_no": 2,
@@ -43942,13 +44412,18 @@
      "start_ym": "2026-08",
      "end_ym": "2026-09",
      "revenue": 0,
-     "cost": 81084569.34,
-     "profit": -81084569.34,
+     "cost": 86842905.01,
+     "calc_cost": 86842905.01,
+     "overridden": false,
+     "internal_labor": 44660001.9,
+     "external_labor": 40742903.11,
+     "expense": 1440000,
+     "profit": -86842905.01,
      "margin_rate": 0,
      "cum_revenue": 50000000,
-     "cum_cost": 158208317.49,
+     "cum_cost": 167369433.04,
      "rem_revenue": -50000000,
-     "rem_cost": -6310833.42
+     "rem_cost": -8720555.98
     },
     {
      "phase_no": 3,
@@ -43957,12 +44432,17 @@
      "end_ym": "2026-10",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 78122349.03,
+     "overridden": true,
+     "internal_labor": 28085101.08,
+     "external_labor": 49112347.95,
+     "expense": 924900,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 100000000,
-     "cum_cost": 188208317.49,
+     "cum_cost": 197369433.04,
      "rem_revenue": -100000000,
-     "rem_cost": -36310833.42
+     "rem_cost": -38720555.98
     }
    ],
    "estimate": {
@@ -44377,8 +44857,8 @@
    ],
    "summary": {
     "revenue": 0,
-    "total_cost": 92382414.11,
-    "profit": -92382414.11,
+    "total_cost": 87349084.33,
+    "profit": -87349084.33,
     "margin_rate": 0,
     "hurdle_rate": 18,
     "hurdle_gap": -18,
@@ -44387,37 +44867,37 @@
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 52600230.3,
-      "share": 56.94,
+      "amount": 47566900.52,
+      "share": 54.46,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 38880544.78,
-      "share": 42.09,
+      "share": 44.51,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 568305.68,
-      "share": 0.62,
+      "share": 0.65,
       "items": [
        {
         "name": "복리후생비",
         "amount": 140001.4,
-        "share": 0.15
+        "share": 0.16
        },
        {
         "name": "사무공간·장비",
         "amount": 140001.4,
-        "share": 0.15
+        "share": 0.16
        },
        {
         "name": "외주 관리비",
         "amount": 288302.88,
-        "share": 0.31
+        "share": 0.33
        }
       ]
      },
@@ -44425,18 +44905,18 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 333333.35,
-      "share": 0.36,
+      "share": 0.38,
       "items": [
        {
         "name": "X0",
         "amount": 333333.35,
-        "share": 0.36
+        "share": 0.38
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 52600230.3,
+     "internal_labor": 47566900.52,
      "external_labor": 38880544.78,
      "general_expense": 0,
      "internal_overhead": 280002.8,
@@ -44480,22 +44960,22 @@
        },
        "2027-08": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 8500000.5,
+        "cost": 4250000.25
        },
        "2027-09": {
         "mm": 0.3,
-        "rate": 7777777,
-        "cost": 2333333.1
+        "rate": 8500000.5,
+        "cost": 2550000.15
        },
        "2027-10": {
         "mm": 0.25,
-        "rate": 7777777,
-        "cost": 1944444.25
+        "rate": 8500000.5,
+        "cost": 2125000.12
        }
       },
       "total_mm": 1.05,
-      "total_cost": 8166665.85
+      "total_cost": 8925000.52
      },
      {
       "name": "I1",
@@ -44571,27 +45051,27 @@
        },
        "2027-07": {
         "mm": 0.5,
-        "rate": 7777777,
-        "cost": 3888888.5
+        "rate": 4800000,
+        "cost": 2400000
        },
        "2027-08": {
         "mm": 0.25,
-        "rate": 7777777,
-        "cost": 1944444.25
+        "rate": 4800000,
+        "cost": 1200000
        },
        "2027-09": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 4800000,
         "cost": 0
        },
        "2027-10": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 4800000,
+        "cost": 4800000
        }
       },
       "total_mm": 1.75,
-      "total_cost": 13611109.75
+      "total_cost": 8400000
      },
      {
       "name": "I3",
@@ -44676,22 +45156,22 @@
        },
        "2027-08": {
         "mm": 0.1,
-        "rate": 7777777,
-        "cost": 777777.7
+        "rate": 7250000,
+        "cost": 725000
        },
        "2027-09": {
         "mm": 1,
-        "rate": 7777777,
-        "cost": 7777777
+        "rate": 7250000,
+        "cost": 7250000
        },
        "2027-10": {
         "mm": 0,
-        "rate": 7777777,
+        "rate": 7250000,
         "cost": 0
        }
       },
       "total_mm": 1.77,
-      "total_cost": 13384054.7
+      "total_cost": 12803500
      }
     ],
     "external_labor": [
@@ -44938,13 +45418,18 @@
      "start_ym": "2027-06",
      "end_ym": "2027-09",
      "revenue": 0,
-     "cost": 75407085.43,
-     "profit": -75407085.43,
+     "cost": 73170976.78,
+     "calc_cost": 73170976.78,
+     "overridden": false,
+     "internal_labor": 37843500.4,
+     "external_labor": 34651655.6,
+     "expense": 675820.78,
+     "profit": -73170976.78,
      "margin_rate": 0,
      "cum_revenue": 0,
-     "cum_cost": 75407085.43,
+     "cum_cost": 73170976.78,
      "rem_revenue": 0,
-     "rem_cost": 16975328.68
+     "rem_cost": 14178107.55
     },
     {
      "phase_no": 2,
@@ -44952,13 +45437,18 @@
      "start_ym": "2027-07",
      "end_ym": "2027-10",
      "revenue": 50000000,
-     "cost": 76392175.81,
-     "profit": -26392175.81,
-     "margin_rate": -52.78,
+     "cost": 71358846.03,
+     "calc_cost": 71358846.03,
+     "overridden": false,
+     "internal_labor": 40352650.52,
+     "external_labor": 30226223.7,
+     "expense": 779971.81,
+     "profit": -21358846.03,
+     "margin_rate": -42.72,
      "cum_revenue": 50000000,
-     "cum_cost": 151799261.24,
+     "cum_cost": 144529822.81,
      "rem_revenue": -50000000,
-     "rem_cost": -59416847.13
+     "rem_cost": -57180738.48
     },
     {
      "phase_no": 3,
@@ -44966,13 +45456,18 @@
      "start_ym": "2027-08",
      "end_ym": "2027-09",
      "revenue": 50000000,
-     "cost": 41258738.15,
-     "profit": 8741261.85,
-     "margin_rate": 17.48,
+     "cost": 40511518,
+     "calc_cost": 40511518,
+     "overridden": false,
+     "internal_labor": 23775000.4,
+     "external_labor": 16361531.83,
+     "expense": 374985.77,
+     "profit": 9488482,
+     "margin_rate": 18.98,
      "cum_revenue": 100000000,
-     "cum_cost": 193057999.39,
+     "cum_cost": 185041340.81,
      "rem_revenue": -100000000,
-     "rem_cost": -100675585.28
+     "rem_cost": -97692256.48
     },
     {
      "phase_no": 4,
@@ -44981,12 +45476,17 @@
      "end_ym": "2027-09",
      "revenue": 123456789,
      "cost": 30000000,
+     "calc_cost": 40511518,
+     "overridden": true,
+     "internal_labor": 23775000.4,
+     "external_labor": 16361531.83,
+     "expense": 374985.77,
      "profit": 93456789,
      "margin_rate": 75.7,
      "cum_revenue": 223456789,
-     "cum_cost": 223057999.39,
+     "cum_cost": 215041340.81,
      "rem_revenue": -223456789,
-     "rem_cost": -130675585.28
+     "rem_cost": -127692256.48
     },
     {
      "phase_no": 5,
@@ -44994,13 +45494,18 @@
      "start_ym": "2027-08",
      "end_ym": "2027-10",
      "revenue": 50000000,
-     "cost": 58234066.83,
-     "profit": -8234066.83,
-     "margin_rate": -16.47,
+     "cost": 54689625.55,
+     "calc_cost": 54689625.55,
+     "overridden": false,
+     "internal_labor": 33498400.52,
+     "external_labor": 20590421.01,
+     "expense": 600804.02,
+     "profit": -4689625.55,
+     "margin_rate": -9.38,
      "cum_revenue": 273456789,
-     "cum_cost": 281292066.22,
+     "cum_cost": 269730966.36,
      "rem_revenue": -273456789,
-     "rem_cost": -188909652.11
+     "rem_cost": -182381882.03
     }
    ],
    "estimate": {
@@ -45390,21 +45895,6 @@
       "share": 3.87,
       "items": [
        {
-        "name": "X0",
-        "amount": 333333.35,
-        "share": 0.28
-       },
-       {
-        "name": "X1",
-        "amount": 333333.35,
-        "share": 0.28
-       },
-       {
-        "name": "X2",
-        "amount": 333333.35,
-        "share": 0.28
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -45418,6 +45908,21 @@
         "name": "외주 관리비",
         "amount": 3559800,
         "share": 3.02
+       },
+       {
+        "name": "X0",
+        "amount": 333333.35,
+        "share": 0.28
+       },
+       {
+        "name": "X1",
+        "amount": 333333.35,
+        "share": 0.28
+       },
+       {
+        "name": "X2",
+        "amount": 333333.35,
+        "share": 0.28
        }
       ]
      },
@@ -46378,11 +46883,6 @@
       "share": 2.97,
       "items": [
        {
-        "name": "X0",
-        "amount": 259259.07,
-        "share": 0.09
-       },
-       {
         "name": "복리후생비",
         "amount": 0,
         "share": 0
@@ -46396,6 +46896,11 @@
         "name": "외주 관리비",
         "amount": 8519400,
         "share": 2.89
+       },
+       {
+        "name": "X0",
+        "amount": 259259.07,
+        "share": 0.09
        }
       ]
      },
@@ -47276,6 +47781,11 @@
      "end_ym": "2027-07",
      "revenue": 50000000,
      "cost": 30000000,
+     "calc_cost": 150900493.41,
+     "overridden": true,
+     "internal_labor": 46195200,
+     "external_labor": 100079436.71,
+     "expense": 4625856.7,
      "profit": 20000000,
      "margin_rate": 40,
      "cum_revenue": 50000000,
@@ -47290,6 +47800,11 @@
      "end_ym": "2026-07",
      "revenue": 123456789,
      "cost": 75473072.54,
+     "calc_cost": 75473072.54,
+     "overridden": false,
+     "internal_labor": 29397600,
+     "external_labor": 44004298.52,
+     "expense": 2071174.02,
      "profit": 47983716.46,
      "margin_rate": 38.87,
      "cum_revenue": 173456789,
@@ -47561,18 +48076,18 @@
    ],
    "summary": {
     "revenue": 150000000.5,
-    "total_cost": 35626219.69,
-    "profit": 114373780.81,
-    "margin_rate": 76.25,
+    "total_cost": 25126219.69,
+    "profit": 124873780.81,
+    "margin_rate": 83.25,
     "hurdle_rate": 12.5,
-    "hurdle_gap": 63.75,
+    "hurdle_gap": 70.75,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 33300000,
-      "share": 93.47,
+      "amount": 22800000,
+      "share": 90.74,
       "items": []
      },
      {
@@ -47586,12 +48101,12 @@
       "key": "expense",
       "label": "경비",
       "amount": 2239800,
-      "share": 6.29,
+      "share": 8.91,
       "items": [
        {
         "name": "복리후생비",
         "amount": 1140000,
-        "share": 3.2
+        "share": 4.54
        },
        {
         "name": "사무공간·장비",
@@ -47601,7 +48116,7 @@
        {
         "name": "외주 관리비",
         "amount": 1099800,
-        "share": 3.09
+        "share": 4.38
        }
       ]
      },
@@ -47609,18 +48124,18 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 86419.69,
-      "share": 0.24,
+      "share": 0.34,
       "items": [
        {
         "name": "X0",
         "amount": 86419.69,
-        "share": 0.24
+        "share": 0.34
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 33300000,
+     "internal_labor": 22800000,
      "external_labor": 0,
      "general_expense": 0,
      "internal_overhead": 1140000,
@@ -47657,37 +48172,37 @@
        },
        "2027-08": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2027-09": {
         "mm": 0.1,
-        "rate": 9000000,
-        "cost": 900000
+        "rate": 6000000,
+        "cost": 600000
        },
        "2027-10": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2027-11": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 6000000,
+        "cost": 6000000
        },
        "2027-12": {
         "mm": 0.1,
-        "rate": 9000000,
-        "cost": 900000
+        "rate": 6000000,
+        "cost": 600000
        },
        "2028-01": {
         "mm": 0.3,
-        "rate": 9000000,
-        "cost": 2700000
+        "rate": 6000000,
+        "cost": 1800000
        }
       },
       "total_mm": 3.8,
-      "total_cost": 33300000
+      "total_cost": 22800000
      }
     ],
     "external_labor": [
@@ -48090,47 +48605,47 @@
    ],
    "summary": {
     "revenue": 240000000,
-    "total_cost": 125700000,
-    "profit": 114300000,
-    "margin_rate": 47.62,
+    "total_cost": 123700000,
+    "profit": 116300000,
+    "margin_rate": 48.46,
     "hurdle_rate": 18,
-    "hurdle_gap": 29.62,
+    "hurdle_gap": 30.46,
     "hurdle_met": true,
     "composition": [
      {
       "key": "internal_labor",
       "label": "내부 인건비",
-      "amount": 80000000,
-      "share": 63.64,
+      "amount": 78000000,
+      "share": 63.06,
       "items": []
      },
      {
       "key": "external_labor",
       "label": "외주 인건비",
       "amount": 31200000,
-      "share": 24.82,
+      "share": 25.22,
       "items": []
      },
      {
       "key": "expense",
       "label": "경비",
       "amount": 12100000,
-      "share": 9.63,
+      "share": 9.78,
       "items": [
        {
         "name": "출장비",
         "amount": 9000000,
-        "share": 7.16
+        "share": 7.28
        },
        {
         "name": "복리후생비",
         "amount": 1800000,
-        "share": 1.43
+        "share": 1.46
        },
        {
         "name": "사무공간·장비",
         "amount": 900000,
-        "share": 0.72
+        "share": 0.73
        },
        {
         "name": "외주 관리비",
@@ -48143,18 +48658,18 @@
       "key": "custom_cost",
       "label": "기타경비",
       "amount": 2400000,
-      "share": 1.91,
+      "share": 1.94,
       "items": [
        {
         "name": "사전심의·인증비",
         "amount": 2400000,
-        "share": 1.91
+        "share": 1.94
        }
       ]
      }
     ],
     "breakdown": {
-     "internal_labor": 80000000,
+     "internal_labor": 78000000,
      "external_labor": 31200000,
      "general_expense": 9000000,
      "internal_overhead": 2700000,
@@ -48196,27 +48711,27 @@
        },
        "2026-03": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2026-04": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2026-05": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000,
+        "cost": 8500000
        },
        "2026-06": {
         "mm": 1,
-        "rate": 9000000,
-        "cost": 9000000
+        "rate": 8500000,
+        "cost": 8500000
        }
       },
       "total_mm": 6,
-      "total_cost": 53000000
+      "total_cost": 51000000
      },
      {
       "name": "이민지",
@@ -48447,13 +48962,18 @@
      "start_ym": "2026-01",
      "end_ym": "2026-03",
      "revenue": 110000000,
-     "cost": 63850000,
-     "profit": 46150000,
-     "margin_rate": 41.95,
+     "cost": 63350000,
+     "calc_cost": 63350000,
+     "overridden": false,
+     "internal_labor": 40500000,
+     "external_labor": 15600000,
+     "expense": 7250000,
+     "profit": 46650000,
+     "margin_rate": 42.41,
      "cum_revenue": 110000000,
-     "cum_cost": 63850000,
+     "cum_cost": 63350000,
      "rem_revenue": 130000000,
-     "rem_cost": 61850000
+     "rem_cost": 60350000
     },
     {
      "phase_no": 2,
@@ -48461,11 +48981,16 @@
      "start_ym": "2026-04",
      "end_ym": "2026-06",
      "revenue": 130000000,
-     "cost": 61850000,
-     "profit": 68150000,
-     "margin_rate": 52.42,
+     "cost": 60350000,
+     "calc_cost": 60350000,
+     "overridden": false,
+     "internal_labor": 37500000,
+     "external_labor": 15600000,
+     "expense": 7250000,
+     "profit": 69650000,
+     "margin_rate": 53.58,
      "cum_revenue": 240000000,
-     "cum_cost": 125700000,
+     "cum_cost": 123700000,
      "rem_revenue": 0,
      "rem_cost": 0
     }

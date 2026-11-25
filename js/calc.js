@@ -18,24 +18,34 @@
     return raiseYm && ym >= raiseYm && !isBlank(g.raise_rate) ? num(g.raise_rate) : num(g.rate);
   }
 
-  // 내부 인력의 그 달 단가: 기준단가(없으면 등급 단가) → 인상월부터 등급의 인상단가(넣은 등급만) → 승진월부터 승진단가(없으면 승진등급 단가)
+  // 내부 인력의 그 달 단가: 기준단가(없으면 등급 단가) → 인상월부터 등급의 인상단가(넣은 등급만)
   function resolveInternalRate(member, ym, settings, raiseYm) {
-    const grades = new Map();
-    (settings.internal_grades || []).forEach(g => { if (g && g.grade) grades.set(String(g.grade).trim(), g); });
-    const own = grades.get(String(member.grade || "").trim());
+    const own = (settings.internal_grades || []).find(g => g && String(g.grade || "").trim() === String(member.grade || "").trim());
     let rate = !isBlank(member.base_rate) ? num(member.base_rate) : num(gradeRate(own, ym, raiseYm));
     if (own && raiseYm && ym >= raiseYm && !isBlank(own.raise_rate)) rate = num(own.raise_rate);
-    const promos = [];
-    (member.promotions || []).forEach(p => {
-      const eff = normalizeYm(p && p.effective_ym, "");
-      if (!eff || eff > ym) return;
-      const pg = grades.get(String((p && p.grade) || "").trim());
-      if (!isBlank(p.rate)) promos.push([eff, num(p.rate)]);
-      else if (pg) promos.push([eff, num(gradeRate(pg, ym, raiseYm))]);
-    });
-    promos.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
-    if (promos.length) rate = promos[promos.length - 1][1];
     return pyRound(rate, 2);
+  }
+
+  // ---------- 기준정보 순서 ----------
+  //  목록에 있는 값은 그 순서, 없는 값은 뒤(나온 순서대로), 빈 값 · (미지정)은 맨 뒤
+  function rankOf(list) {
+    const m = new Map();
+    (list || []).forEach((v, i) => { const k = String(v === null || v === undefined ? "" : v).trim(); if (k && !m.has(k)) m.set(k, i); });
+    return v => { const k = String(v === null || v === undefined ? "" : v).trim(); return m.has(k) ? m.get(k) : k && k !== "(미지정)" ? 1e6 : 2e6; };
+  }
+  // 여러 기준으로 차례로 비교 (같으면 원래 순서 — 안정 정렬)
+  const sortByRanks = (rows, ranks) => rows.map((r, i) => [r, i]).sort((x, y) => {
+    for (const f of ranks) { const d = f(x[0]) - f(y[0]); if (d) return d; }
+    return x[1] - y[1];
+  }).map(x => x[0]);
+  const gradeNames = st => (st.internal_grades || []).map(g => g.grade);
+  const vendorNames = st => [...new Set((st.vendor_rates || []).map(v => v.vendor))];
+  // 목록(인력 · 경비)을 기준정보 순서로: 내부 = 영역 → 등급, 외주 = 영역 → 업체 → 등급, 경비 = 계정
+  function orderRows(list, rows, st) {
+    const area = rankOf(st.areas), acc = rankOf((st.expense_accounts || []).map(a => a.account));
+    if (list === "internal_labor") { const g = rankOf(gradeNames(st)); return sortByRanks(rows, [r => area(r.area), r => g(r.grade)]); }
+    if (list === "external_labor") { const v = rankOf(vendorNames(st)), g = rankOf(st.external_grades); return sortByRanks(rows, [r => area(r.area), r => v(r.vendor), r => g(r.grade)]); }
+    return sortByRanks(rows, [r => acc(r.name)]);
   }
 
   // 경비를 달마다 나눔: 총액 균등 · 매달 같은 금액 · 직접 입력
@@ -168,10 +178,11 @@
 
     // 원가 구성: 항목별 금액 · 총 원가 대비 비중(%) — 경비는 같은 이름끼리 합침
     const share = v => (totalCost > 0 ? pyRound((v / totalCost) * 100.0, 2) : 0);
-    const byName = (rows, key) => {
+    const accRank = rankOf((settings.expense_accounts || []).map(a => a.account));
+    const byName = (rows, key) => {   // 같은 이름끼리 합치고 기준정보의 계정 순서로
       const acc = new Map();
       rows.forEach(r => { const n = String(r[key] || "").trim() || "(이름 없음)"; acc.set(n, pyRound((acc.get(n) || 0) + r.total_cost, 2)); });
-      return [...acc].map(([name, amount]) => ({ name, amount, share: share(amount) }));
+      return sortByRanks([...acc].map(([name, amount]) => ({ name, amount, share: share(amount) })), [x => accRank(x.name)]);
     };
     // 경비 = 일반경비 + 인비례 경비 (항목은 일반경비 이름별 · 인비례 계정별), 기타경비는 따로
     const expTotal = pyRound(tGeneral + tIntOvh + tExtOvh, 2);
@@ -182,19 +193,23 @@
       { key: "custom_cost", label: "기타경비", amount: tCustom, share: share(tCustom), items: byName(customDetails, "name") }
     ];
 
-    // 4. 분할계약 (최대 5회차): 별도 원가를 넣지 않으면 그 기간 달의 원가 합
+    // 4. 분할계약 (최대 5회차): 별도 원가를 넣지 않으면 그 기간 달의 원가 합 — 내부 · 외주 인건비 · 경비(일반 · 인비례 · 기타)로도 나눔
     let cumRev = 0, cumCost = 0;
     const phases = (project.phases || []).slice(0, 5).map((ph, i) => {
       const idx = i + 1;
       const ps = normalizeYm(ph.start_ym, ""), pe = normalizeYm(ph.end_ym, "");
       const phMonths = ps && pe ? monthRange(ps, pe) : [];
       const rev = pyRound(num(ph.revenue), 2);
-      const cost = !isBlank(ph.override_cost) ? pyRound(num(ph.override_cost), 2) : pyRound(phMonths.reduce((a, m) => a + monthCost(m), 0), 2);
+      const sumOf = f => pyRound(phMonths.reduce((a, m) => a + f(m), 0), 2);
+      const pInt = sumOf(m => internalMonthly[m] || 0), pExt = sumOf(m => externalMonthly[m] || 0);
+      const pExp = sumOf(m => (generalMonthly[m] || 0) + (intOvh[m] || 0) + (extOvh[m] || 0) + (customMonthly[m] || 0));
+      const calcCost = sumOf(monthCost), overridden = !isBlank(ph.override_cost);
+      const cost = overridden ? pyRound(num(ph.override_cost), 2) : calcCost;
       cumRev = pyRound(cumRev + rev, 2);
       cumCost = pyRound(cumCost + cost, 2);
       return {
         phase_no: idx, title: String(ph.title || `${idx}차 계약`), start_ym: ps, end_ym: pe,
-        revenue: rev, cost, profit: pyRound(rev - cost, 2), margin_rate: rev > 0 ? pyRound(((rev - cost) / rev) * 100.0, 2) : 0,
+        revenue: rev, cost, calc_cost: calcCost, overridden, internal_labor: pInt, external_labor: pExt, expense: pExp, profit: pyRound(rev - cost, 2), margin_rate: rev > 0 ? pyRound(((rev - cost) / rev) * 100.0, 2) : 0,
         cum_revenue: cumRev, cum_cost: cumCost, rem_revenue: pyRound(revenue - cumRev, 2), rem_cost: pyRound(totalCost - cumCost, 2)
       };
     });
@@ -226,7 +241,7 @@
     vendor: r => (r.__kind === "internal" ? "내부" : String(r.vendor || "").trim() || "(미지정)"),
     kind: r => (r.__kind === "internal" ? "내부" : "외주")
   };
-  function staffStats(calc, o = {}) {
+  function staffStats(calc, o = {}) {   // o.settings 가 있으면 기준정보 순서로
     const months = o.months && o.months.length ? calc.months.filter(m => o.months.includes(m)) : calc.months;
     const scope = o.scope || "all", keyOf = BY[o.by] || BY.area;
     const people = [];
@@ -248,7 +263,11 @@
     const rows = [...groups.values()];
     const totalCost = rows.reduce((a, g) => pyRound(a + g.cost, 2), 0), totalMm = rows.reduce((a, g) => pyRound(a + g.total_mm, 2), 0);
     rows.forEach(g => { g.share = totalCost > 0 ? pyRound((g.cost / totalCost) * 100, 2) : 0; g.mm_share = totalMm > 0 ? pyRound((g.total_mm / totalMm) * 100, 2) : 0; });
-    rows.sort((a, b) => b.total_mm - a.total_mm || a.key.localeCompare(b.key, "ko"));
+    const st = o.settings || {};
+    const order = { area: st.areas, grade: gradeNames(st).concat(st.external_grades || []), vendor: ["내부"].concat(vendorNames(st)), kind: ["내부", "외주"] }[o.by];
+    const rank = rankOf(order || []);
+    const sorted = sortByRanks(rows, [g => rank(g.key)]);   // 기준정보에 없는 값(역할 등)은 나온 순서
+    rows.length = 0; rows.push(...sorted);
     return { months, rows, total: { mm: Object.fromEntries(months.map(m => [m, pyRound(rows.reduce((a, g) => a + g.mm[m], 0), 2)])), total_mm: totalMm, cost: totalCost, people: rows.reduce((a, g) => a + g.people, 0) } };
   }
 
@@ -283,6 +302,6 @@
     return { summary, staff };
   }
 
-  PC.Calc = { compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
+  PC.Calc = { orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Calc;
 })(typeof window !== "undefined" ? window : globalThis);

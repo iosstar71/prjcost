@@ -12,6 +12,11 @@
 
   const head = cells => ({ cells, style: "head" });
   const catName = c => ((PC.Model.CATEGORIES.find(x => x.v === c) || {}).t || c || "일반경비");
+  // 글이 들어갈 줄 높이: 칸 너비(글자 수) 기준으로 줄 수를 어림 (한글은 한 글자에 두 칸)
+  function textHeight(text, width) {
+    const lines = String(text || "").split(/\r?\n/).reduce((n, line) => n + Math.max(1, Math.ceil([...line].reduce((w, ch) => w + (ch.charCodeAt(0) > 255 ? 2 : 1), 0) / Math.max(10, width - 2))), 0);
+    return Math.max(20, Math.min(400, lines * 16 + 6));
+  }
   const widths = (n, w = 16, first) => Array.from({ length: n }, (_, i) => (i === 0 && first ? first : w));
 
   function projectSheets(project, calc, auditRows) {
@@ -19,15 +24,14 @@
     const info = [
       ["프로젝트 ID", project.project_id], ["프로젝트명", project.project_name], ["고객사", project.client_name], ["프로젝트 PM", project.pm_name],
       ["영업대표", project.sales_rep], ["시작일/월", project.start_date || project.start_ym], ["종료일/월", project.end_date || project.end_ym],
-      ["프로젝트 설명", { v: project.description || "", s: "wrap" }],
+      ["프로젝트 설명", { v: project.description || "", s: "wrap" }, textHeight(project.description, 46)],
       ["계약 매출(원)", s.revenue], ["총 원가(원)", s.total_cost], ["예상 이익(원)", s.profit], ["예상 이익률(%)", { v: s.margin_rate, s: "dec" }],
       ["목표 허들(%)", { v: s.hurdle_rate, s: "dec" }], ["허들 대비(%p)", { v: s.hurdle_gap, s: s.hurdle_met ? "ok" : "warn" }],
       ["내부 인건비(원)", b.internal_labor], ["외주 인건비(원)", b.external_labor], ["일반 경비(원)", b.general_expense],
       ["내부 인비례경비(원)", b.internal_overhead], ["외주 인비례경비(원)", b.external_overhead], ["기타 비용(원)", b.custom_cost]
-    ].map(([k, v]) => ({ cells: [{ v: k, s: "label" }, v === undefined || v === null ? "" : v] }));
+    ].map(([k, v, ht]) => ({ cells: [{ v: k, s: "label" }, v === undefined || v === null ? "" : v], ht }));
 
     const settingsRows = [
-      ["승진설정", "default_promotion_month", "기본승진월", String(st.default_promotion_month || "03")],
       ["연봉인상", "raise_month", "연봉인상월", String(st.raise_month || "")],
       ...(st.internal_grades || []).map(g => ["내부등급", g.grade || "", "기준단가", num(g.rate)]),
       ...(st.internal_grades || []).filter(g => g.raise_rate !== undefined && g.raise_rate !== "").map(g => ["내부등급인상", g.grade || "", "인상단가", num(g.raise_rate)]),
@@ -39,9 +43,8 @@
     ].map(cells => ({ cells }));
 
     const d = calc.details;
-    const step = l => { const r0 = (l || [])[0] || {}; return [r0.effective_ym || "", r0.rate === undefined || r0.rate === "" ? "" : num(r0.rate)]; };   // 첫 인상 · 승진 (월, 단가)
     const internal = d.internal_labor.map(m => {
-      return { cells: [m.name || "", m.role || "", m.area || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", ...step(m.promotions), ((m.promotions || [])[0] || {}).grade || "", { v: m.total_mm, s: "dec" },
+      return { cells: [m.name || "", m.role || "", m.area || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", { v: m.total_mm, s: "dec" },
         ...months.map(mo => ({ v: m.calc[mo].mm, s: "dec" })), m.total_cost] };
     });
     const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.area || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, { v: e.total_mm, s: "dec" },
@@ -52,7 +55,7 @@
       ...(d.mm_overheads || []).map(o => [o.category === "mm_internal" ? "인비례(내부)" : "인비례(외주)", o.account, "MM×기준금액", o.unit_amount, ...months.map(m => o.calc_monthly[m]), o.total_cost]),
       ...d.custom_costs.map(e => ["기타경비", e.name || "", e.dist_mode || "", expIn(e), ...months.map(m => e.calc_monthly[m]), e.total_cost])
     ].map(cells => ({ cells }));
-    const phases = calc.phases.map(p => ({ cells: [p.phase_no, p.title, p.start_ym, p.end_ym, p.revenue, p.cost, { v: p.margin_rate, s: "dec" }, p.cum_revenue, p.cum_cost, p.rem_revenue, p.rem_cost] }));
+    const phases = calc.phases.map(p => ({ cells: [p.phase_no, p.title, p.start_ym, p.end_ym, p.revenue, p.cost, { v: p.margin_rate, s: "dec" }, p.cum_revenue, p.cum_cost, p.rem_revenue, p.rem_cost, p.internal_labor, p.external_labor, p.expense] }));
     const est = calc.estimate;
     const estimate = [
       { cells: [{ v: "견적번호", s: "label" }, est.estimate_no, { v: "견적일자", s: "label" }, est.estimate_date, { v: "매출적용여부", s: "label" }, est.applied_to_revenue ? "Y" : "N"] },
@@ -73,10 +76,10 @@
     return [
       { name: "01_Project_Info", cols: [22, 48], rows: [head(["항목", "내용"]), ...info] },
       { name: "02_Project_Settings", cols: widths(4, 22), rows: [head(["구분", "항목1(업체/등급/키)", "항목2(등급/유형)", "값(단가/비율/설명)"]), ...settingsRows] },
-      { name: "03_Internal_Labor", cols: widths(11 + months.length), rows: [head(["성명", "역할", "담당영역", "등급", "기준단가", "인비례포함", "승진월", "승진단가", "승진등급", "총MM", ...mHead, "합계금액"]), ...internal] },
+      { name: "03_Internal_Labor", cols: widths(8 + months.length), rows: [head(["성명", "역할", "담당영역", "등급", "기준단가", "인비례포함", "총MM", ...mHead, "합계금액"]), ...internal] },
       { name: "04_External_Labor", cols: widths(9 + months.length), rows: [head(["성명/구분", "역할", "담당영역", "외주업체", "등급", "기준단가", "적용단가", "총MM", ...mHead, "합계금액"]), ...external] },
       { name: "05_Expenses", cols: widths(5 + months.length), rows: [head(["구분", "경비계정/항목", "분배방식", "입력금액", ...mHead, "합계금액"]), ...expenses] },
-      { name: "06_Phases", cols: widths(11), rows: [head(["회차", "구분", "시작월", "종료월", "회차매출", "회차원가", "회차이익률(%)", "누적매출", "누적원가", "잔여매출", "잔여원가"]), ...phases] },
+      { name: "06_Phases", cols: widths(14), rows: [head(["회차", "구분", "시작월", "종료월", "회차매출", "회차원가", "회차이익률(%)", "누적매출", "누적원가", "잔여매출", "잔여원가", "내부인건비", "외주인건비", "경비"]), ...phases] },
       { name: "07_Estimate", cols: widths(6, 18), freeze: false, rows: estimate },
       { name: "08_Versions", cols: [8, 16, 20, 40, 16, 16, 12], freeze: false, rows: versions },
       { name: "99_Audit_Log", cols: [20, 12, 16, 16, 16, 12], rows: audit },
@@ -91,7 +94,6 @@
     const st = settings || {};
     return [
       { name: "Overhead_Config", cols: [28, 14, 24], rows: [head(["config_key", "value", "description"]),
-        { cells: ["default_promotion_month", String(st.default_promotion_month || "03"), "내부 기본 승진월(MM)"] },
         { cells: ["raise_month", String(st.raise_month || ""), "연봉 인상월(MM) — 등급의 인상단가가 이 달부터"] }] },
       { name: "Internal_Grades", cols: [16, 16, 16], rows: [head(["grade", "monthly_rate", "raise_rate"]), ...(st.internal_grades || []).map(g => ({ cells: [g.grade || "", num(g.rate), g.raise_rate === undefined || g.raise_rate === "" ? "" : num(g.raise_rate)] }))] },
       { name: "External_Grades", cols: [16], rows: [head(["grade"]), ...(st.external_grades || []).map(g => ({ cells: [String(g)] }))] },
@@ -111,7 +113,6 @@
       const k = String(r[0] || "").trim();
       if (k === "internal_overhead_ratio" && r[1] !== "") st.internal_overhead_ratio = num(r[1]);
       else if (k === "external_overhead_ratio" && r[1] !== "") st.external_overhead_ratio = num(r[1]);
-      else if (k === "default_promotion_month" && r[1] !== "") st.default_promotion_month = String(r[1]).padStart(2, "0");
     });
     const vr = wb.sheet("External_Rates");
     if (vr) {
@@ -132,7 +133,7 @@
       ...[["프로젝트 ID", project.project_id, "고객사", project.client_name], ["프로젝트 PM", project.pm_name, "영업대표", project.sales_rep],
         ["수행 기간", `${project.start_date || ""} ~ ${project.end_date || ""} (${months.length}개월)`, "견적 공급가액", est.supply_total],
         ["목표 허들(%)", pctCell(s.hurdle_rate), "작성 시각", PC.nowText()]].map(([a, b, c2, e]) => ({ cells: [{ v: a, s: "label" }, b || "", { v: c2, s: "label" }, e === undefined ? "" : e] })),
-      { cells: [{ v: "프로젝트 설명", s: "label" }, { v: project.description || "", s: "wrap" }] }, { cells: [] },
+      { cells: [{ v: "프로젝트 설명", s: "label" }, { v: project.description || "", s: "wrap" }], merge: [1, 7], ht: textHeight(project.description, 7 * 16) }, { cells: [] },
       { cells: [{ v: "원가 및 수익성 요약", s: "title" }] },
       head(["구분", "금액(원)", "원가 비중(%)", "매출 대비(%)"]),
       { cells: [{ v: "계약 매출", s: "label" }, rev, "", pctCell(rev > 0 ? 100 : 0)] }
@@ -145,8 +146,8 @@
     r1.push({ cells: [{ v: "예상 이익 / 이익률", s: s.hurdle_met ? "ok" : "warn" }, { v: s.profit, s: s.hurdle_met ? "ok" : "warn" }, "", { v: s.margin_rate, s: s.hurdle_met ? "ok" : "warn" }] });
     r1.push({ cells: [`허들 대비 ${s.hurdle_gap >= 0 ? "+" : ""}${s.hurdle_gap}%p (${s.hurdle_met ? "달성" : "미달"})`] }, { cells: [] });
     if (calc.phases.length) {
-      r1.push({ cells: [{ v: "분할계약 현황 (회차 / 누적 / 잔여)", s: "title" }] }, head(["회차", "기간", "회차 매출", "회차 원가", "이익률(%)", "누적 매출", "누적 원가", "잔여 매출"]));
-      calc.phases.forEach(p => r1.push({ cells: [p.title, `${p.start_ym}~${p.end_ym}`, p.revenue, p.cost, pctCell(p.margin_rate), p.cum_revenue, p.cum_cost, p.rem_revenue] }));
+      r1.push({ cells: [{ v: "분할계약 현황 (회차 / 누적 / 잔여)", s: "title" }] }, head(["회차", "기간", "회차 매출", "회차 원가", "내부 인건비", "외주 인건비", "경비", "이익률(%)", "누적 매출", "누적 원가", "잔여 매출"]));
+      calc.phases.forEach(p => r1.push({ cells: [p.title, `${p.start_ym}~${p.end_ym}`, p.revenue, p.cost, p.internal_labor, p.external_labor, p.expense, pctCell(p.margin_rate), p.cum_revenue, p.cum_cost, p.rem_revenue] }));
     }
     const r2 = [];
     const section = (title, heads, rows, total) => {
@@ -163,7 +164,7 @@
     ], s.breakdown.general_expense + s.breakdown.internal_overhead + s.breakdown.external_overhead + s.breakdown.custom_cost);
     const r3 = [];
     [["area", "담당 영역별"], ["grade", "등급별"], ["vendor", "업체별 (내부 / 외주업체)"]].forEach(([by, title]) => {
-      const st3 = PC.Calc.staffStats(calc, { by });
+      const st3 = PC.Calc.staffStats(calc, { by, settings: project.settings || {} });
       r3.push({ cells: [{ v: `인력 투입 — ${title}`, s: "title" }] }, head(["구분", "인원", ...st3.months, "총 MM", "MM 비중(%)", "인건비(원)", "금액 비중(%)"]));
       st3.rows.forEach(g => r3.push({ cells: [g.key, g.people, ...st3.months.map(m => ({ v: g.mm[m], s: "dec" })), { v: g.total_mm, s: "dec" }, pctCell(g.mm_share), g.cost, pctCell(g.share)] }));
       r3.push({ cells: ["합계", st3.total.people, ...st3.months.map(m => ({ v: st3.total.mm[m], s: "dec" })), { v: st3.total.total_mm, s: "dec" }, "", st3.total.cost, ""], style: "total" }, { cells: [] });

@@ -112,7 +112,7 @@
       catch (e) { await this._quarantine(dir, file, "bad_project"); throw new Error(`파일이 손상되어 backups 폴더로 옮겼습니다: ${file}`); }
       const json = X.readJson(wb.sheet("State_JSON"));
       if (!json) throw new Error(`${file} 에 프로젝트 자료(State_JSON 시트)가 없습니다. 이 프로그램으로 저장한 파일인지 확인하세요.`);
-      return { project: M.normalize(json, master), mtime: f.lastModified };
+      return { project: M.normalize(PC.clone(json), master), raw: json, mtime: f.lastModified };
     },
     fileFor(project) { return `${safeId(project.project_id)}.xlsx`; },
     async exists(file) { return !!(await this._file(await this._sub("projects"), file)); },

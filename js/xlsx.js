@@ -94,12 +94,19 @@
 <xf fontId="3" applyFont="1"/>
 </cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
 
-  // 시트: { name, rows: [{ cells:[값 | {v, s}], style }], cols: [너비…], hidden, freeze }
+  // 시트: { name, rows: [{ cells:[값 | {v, s}], style, merge: [첫 열, 끝 열](0부터, 그 줄 안에서 합침), ht: 줄 높이 }], cols: [너비…], hidden, freeze }
   //  숫자 칸은 줄 꾸밈이 없으면 금액(#,##0), 글자 칸은 테두리만
   function sheetXml(sh) {
+    const merges = [];
     const rows = (sh.rows || []).map((row, ri) => {
       const r = Array.isArray(row) ? { cells: row } : row;
-      const cells = (r.cells || []).map((c, ci) => {
+      const raw = (r.cells || []).slice();
+      if (r.merge) {   // 합친 칸의 나머지도 같은 꾸밈 (테두리가 끊기지 않게)
+        const sty = (raw[r.merge[0]] && raw[r.merge[0]].s) || r.style || "body";
+        for (let k = r.merge[0] + 1; k <= r.merge[1]; k++) if (raw[k] === undefined || raw[k] === "") raw[k] = { v: "", s: sty };
+        merges.push(`${colName(r.merge[0])}${ri + 1}:${colName(r.merge[1])}${ri + 1}`);
+      }
+      const cells = raw.map((c, ci) => {
         const cell = c !== null && typeof c === "object" && "v" in c ? c : { v: c };
         const v = cell.v;
         if (v === null || v === undefined || v === "") return r.style || cell.s ? `<c r="${colName(ci)}${ri + 1}" s="${STYLE[cell.s || r.style] || 0}"/>` : "";
@@ -108,13 +115,13 @@
         return isNum ? `<c r="${colName(ci)}${ri + 1}" s="${s}"><v>${v}</v></c>`
           : `<c r="${colName(ci)}${ri + 1}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
       }).join("");
-      return `<row r="${ri + 1}">${cells}</row>`;
+      return `<row r="${ri + 1}"${r.ht ? ` ht="${r.ht}" customHeight="1"` : ""}>${cells}</row>`;
     }).join("");
     const cols = (sh.cols || []).length ? `<cols>${sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>` : "";
     const view = sh.freeze === false || sh.hidden ? `<sheetViews><sheetView workbookViewId="0"/></sheetViews>`
       : `<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`;
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${view}${cols}<sheetData>${rows}</sheetData></worksheet>`;
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${view}${cols}<sheetData>${rows}</sheetData>${merges.length ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join("")}</mergeCells>` : ""}</worksheet>`;
   }
 
   function build(sheets) {

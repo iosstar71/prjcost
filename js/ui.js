@@ -36,12 +36,14 @@
   const confirm = async (title, message, okLabel, danger) =>
     (await choose(title, message, [{ id: "cancel", label: "취소" }, { id: "ok", label: okLabel || "확인", cls: danger ? "danger" : "primary" }])) === "ok";
 
-  // 입력 칸이 있는 창 → { key: 값 } (취소 = null). fields: [{ key, label, value, ph, options(골라 쓰는 값), multiline }]
+  // 입력 칸이 있는 창 → { key: 값 } (취소 = null). fields: [{ key, label, value, ph, options(골라 쓰는 값), choices([{v, t}] 고르기), multiline }]
   function form(title, message, fields, okLabel) {
     return new Promise(resolve => {
       const ov = document.createElement("div");
       ov.className = "overlay";
-      const ctl = (f, i) => f.multiline
+      const ctl = (f, i) => f.choices
+        ? `<select data-key="${esc(f.key)}">${f.choices.map(o => `<option value="${esc(o.v)}"${String(o.v) === String(f.value) ? " selected" : ""}>${esc(o.t)}</option>`).join("")}</select>`
+        : f.multiline
         ? `<textarea rows="3" data-key="${esc(f.key)}" placeholder="${esc(f.ph || "")}">${esc(f.value || "")}</textarea>`
         : `<input type="text" data-key="${esc(f.key)}" value="${esc(f.value || "")}" placeholder="${esc(f.ph || "")}"${f.options ? ` list="dlgList${i}"` : ""}>${f.options ? `<datalist id="dlgList${i}">${f.options.map(o => `<option value="${esc(o)}"></option>`).join("")}</datalist>` : ""}`;
       ov.innerHTML = `<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"><h3 id="dlgTitle">${esc(title)}</h3>${message ? `<p>${esc(message)}</p>` : ""}

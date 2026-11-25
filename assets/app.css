@@ -253,3 +253,9 @@ table.grid td.rate-step { box-shadow: inset 3px 0 0 var(--warn); }
 @media (max-width: 1100px) { .ver-cmp { grid-template-columns: minmax(0, 1fr); } }
 
 .raise-bar { max-width: 260px; margin-bottom: 14px; }
+
+/* 기준정보 목록 순서 바꾸기 (▲ ▼) */
+.mv { display: inline-flex; gap: 0; margin-right: 2px; }
+.mv .btn.icon-only { padding: 2px; min-width: 0; border: 0; background: transparent; color: var(--muted); }
+.mv .btn.icon-only:hover { color: var(--text); background: var(--chip); }
+th.grp { border-bottom: 1px solid var(--line); }

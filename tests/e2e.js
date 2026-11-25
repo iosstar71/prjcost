@@ -49,15 +49,15 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     const note = await page.textContent(".dialog");
     await page.click('.dialog button[data-id="ok"]');
     const s1 = await page.evaluate(() => PC.App.S.calc.summary);
-    check("A v4 file opens: labor and expenses as in v4 (internal 38,000,000 · external 22,500,000), old ratio overhead dropped with a notice", s1.breakdown.internal_labor === 38000000 && s1.breakdown.external_labor === 22500000 && s1.total_cost === 66500000 && note.includes("기준금액"), JSON.stringify(s1.breakdown) + " " + note.slice(0, 60));
+    check("A v4 file opens: old ratio overhead and the promotion rate dropped with one notice (internal 36,000,000 at the base rate · external 22,500,000)", s1.breakdown.internal_labor === 36000000 && s1.breakdown.external_labor === 22500000 && s1.total_cost === 64500000 && note.includes("기준금액") && note.includes("승진 단가(홍길동 2026-06 8,000,000원)"), JSON.stringify(s1.breakdown) + " " + note.slice(0, 160));
 
     // 입력 → 저장 안 됨 표시 → Ctrl+S → 백업 · 다시 열면 그대로
     await page.click('[data-act="showTab"][data-args*="internal"]');
     const cell = page.locator('input[data-bind="internal_labor.0.mm.2026-05"]');
     await cell.fill("1"); await cell.press("Tab");
-    await page.waitForFunction(() => PC.App.S.calc.summary.breakdown.internal_labor === 41600000, null, { timeout: 3000 }).catch(() => {});
+    await page.waitForFunction(() => PC.App.S.calc.summary.breakdown.internal_labor === 39600000, null, { timeout: 3000 }).catch(() => {});
     const ed = await page.evaluate(() => ({ state: document.getElementById("saveState").textContent, internal: PC.App.S.calc.summary.breakdown.internal_labor, focus: document.activeElement.dataset.bind || document.activeElement.tagName }));
-    check("Editing a month MM recalculates at once and marks the project unsaved; Tab moves to the next month", ed.state.includes("저장 안 됨") && ed.internal === 41600000 && ed.focus === "internal_labor.0.mm.2026-06", JSON.stringify(ed));
+    check("Editing a month MM recalculates at once and marks the project unsaved; Tab moves to the next month", ed.state.includes("저장 안 됨") && ed.internal === 39600000 && ed.focus === "internal_labor.0.mm.2026-06", JSON.stringify(ed));
     await page.keyboard.press("Control+s");
     await page.waitForFunction(() => !document.getElementById("saveState").classList.contains("dirty"));
     const after = await page.evaluate(async () => {
@@ -148,14 +148,26 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Typing a name in the blank last row adds a person and moves to the role cell", (await page.evaluate(() => PC.App.S.proj.internal_labor[4].name)) === "정신입" && (await focused()) === "internal_labor.4.role", await focused());
     await page.evaluate(() => { while (PC.App.S.proj.internal_labor.length > 2) PC.App.S.proj.internal_labor.pop(); PC.App.render(); });
 
-    // 승진은 인력 표 (승진월 · 승진등급), 단가 인상은 기준정보 (등급 인상단가 + 연봉 인상월 / 외주업체 인상월 · 인상단가)
+    // 총 MM: 달별 MM 을 고치면 합으로 바뀜 / 기간을 골라 배분 (기간 밖은 0) / 기준정보 순서로 줄 세우기
     await page.selectOption(B("internal_labor.1.area"), "개발");
-    await page.fill(B("internal_labor.1.promotions.0.effective_ym"), "2026-05"); await page.keyboard.press("Tab");
-    await page.selectOption(B("internal_labor.1.promotions.0.grade"), "책임");
-    await page.waitForFunction(() => PC.App.S.calc.details.internal_labor[1].calc["2026-05"].rate === 7200000, null, { timeout: 3000 }).catch(() => {});
-    const promo = await page.evaluate(() => { const r = PC.App.S.calc.details.internal_labor[1]; return { area: r.area, rates: ["2026-02", "2026-03", "2026-05"].map(m => r.calc[m].rate), step: document.querySelector('[data-bind="internal_labor.1.mm.2026-05"]').closest("td").classList.contains("rate-step"), raiseCols: document.querySelectorAll('[data-bind*="rate_changes"]').length }; });
-    check("Promotion is set per person (month + grade); the grade raise from Settings applies from the raise month (demo 03)", promo.area === "개발" && promo.rates.join() === "6000000,6200000,7200000" && promo.step && promo.raiseCols === 0, JSON.stringify(promo));
+    await page.fill(B("internal_labor.1.mm.2026-06"), "0.5"); await page.keyboard.press("Tab");
+    await page.waitForFunction(() => document.querySelector('[data-bind="internal_labor.1.target_mm"]').value === "5", null, { timeout: 3000 }).catch(() => {});
+    const tm1 = await page.evaluate(() => [PC.App.S.proj.internal_labor[1].target_mm, document.querySelector('[data-bind="internal_labor.1.target_mm"]').value]);
+    await page.locator('[data-act="distributeRange"]').nth(1).click();
+    await page.waitForSelector(".dialog-form");
+    await page.selectOption('.dialog [data-key="from"]', "2026-03"); await page.selectOption('.dialog [data-key="to"]', "2026-05");
+    await page.fill('.dialog [data-key="mm"]', "2.4");
+    await page.click('.dialog button[data-id="ok"]');
+    const dr = await page.evaluate(() => { const r = PC.App.S.proj.internal_labor[1]; return { mm: ["2026-01", "2026-03", "2026-04", "2026-05", "2026-06"].map(m => r.mm[m] || 0), total: r.target_mm }; });
+    check("Total MM follows the monthly plan; distributing over a chosen period fills only those months", tm1[0] === 5 && tm1[1] === "5" && dr.mm.join() === "0,0.8,0.8,0.8,0" && dr.total === 2.4, JSON.stringify({ tm1, dr }));
     for (let k = 0; k < 3; k++) await page.keyboard.press("Control+z");
+    await page.click('[data-act="sortRows"][data-args*="internal_labor"]');
+    const sorted = await page.evaluate(() => PC.App.S.proj.internal_labor.map(r => r.area));
+    check("Sort by settings order (areas: PMO → 분석 · 설계 → 개발)", sorted.join() === "PMO,분석 · 설계", sorted.join());
+    await page.keyboard.press("Control+z");
+    const promoCols = await page.evaluate(() => document.querySelectorAll('[data-bind*="promotions"]').length);
+    check("No promotion columns any more", promoCols === 0);
+
     await page.click('[data-act="showTab"][data-args*="settings"]');
     await page.click('[data-act="showSettings"][data-args*="grades"]');
     await page.fill(B("settings.raise_month"), "04"); await page.keyboard.press("Tab");
@@ -166,6 +178,15 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Settings: changing the raise month moves the internal raise; vendor rate has its own raise month and rate", rm.join() === "6000000,6200000" && vr.ym === "2026-04" && vr.rates.join() === "7800000,8000000", JSON.stringify({ rm, vr }));
     await page.evaluate(() => document.activeElement.blur());
     await page.keyboard.press("Control+z");
+    // 기준정보 목록의 순서 바꾸기 (▲ ▼) → 투입 현황도 그 순서
+    await page.click('[data-act="showSettings"][data-args*="areas"]');
+    await page.locator('[data-act="moveRow"][data-args*="settings.areas"]').nth(4).click();   // 셋째 줄의 ▲
+    const areasNow = await page.evaluate(() => PC.App.S.proj.settings.areas.slice(0, 3).join());
+    await page.click('[data-act="showTab"][data-args*="stats"]');
+    const statOrder = await page.$$eval("#panel table tbody tr", rs => rs.map(r => r.cells[0].innerText.trim()).filter(t => t !== "합계").join());
+    check("Settings lists can be reordered; stats follow that order", areasNow === "PMO,개발,분석 · 설계" && statOrder === "PMO,개발,분석 · 설계", JSON.stringify({ areasNow, statOrder }));
+    await page.keyboard.press("Control+z");
+    await page.click('[data-act="showTab"][data-args*="settings"]');
     await page.click('[data-act="showSettings"][data-args*="grades"]');
 
     // 투입 현황: 영역별 · 등급별, 분할계약을 고르면 그 기간만
@@ -211,6 +232,11 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Expense table works like the staffing table (paste rows; month paste switches to monthly input, other months kept)", ex1.join() === "회의비,fill_all,500000,3000000" && ex2.mode === "manual" && ex2.m["2026-03"] === 100 && ex2.m["2026-04"] === 200 && ex2.m["2026-01"] === 1500000, JSON.stringify({ ex1, ex2 }));
     await page.keyboard.press("Control+z"); await page.keyboard.press("Control+z");
 
+    // 분할계약: 회차 원가를 합계 · 내부 · 외주 · 경비로
+    await page.click('[data-act="showTab"][data-args*="phase"]');
+    const ph = await page.evaluate(() => ({ heads: [...document.querySelectorAll("#panel table")[1].tHead.rows[1].cells].map(c => c.innerText.trim()), ok: PC.App.S.calc.phases.every(p => Math.abs(p.internal_labor + p.external_labor + p.expense - p.cost) < 1) }));
+    check("Split contract cost shows total · internal · external · expense", ph.heads.join() === "합계,내부 인건비,외주 인건비,경비" && ph.ok, JSON.stringify(ph));
+
     // 프로젝트 개요: 원가 구성 (인건비 · 경비(일반 + 인비례) · 기타경비)
     await page.click('[data-act="showTab"][data-args*="info"]');
     const comp = await page.$$eval("table.comp tr", rs => rs.map(r => r.innerText.replace(/\s+/g, " ").trim()));
@@ -225,6 +251,9 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     const PCn = require("../js/util.js"); require("../js/xlsx.js");
     const rwb = await PCn.Xlsx.read(fs.readFileSync(rpath));
     check("Report button downloads an Excel report (통합보고 · 항목별상세 · 투입현황)", rwb.sheets.map(x => x.name).join() === "01_통합보고,02_항목별상세,03_투입현황" && /^PRJ-2026-01_원가보고서_\d{8}_\d{6}\.xlsx$/.test(await page.evaluate(() => window.__lastDownload)), await page.evaluate(() => window.__lastDownload));
+    let merged = "";
+    try { merged = execFileSync("python3", ["-c", `import openpyxl,sys;ws=openpyxl.load_workbook(sys.argv[1])["01_통합보고"];r=[str(m) for m in ws.merged_cells.ranges];print(",".join(r), ws.row_dimensions[[m for m in ws.merged_cells.ranges][0].min_row].height)`, rpath], { encoding: "utf8" }).trim(); } catch (e) { merged = "openpyxl: " + e.message.split("\n")[0]; }
+    check("Report: project description spans merged cells (B:H) with a taller row", /^B\d+:H\d+ \d/.test(merged) && Number(merged.split(" ")[1]) >= 30, merged);
     check("Theme button says Dark in light mode", (await page.textContent("#btnTheme")).trim() === "Dark");
     if (shotDir) {
       fs.mkdirSync(shotDir, { recursive: true });

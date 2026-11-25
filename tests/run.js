@@ -85,19 +85,32 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   const rateOf = (row, m) => row.calc[m].rate;
   const kim = c.details.internal_labor[0], lee = c.details.internal_labor[1], ext = c.details.external_labor[0];
   eq("demo: raise month 03 within the project", PC.Calc.raiseMonth(demo.settings, c.months), "2026-03");
-  eq("internal: grade raise from 03 (also over a personal base rate), promotion rate from 05", ["2026-02", "2026-03", "2026-05"].map(m => rateOf(kim, m)), [8500000, 8800000, 9500000]);
+  eq("internal: grade raise from 03 (also over a personal base rate)", ["2026-02", "2026-03", "2026-05"].map(m => rateOf(kim, m)), [8500000, 8800000, 8800000]);
   eq("internal: other grade raise from 03", ["2026-02", "2026-03"].map(m => rateOf(lee, m)), [6000000, 6200000]);
   eq("external: vendor rate raised from the negotiated month", ["2026-03", "2026-04"].map(m => rateOf(ext, m)), [7800000, 8000000]);
   const st2 = M.defaultSettings();
   st2.internal_grades.find(g => g.grade === "책임").raise_rate = 7500000;
-  const r = (pr, ym, raise) => PC.Calc.resolveInternalRate({ grade: "선임", base_rate: 6000000, promotions: pr }, ym, st2, raise);
-  eq("promotion with grade only uses the grade rate (raised after the raise month)", [r([{ effective_ym: "2026-02", grade: "책임", rate: "" }], "2026-02", "2026-03"), r([{ effective_ym: "2026-02", grade: "책임", rate: "" }], "2026-04", "2026-03")], [7200000, 7500000]);
-  eq("grade without a raise rate keeps its rate", r([], "2026-06", "2026-03"), 6000000);
+  const r = (g, ym, raise) => PC.Calc.resolveInternalRate({ grade: g, base_rate: "" }, ym, st2, raise);
+  eq("grade rate, raised from the raise month", [r("책임", "2026-02", "2026-03"), r("책임", "2026-04", "2026-03")], [7200000, 7500000]);
+  eq("grade without a raise rate keeps its rate", r("선임", "2026-06", "2026-03"), 6000000);
   eq("no raise month in the project period = no raise", PC.Calc.raiseMonth({ raise_month: "11" }, ["2026-01", "2026-02"]), "");
   const nz = M.normalize({ settings: M.defaultSettings(), internal_labor: [{ name: "a", promotions: [{ effective_ym: "2026-03", rate: "" }], rate_changes: [{ effective_ym: "2026-04", rate: 100 }] }],
     external_labor: [{ name: "b", vendor: "파트너A", grade: "고급", rate_changes: [{ effective_ym: "2026-05", rate: 200 }] }] }, st2);
   const va = nz.settings.vendor_rates.find(v => v.vendor === "파트너A" && v.grade === "고급");
-  eq("normalize: empty promotions dropped; v0.9.1 per-person raises move (internal → promotion rate, external → vendor raise)", [nz.internal_labor[0].promotions, nz.internal_labor[0].rate_changes, nz.external_labor[0].rate_changes, va.raise_ym, va.raise_rate], [[{ effective_ym: "2026-04", rate: 100 }], undefined, undefined, "2026-05", 200]);
+  eq("normalize: promotions and per-person raises dropped (noted on open); external raise moves to the vendor rate", [nz.internal_labor[0].promotions, nz.internal_labor[0].rate_changes, nz.external_labor[0].rate_changes, va.raise_ym, va.raise_rate], [undefined, undefined, undefined, "2026-05", 200]);
+  eq("legacy note mentions the dropped promotion", /승진 단가\(a 2026-04 100원\)/.test(M.legacyNote({ internal_labor: [{ name: "a", promotions: [{ effective_ym: "2026-04", rate: 100 }] }] })), true);
+  eq("normalize: total MM = sum of the monthly plan", M.normalize({ start_date: "2026-01", end_date: "2026-03", internal_labor: [{ name: "x", target_mm: 9, mm: { "2026-01": 1, "2026-02": 0.25, "2026-09": 5 } }] }, st2).internal_labor[0].target_mm, 1.25);
+
+  // 기준정보 순서: 투입 현황 · 원가 구성 항목 · 줄 세우기
+  const ost = M.defaultSettings(); ost.areas = ["개발", "PMO", "분석 · 설계"];
+  eq("staff stats follow the settings order (areas)", PC.Calc.staffStats(c, { by: "area", settings: ost }).rows.map(x => x.key), ["개발", "PMO", "분석 · 설계"]);
+  eq("staff stats by grade: internal grades then external grades", PC.Calc.staffStats(c, { by: "grade", settings: demo.settings }).rows.map(x => x.key), ["수석", "선임", "고급"]);
+  const rows = [{ name: "a", area: "PMO", grade: "선임" }, { name: "b", area: "개발", grade: "수석" }, { name: "c", area: "PMO", grade: "수석" }, { name: "d", area: "", grade: "수석" }];
+  eq("orderRows: area then grade, blank area last", PC.Calc.orderRows("internal_labor", rows, ost).map(x => x.name), ["b", "c", "a", "d"]);
+  eq("expense items in account order", c.summary.composition.find(g => g.key === "expense").items.map(x => x.name), ["출장비", "복리후생비", "외주 관리비"].filter(n => c.summary.composition.find(g => g.key === "expense").items.some(x => x.name === n)));
+
+  // 분할계약 원가: 내부 · 외주 · 경비 합 = 회차 원가
+  eq("phase cost = internal + external + expense", c.phases.map(ph => PC.pyRound(ph.internal_labor + ph.external_labor + ph.expense, 2) === ph.cost), c.phases.map(() => true));
 
   // 버전(기준선): 남긴 자료와 지금을 비교, 불러오기는 ID · 버전 목록을 지킴
   const vp = M.demoProject(M.defaultSettings());
