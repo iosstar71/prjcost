@@ -11,6 +11,7 @@
     plus: '<path d="M12 5v14M5 12h14"/>',
     undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
     redo: '<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>',
+    building: '<path d="M4 21V5l8-3v19M12 9h8v12"/><path d="M7 8h2M7 12h2M7 16h2M15 13h2M15 17h2M2 21h20"/>',
     range: '<path d="M3 12h18"/><path d="M7 8l-4 4 4 4M17 8l4 4-4 4"/><path d="M10 5v14M14 5v14"/>',
     sort: '<path d="M7 4v16M4 17l3 3 3-3"/><path d="M14 6h7M14 11h5M14 16h3"/>',
     up: '<path d="M6 15l6-6 6 6"/>',

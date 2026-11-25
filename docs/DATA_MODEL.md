@@ -11,16 +11,17 @@
 | start_date · end_date | 기간 (예전 자료의 start_ym · end_ym 도 읽음) |
 | contract_revenue · target_hurdle_rate | 계약 매출(원) · 목표 이익률(%) |
 | settings | 이 프로젝트 전용 기준정보 (아래) — 비어 있으면 폴더의 기준정보 |
-| internal_labor[] | name · role · area(담당 영역) · grade · base_rate(비우면 등급 단가) · overhead_eligible · target_mm(총 MM — 달별 MM 을 고치면 그 합) · mm{YYYY-MM: MM} |
-| external_labor[] | name · role · area · vendor · grade · custom_rate(적용단가, 비우면 업체 · 등급 단가) · base_rate(단가표에 없을 때) · target_mm · mm{} |
+| internal_labor[] | name · role · area(담당 영역) · dept(부서) · grade · base_rate(비우면 등급 단가) · overhead_eligible · target_mm(총 MM — 달별 MM 을 고치면 그 합) · mm{YYYY-MM: MM} |
+| external_labor[] | name · role · area · dept · vendor · grade · custom_rate(적용단가, 비우면 업체 · 등급 단가) · base_rate(단가표에 없을 때) · target_mm · mm{} |
+| dept_revenue | 부서별 매출 {부서 이름: 원} — 부서 2개 이상일 때 [부서별] 탭에서 입력 |
 | versions[] | 버전(기준선): no · name(초기 계획 · 실계약 …) · memo · saved_at · data(그때의 프로젝트 자료 — versions 는 빼고) |
-| general_expenses[] · custom_costs[] | name · dist_mode(`equal_total` 총액 균등 / `fill_all` 매달 같은 금액 / `manual` 달마다) · total_input · unit_input · monthly{} · memo |
+| general_expenses[] · custom_costs[] | name · dept(비우면 공통) · dist_mode(`equal_total` 총액 균등 / `fill_all` 매달 같은 금액 / `manual` 달마다) · total_input · unit_input · monthly{} · memo |
 | phases[] (최대 5) | title · start_ym · end_ym · revenue · override_cost(비우면 기간 원가 합) |
 | estimate | estimate_no · estimate_date · note · applied_to_revenue · items[{item_name, spec, qty, unit_price, memo}] |
 
 ## settings
 raise_month("03" — 연봉 인상월, 비우면 인상 없음) · internal_grades[{grade, rate, raise_rate(인상단가)}] · external_grades["특급", …] · vendor_rates[{vendor, grade, rate, raise_ym(인상월 YYYY-MM), raise_rate(인상단가)}] · external_rates{"업체|등급": 단가}(예전 형식) ·
-areas["PMO", …](담당 영역) ·
+areas["PMO", …](담당 영역) · departments["SI사업부", …](부서 — 2개 이상이면 부서 화면, 이름에 '.' 대신 '·') · dept_common_basis(`cost` 직접 원가 비율 / `mm` / `revenue` / `equal` — 공통경비 나누는 기준) ·
 expense_accounts[{account, category, unit_amount, desc}] — category: `general` 일반경비 · `custom` 기타경비 · `mm_internal` 인비례(내부) · `mm_external` 인비례(외주), unit_amount = 인비례 기준금액(원/MM)
 - 예전 internal_overhead_ratio · external_overhead_ratio(인건비의 %)는 더 쓰지 않음 — 열 때 알리고, 저장할 때 지움
 
@@ -30,6 +31,7 @@ expense_accounts[{account, category, unit_amount, desc}] — category: `general`
 - 연봉 인상월 = 프로젝트 기간 안에서 raise_month(MM)가 처음 오는 달 (1년 이내 기준 — 한 번)
 - 내부 그 달 단가 = 기준단가 → 인상월부터 그 등급의 인상단가(넣은 등급만, 개인 기준단가보다 우선)
 - 분할계약(phases) = 회차 원가(cost — 별도 원가가 있으면 그 값, calc_cost 는 계산값)와 그 기간의 internal_labor · external_labor · expense(일반 + 인비례 + 기타)
+- 부서별 손익(Calc.deptSummary) = 인건비 · 인비례(계정마다 그 사람 MM × 기준금액)는 인력의 dept, 일반 · 기타경비는 항목의 dept(비거나 목록에 없으면 공통 → dept_common_basis 로 나눔), 매출은 dept_revenue. 부서를 고르지 않은 인력은 '(미지정)' 줄. 끝수는 가장 큰 부서에 → 합계 = 통합
 - 기준정보 순서(Calc.rankOf · orderRows) = 목록에 있는 값은 그 순서, 없는 값은 뒤, 빈 값은 맨 뒤. 투입 현황 · 원가 구성 경비 항목 · [기준정보 순서로] 줄 세우기에 씀
 - 외주 그 달 단가 = 적용단가(비우면 업체 · 등급 단가) → 업체 · 등급의 인상월부터 인상단가
 - 버전 비교(Calc.compareVersions) = 두 계산 결과의 요약(매출 · 인건비 · 경비 · 기타경비 · 총 원가 · 이익 · 이익률 · MM)과 사람별(내부/외주 + 이름) MM · 인건비 차이

@@ -232,6 +232,38 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Expense table works like the staffing table (paste rows; month paste switches to monthly input, other months kept)", ex1.join() === "회의비,fill_all,500000,3000000" && ex2.mode === "manual" && ex2.m["2026-03"] === 100 && ex2.m["2026-04"] === 200 && ex2.m["2026-01"] === 1500000, JSON.stringify({ ex1, ex2 }));
     await page.keyboard.press("Control+z"); await page.keyboard.press("Control+z");
 
+    // 부서: 하나 이하면 지금 화면 그대로, 2개 이상이면 부서 칸 · [부서별] 탭 (외주 인력도 부서, 매출은 입력)
+    const noDept = await page.evaluate(() => ({ tab: !!document.querySelector('[data-act="showTab"][data-args*="dept"]'), col: document.querySelectorAll('[data-bind$=".dept"]').length }));
+    await page.click('[data-act="showTab"][data-args*="settings"]');
+    await page.click('[data-act="showSettings"][data-args*="depts"]');
+    await page.fill('input[data-new="settings.departments"]', "SI사업부"); await page.keyboard.press("Enter");
+    await page.evaluate(() => document.activeElement.blur());
+    const oneDept = await page.evaluate(() => !!document.querySelector('[data-act="showTab"][data-args*="dept"]'));
+    await page.fill('input[data-new="settings.departments"]', "AI사업부"); await page.keyboard.press("Enter");
+    await page.evaluate(() => document.activeElement.blur());
+    await page.click('[data-act="showTab"][data-args*="external"]');
+    await page.selectOption(B("external_labor.0.dept"), "AI사업부");
+    await page.click('[data-act="showTab"][data-args*="internal"]');
+    const newDept = await page.evaluate(() => PC.App.S.proj.internal_labor.map(r => r.dept || ""));
+    await page.click('[data-act="showTab"][data-args*="dept"]');
+    await page.fill(B("dept_revenue.SI사업부"), "140,000,000"); await page.keyboard.press("Tab");
+    await page.fill(B("dept_revenue.AI사업부"), "100,000,000"); await page.keyboard.press("Tab");
+    await page.waitForFunction(() => (PC.App.S.proj.dept_revenue || {})["AI사업부"] === 100000000, null, { timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(50);
+    const dv = await page.evaluate(() => ({ rows: [...document.querySelectorAll(".dept-tbl tbody tr")].map(r => r.cells[0].innerText.trim()), total: document.querySelector(".dept-tbl tr.total").cells[7].innerText.trim(), cost: PC.App.S.calc.summary.total_cost, warn: !!document.querySelector(".note-warn"), ext: PC.Calc.deptSummary(PC.App.S.proj, PC.App.S.calc).rows.find(g => g.dept === "AI사업부").external_labor }));
+    check("Departments: hidden with 0-1 departments; with 2, staff without one go to the first department, department columns and a Department P&L tab (external staff mapped, revenue entered, total = project cost)",
+      !noDept.tab && noDept.col === 0 && !oneDept && newDept.join() === "SI사업부,SI사업부" && dv.rows.join() === "SI사업부,AI사업부,합계 (통합)" && dv.total === dv.cost.toLocaleString("ko-KR") && !dv.warn && dv.ext > 0, JSON.stringify({ noDept, oneDept, newDept, dv }));
+    // 부서 이름을 바꾸면 인력 · 매출도 따라감
+    await page.click('[data-act="showTab"][data-args*="settings"]');
+    await page.fill(B("settings.departments.1"), "AI본부"); await page.keyboard.press("Tab");
+    await page.waitForFunction(() => PC.App.S.proj.settings.departments[1] === "AI본부", null, { timeout: 3000 }).catch(() => {});
+    const rn = await page.evaluate(() => [PC.App.S.proj.external_labor[0].dept, PC.App.S.proj.dept_revenue["AI본부"]]);
+    check("Renaming a department carries over to staff and department revenue", rn[0] === "AI본부" && rn[1] === 100000000, JSON.stringify(rn));
+    if (shotDir) { await page.click('[data-act="showTab"][data-args*="dept"]'); await page.screenshot({ path: path.join(shotDir, "light_dept.png"), fullPage: true }); await page.click('[data-act="showTab"][data-args*="internal"]'); await page.screenshot({ path: path.join(shotDir, "light_internal_dept.png") }); }
+    for (let k = 0; k < 7; k++) await page.keyboard.press("Control+z");
+    const back = await page.evaluate(() => PC.App.S.proj.settings.departments.length);
+    check("Undo removes the department setup again", back === 0, String(back));
+
     // 분할계약: 회차 원가를 합계 · 내부 · 외주 · 경비로
     await page.click('[data-act="showTab"][data-args*="phase"]');
     const ph = await page.evaluate(() => ({ heads: [...document.querySelectorAll("#panel table")[1].tHead.rows[1].cells].map(c => c.innerText.trim()), ok: PC.App.S.calc.phases.every(p => Math.abs(p.internal_labor + p.external_labor + p.expense - p.cost) < 1) }));

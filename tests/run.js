@@ -124,6 +124,24 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   vp.project_id = "KEEP";
   const rv = M.restoreVersion(vp, vp.versions[0], M.defaultSettings());
   eq("restore brings back the data, keeps ID and versions", [rv.external_labor.length, rv.contract_revenue, rv.project_id, rv.versions.length], [1, 240000000, "KEEP", 1]);
+
+  // 부서별 손익: 인력 · 인비례는 사람의 부서, 경비는 항목의 부서(공통은 기준대로), 매출은 입력 — 합계 = 통합
+  const dp = M.demoProject(M.defaultSettings());
+  eq("one department or none = no department screens", [M.multiDept(dp), M.multiDept(Object.assign({}, dp, { settings: Object.assign({}, dp.settings, { departments: ["SI"] }) }))], [false, false]);
+  dp.settings.departments = ["SI", "AI"];
+  dp.internal_labor[0].dept = "SI"; dp.internal_labor[1].dept = "AI"; dp.external_labor[0].dept = "SI";
+  dp.custom_costs[0].dept = "AI";
+  dp.dept_revenue = { SI: 140000000, AI: 100000000 };
+  const dc = PC.Calc.calculateProjectCost(dp, dp.settings), ds = PC.Calc.deptSummary(dp, dc);
+  const bk = dc.summary.breakdown;
+  eq("dept totals = project totals (cost, revenue, overhead)", [ds.total.cost, ds.total.revenue, ds.total.overhead, ds.revenue_gap], [dc.summary.total_cost, 240000000, bk.internal_overhead + bk.external_overhead, 0]);
+  eq("dept: external staff counted in their department", ds.rows.map(g => [g.dept, g.external_labor > 0]), [["SI", true], ["AI", false]]);
+  eq("dept: common expense split by direct cost (sums to the common total)", [PC.pyRound(ds.rows[0].common + ds.rows[1].common, 2), ds.common, ds.rows[0].common > ds.rows[1].common], [bk.general_expense, bk.general_expense, true]);
+  dp.settings.dept_common_basis = "equal";
+  const de = PC.Calc.deptSummary(dp, dc);
+  eq("dept: common split equally", de.rows[0].common, de.rows[1].common);
+  dp.internal_labor[1].dept = "";
+  eq("dept: unassigned staff shown as (미지정)", PC.Calc.deptSummary(dp, PC.Calc.calculateProjectCost(dp, dp.settings)).rows.map(g => g.dept), ["SI", "AI", "(미지정)"]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

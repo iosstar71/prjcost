@@ -259,3 +259,7 @@ table.grid td.rate-step { box-shadow: inset 3px 0 0 var(--warn); }
 .mv .btn.icon-only { padding: 2px; min-width: 0; border: 0; background: transparent; color: var(--muted); }
 .mv .btn.icon-only:hover { color: var(--text); background: var(--chip); }
 th.grp { border-bottom: 1px solid var(--line); }
+
+/* 부서별 손익 */
+.note-warn { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+.dept-tbl td .money { text-align: right; }

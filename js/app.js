@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.3";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.4";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -42,7 +42,7 @@
     const focus = focusBind ? { bind: focusBind } : captureFocus();
     renderKpis();
     renderTabs();
-    const tab = Views.TABS.find(t => t.id === S.tab) || Views.TABS[0];
+    const tab = shownTabs().find(t => t.id === S.tab) || Views.TABS[0];
     $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file, sub: S.settingsTab, stats: S.stats, cmp: S.cmp });
     renderSaveState();
     renderUndo();
@@ -69,8 +69,9 @@
     $("kHurdleSub").textContent = `목표 ${s.hurdle_rate}% · ${s.hurdle_met ? "달성" : "미달"}`;
     $("kHurdleCard").className = `kpi ${s.revenue > 0 ? (s.hurdle_met ? "ok" : "bad") : ""}`;
   }
+  const shownTabs = () => Views.TABS.filter(t => !t.show || t.show(S.proj));   // 부서별 탭은 부서가 2개 이상일 때만
   function renderTabs() {
-    $("tabs").innerHTML = Views.TABS.map(t => {
+    $("tabs").innerHTML = shownTabs().map(t => {
       const n = t.count ? t.count(S.proj) : 0;
       return `<button class="tab${t.id === S.tab ? " active" : ""}" role="tab" aria-selected="${t.id === S.tab}" data-act="showTab" data-args="${esc(JSON.stringify([t.id]))}">${PC.icon(t.icon)}${esc(t.label)}${n ? `<span class="cnt">${n}</span>` : ""}</button>`;
     }).join("");
@@ -139,6 +140,10 @@
   function afterBind(path, value) {
     const p = S.proj;
     let m;
+    // 부서 이름은 자료 경로(dept_revenue.<부서>)에 쓰여서 '.' 대신 '·'
+    if (/^settings\.departments\.\d+$/.test(path) && /\./.test(value)) { const v2 = String(value).replace(/\./g, "·"); setPath(p, path, v2); renameRefs(path, value, v2); }
+    // 부서가 2개가 되는 순간: 부서가 비어 있는 인력은 첫 부서로 (그전까지 모두 한 부서였으므로). 경비의 빈 부서는 '공통' 그대로
+    if (/^settings\.departments\.\d+$/.test(path) && M.multiDept(p)) p.internal_labor.concat(p.external_labor).forEach(r => { if (!r.dept) r.dept = p.settings.departments[0]; });
     if ((m = /^internal_labor\.(\d+)\.grade$/.exec(path))) {   // 등급을 바꾸면 기준단가도 그 등급 단가로
       const g = (p.settings.internal_grades || []).find(x => x.grade === value);
       if (g) p.internal_labor[+m[1]].base_rate = num(g.rate);
@@ -152,6 +157,15 @@
       p.start_date = value === "date" ? toDate(p.start_date, false) : String(p.start_date || "").slice(0, 7);
       p.end_date = value === "date" ? toDate(p.end_date, true) : String(p.end_date || "").slice(0, 7);
     }
+  }
+  // 기준정보의 담당 영역 · 부서 이름을 바꾸면 그 이름을 쓰던 인력 · 경비 · 부서 매출도 함께
+  function renameRefs(path, oldV, newV) {
+    const m = /^settings\.(areas|departments)\.\d+$/.exec(path), p = S.proj;
+    if (!m || !oldV || oldV === newV) return;
+    const f = m[1] === "areas" ? "area" : "dept";
+    const lists = f === "area" ? [p.internal_labor, p.external_labor] : [p.internal_labor, p.external_labor, p.general_expenses, p.custom_costs];
+    lists.forEach(l => l.forEach(r => { if (r[f] === oldV) r[f] = newV; }));
+    if (f === "dept" && p.dept_revenue && oldV in p.dept_revenue) { p.dept_revenue[newV] = p.dept_revenue[oldV]; delete p.dept_revenue[oldV]; }
   }
   // 총 MM = 프로젝트 기간 달별 MM 의 합
   function syncTotal(row) {
@@ -172,6 +186,7 @@
     if (cur === v || (cur === undefined && (v === "" || v === 0 || v === false))) return;   // 값이 그대로 (다시 그리며 사라진 칸의 늦은 change 등)
     pushUndo();
     setPath(S.proj, el.dataset.bind, v);
+    renameRefs(el.dataset.bind, cur, v);
     afterBind(el.dataset.bind, v);
     // Tab · 클릭으로 다음 칸에 갈 때: 포커스가 옮겨진 뒤에 다시 그려야 그 칸을 잃지 않음
     clearTimeout(onInput.t);
@@ -182,12 +197,12 @@
   const ROW = {
     internal_labor: p => {
       const g0 = (p.settings.internal_grades || [])[0] || { grade: "선임", rate: 6000000 };
-      return { name: "신규인력", role: "개발", area: "", grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
+      return { name: "신규인력", role: "개발", area: "", dept: firstDept(p), grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
         mm: {} };
     },
     external_labor: p => {
       const v0 = (p.settings.vendor_rates || [])[0] || { vendor: "파트너A", grade: "고급" };
-      return { name: "외주인력", role: "개발", area: "", vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, mm: {} };
+      return { name: "외주인력", role: "개발", area: "", dept: firstDept(p), vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, mm: {} };
     },
     general_expenses: p => expenseRow(p, "general", "일반경비"),
     custom_costs: p => expenseRow(p, "custom", "기타비용"),
@@ -197,8 +212,10 @@
     "settings.external_grades": () => "신규등급",
     "settings.vendor_rates": p => ({ vendor: "신규업체", grade: (p.settings.external_grades || [])[0] || "고급", rate: 7500000 }),
     "settings.expense_accounts": () => ({ account: "신규계정", category: "general", desc: "" }),
-    "settings.areas": () => "새 영역"
+    "settings.areas": () => "새 영역",
+    "settings.departments": () => "새 부서"
   };
+  const firstDept = p => (M.multiDept(p) ? p.settings.departments[0] : "");
   function expenseRow(p, cat, fallback) {
     const acc = (p.settings.expense_accounts || []).find(a => a.category === cat);
     return { name: acc ? acc.account : fallback, dist_mode: "equal_total", total_input: 0, unit_input: 0, monthly: {}, memo: "" };
@@ -490,7 +507,13 @@
       setValue: (path, v) => { setPath(S.proj, path, v); afterBind(path, v); },
       // 표의 한 칸에 값: 경비의 입력 금액(@amount)은 분배 방식에 따라 총액 · 한 달 금액으로, 달별 금액을 넣으면 '월별 직접 입력'으로
       setCell: (list, row, b, v) => {
-        if (!b) { setPath(S.proj, `${list}.${row}`, v); return; }   // 글자 목록 (외주 등급 · 담당 영역)
+        if (!b) {   // 글자 목록 (외주 등급 · 담당 영역 · 부서)
+          const old = listAt(list)[row];
+          setPath(S.proj, `${list}.${row}`, v);
+          renameRefs(`${list}.${row}`, old, v);
+          afterBind(`${list}.${row}`, v);
+          return;
+        }
         const r = listAt(list)[row];
         if (b === "@amount") { if (r.dist_mode === "manual") return; b = r.dist_mode === "fill_all" ? "unit_input" : "total_input"; }
         if (/^monthly\./.test(b) && r.dist_mode !== "manual") {
@@ -501,7 +524,7 @@
         setPath(S.proj, `${list}.${row}.${b}`, v);
         afterBind(`${list}.${row}.${b}`, v);
       },
-      known: (list, key, v) => !v || (key === "area" ? (S.proj.settings.areas || []).includes(v) : key === "grade"
+      known: (list, key, v) => !v || (key === "dept" ? (S.proj.settings.departments || []).includes(v) : key === "area" ? (S.proj.settings.areas || []).includes(v) : key === "grade"
         ? (list === "internal_labor" ? (S.proj.settings.internal_grades || []).some(g => g.grade === v) : (S.proj.settings.external_grades || []).includes(v))
         : (S.proj.settings.vendor_rates || []).some(r => r.vendor === v))
     });

@@ -86,6 +86,10 @@
   }
 
   // ---------------- 인력 표 (내부 · 외주 공통) ----------------
+  // 부서 칸: 부서가 2개 이상일 때만 (하나 이하면 지금과 같은 화면)
+  const deptChoices = p => (p.settings.departments || []).filter(d => String(d).trim());
+  const deptColumn = p => (M.multiDept(p) ? [{ b: "dept", t: "text", l: "부서", th: `<th>부서</th>`, cell: (r, base) => `<td>${sel(`${base}.dept`, r.dept || "", [{ v: "", t: "-" }].concat(deptChoices(p)), { label: "부서" })}</td>` }] : []);
+
   // 기준정보 순서로 줄을 다시 세움 (인력: 영역 → 등급(외주는 업체 → 등급), 경비: 계정)
   const sortBtn = list => btn("기준정보 순서로", "sortRows", [list], "sm", "담당 영역 · 등급 · 업체 · 계정을 기준정보에 등록한 순서대로 줄 세우기", "sort");
 
@@ -106,6 +110,7 @@
       { b: "name", t: "text", l: "성명", th: `<th class="l">성명</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "PM/개발", label: "역할" })}</td>` },
       { b: "area", t: "text", l: "담당 영역", th: `<th>담당 영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "담당 영역" })}</td>` },
+      ...deptColumn(p),
       { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>` },
       { b: "base_rate", t: "blank-num", l: "기준단가", th: `<th>기준단가</th>`, cell: (r, base) => `<td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>` },
       { b: "overhead_eligible", t: "bool", l: "인비례", th: `<th title="내부 인비례 경비(MM × 기준금액)를 매길 인력">인비례</th>`, cell: (r, base) => `<td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례")}</td>` },
@@ -120,6 +125,7 @@
       { b: "name", t: "text", l: "성명", th: `<th class="l">성명/구분</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "개발/디자인", label: "역할" })}</td>` },
       { b: "area", t: "text", l: "담당 영역", th: `<th>담당 영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "담당 영역" })}</td>` },
+      ...deptColumn(p),
       { b: "vendor", t: "text", l: "외주업체", th: `<th>외주업체</th>`, cell: (r, base) => `<td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체" })}</td>` },
       { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>` },
       { b: "custom_rate", t: "blank-num", l: "적용단가", th: `<th title="비워 두면 업체 · 등급 단가표의 단가 (인상월 · 인상단가도 단가표대로)">적용단가</th>`, cell: (r, base) => `<td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>` },
@@ -135,13 +141,14 @@
     const accounts = (p.settings.expense_accounts || []).filter(a => a.category === cat).map(a => `<option value="${esc(a.account)}"></option>`).join("");
     const cols = [
       { b: "name", t: "text", l: "계정", th: `<th class="l">계정 / 항목</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-lg", list: `acc_${list}`, label: "계정" })}</td>` },
+      ...(M.multiDept(p) ? [{ b: "dept", t: "dept", l: "부서", th: `<th title="비우면 공통 — 부서별 손익에서 기준에 따라 나눔">부서</th>`, cell: (r, base) => `<td>${sel(`${base}.dept`, r.dept || "", [{ v: "", t: "공통" }].concat(deptChoices(p)), { label: "부서" })}</td>` }] : []),
       { b: "dist_mode", t: "mode", l: "분배", th: `<th>분배 방식</th>`, cell: (r, base) => `<td>${sel(`${base}.dist_mode`, r.dist_mode || "equal_total", MODES, { label: "분배 방식" })}</td>` },
       { b: "@amount", t: "num", l: "금액", th: `<th title="총액 균등: 전체 금액 / 매달 같은 금액: 한 달 금액">입력 금액</th>`, cell: (r, base) => r.dist_mode === "manual" ? `<td class="c"><span class="tag">달마다</span></td>`
         : `<td>${inp(r.dist_mode === "fill_all" ? `${base}.unit_input` : `${base}.total_input`, r.dist_mode === "fill_all" ? r.unit_input : r.total_input, { money: true, cls: "w-md", label: "입력 금액" })}</td>` },
       ...months.map(m => ({ b: `monthly.${m}`, t: "num", l: m, fill: true, th: `<th class="m">${esc(m.slice(2).replace("-", "."))}</th>`,
         cell: (r, base) => (r.dist_mode === "manual" ? `<td>${inp(`${base}.monthly.${m}`, r.calc_monthly[m] || "", { money: true, cls: "w-sm", ph: "0", label: `${m} 금액` })}</td>` : `<td class="num muted">${won(r.calc_monthly[m])}</td>`) }))
     ];
-    const foot = rows.length ? `<tr class="total"><td></td><td colspan="3" class="l">${label} 합계</td>${months.map(m => `<td class="num">${won(sumBy(rows, r => r.calc_monthly[m]))}</td>`).join("")}<td class="num">${won(sumBy(rows, r => r.total_cost))}</td></tr>` : "";
+    const foot = rows.length ? `<tr class="total"><td></td><td colspan="${cols.length - months.length}" class="l">${label} 합계</td>${months.map(m => `<td class="num">${won(sumBy(rows, r => r.calc_monthly[m]))}</td>`).join("")}<td class="num">${won(sumBy(rows, r => r.total_cost))}</td></tr>` : "";
     return `<datalist id="acc_${list}">${accounts}</datalist>` + gridTable({ list, rows, cols, newLabel: "계정 입력", foot, tailHead: `<th>합계(원)</th>`, tail: r => `<td class="num"><b>${won(r.total_cost)}</b></td>` });
   }
   function expense(p, c) {
@@ -219,6 +226,7 @@
     { id: "vendors", label: "외주업체 단가", count: st => (st.vendor_rates || []).length },
     { id: "accounts", label: "경비 계정", count: st => (st.expense_accounts || []).length },
     { id: "areas", label: "담당 영역", count: st => (st.areas || []).length },
+    { id: "depts", label: "부서", count: st => (st.departments || []).length },
     { id: "basics", label: "기본값 · 데모" }
   ];
   function settings(p, c, ctx) {
@@ -248,6 +256,9 @@
         text("desc", "설명", "w-xl")] });
     else if (sub === "areas") body = narrow(subHead("담당 영역 (시스템)", "인력마다 고르는 담당 영역 — [투입 현황]에서 영역별로 MM · 금액을 봅니다")
       + gridTable({ order: true, list: "settings.areas", rows: st.areas || [], newLabel: "영역 입력", cols: [text("", "담당 영역")] }));
+    else if (sub === "depts") body = narrow(subHead("부서", "부서를 2개 이상 넣으면 인력 · 경비에 부서 칸과 [부서별] 탭이 나타납니다. 하나 이하면 지금 화면 그대로입니다")
+      + `<div class="form-grid compact raise-bar">${field("공통경비 나누는 기준", sel("settings.dept_common_basis", st.dept_common_basis || "cost", PC.Calc.DEPT_BASIS), { help: "부서를 '공통'으로 둔 일반 · 기타경비" })}</div>`
+      + gridTable({ order: true, list: "settings.departments", rows: st.departments || [], newLabel: "부서 입력", cols: [text("", "부서")] }));
     else body = narrow(`<section class="sub-card">${subHead("기준정보 가져오기 · 내보내기")}<p class="muted">폴더의 기준정보(master/master_rates.xlsx)는 새 프로젝트를 만들 때의 기본값입니다.</p>
         <div class="bar-group">${btn("폴더 기본값으로 바꾸기", "resetSettings", [], "", "이 프로젝트의 기준정보를 폴더의 기본값으로")}${btn("이 기준정보를 새 프로젝트 기본값으로 저장", "saveDefaults", [], "", "master_rates.xlsx 에 저장")}</div></section>
       <section class="sub-card">${subHead("데모")}<p class="muted">화면을 익히거나 시연할 때 — 지금 프로젝트의 내용을 예시 자료로 바꿉니다.</p>${btn("데모 채우기", "loadDemo", [], "", "예시 자료로 채우기")}</section>`);
@@ -258,22 +269,43 @@
   const STAT_BY = [{ v: "area", t: "담당 영역" }, { v: "grade", t: "등급" }, { v: "role", t: "역할" }, { v: "vendor", t: "업체 (내부 / 외주업체)" }, { v: "kind", t: "내부 · 외주" }];
   const STAT_SCOPE = [{ v: "all", t: "전체 인력" }, { v: "internal", t: "내부만" }, { v: "external", t: "외주만" }];
   function stats(p, c, ctx) {
-    const o = ctx.stats || {}, by = o.by || "area", scope = o.scope || "all", ph = c.phases[o.phase - 1];
+    const o = ctx.stats || {}, by = o.by === "dept" && !M.multiDept(p) ? "area" : o.by || "area", scope = o.scope || "all", ph = c.phases[o.phase - 1];
     const months = ph ? PC.monthRange(ph.start_ym, ph.end_ym) : null;
     const r = PC.Calc.staffStats(c, { by, scope, months, settings: p.settings });
     const seg = (key, list, cur) => `<div class="seg">${list.map(x => `<button class="seg-btn${x.v === cur ? " active" : ""}" data-act="setStats" data-args="${args(key, x.v)}">${esc(x.t)}</button>`).join("")}</div>`;
     const phaseSel = `<select data-change-act="setStats" data-key="phase" aria-label="기간"><option value="0">전체 기간 (${c.months[0] || ""} ~ ${c.months[c.months.length - 1] || ""})</option>${c.phases.map((x, i) => `<option value="${i + 1}"${o.phase === i + 1 ? " selected" : ""}>${esc(x.title)} (${x.start_ym} ~ ${x.end_ym})</option>`).join("")}</select>`;
-    const label = (STAT_BY.find(x => x.v === by) || STAT_BY[0]).t;
+    const byList = M.multiDept(p) ? [{ v: "dept", t: "부서" }].concat(STAT_BY) : STAT_BY;
+    const label = (byList.find(x => x.v === by) || STAT_BY[0]).t;
     const mh = r.months.map(m => `<th class="m">${esc(m.slice(2).replace("-", "."))}</th>`).join("");
     const rows = r.rows.map(g => `<tr><td class="l"><b>${esc(g.key)}</b></td><td class="c">${g.people}</td>${r.months.map(m => `<td class="num${g.mm[m] ? "" : " muted"}">${g.mm[m] ? g.mm[m] : "-"}</td>`).join("")}
       <td class="num"><b>${g.total_mm}</b></td><td class="bar-cell"><span class="bar"><i class="k-internal_labor" style="width:${Math.min(100, g.mm_share)}%"></i></span></td><td class="num">${g.mm_share.toFixed(1)}%</td><td class="num">${won(g.cost)}</td><td class="num">${g.share.toFixed(1)}%</td></tr>`).join("");
     const kpi = (lbl, v) => `<div class="mini-kpi"><span>${esc(lbl)}</span><b>${v}</b></div>`;
     return head("chart", "투입 현황", "인력 계획을 담당 영역 · 등급 · 역할 · 업체별로 모아 봅니다", "")
-      + `<div class="stat-bar"><label class="field"><span>모아 볼 기준</span>${seg("by", STAT_BY, by)}</label><label class="field"><span>인력</span>${seg("scope", STAT_SCOPE, scope)}</label><label class="field"><span>기간 (분할계약)</span>${phaseSel}</label></div>
+      + `<div class="stat-bar"><label class="field"><span>모아 볼 기준</span>${seg("by", byList, by)}</label><label class="field"><span>인력</span>${seg("scope", STAT_SCOPE, scope)}</label><label class="field"><span>기간 (분할계약)</span>${phaseSel}</label></div>
       <div class="mini-kpis">${kpi("기간", `${r.months.length}개월${ph ? ` · ${esc(ph.title)}` : ""}`)}${kpi("투입 인원", `${r.total.people}명`)}${kpi("총 MM", r.total.total_mm)}${kpi("인건비", `${won(r.total.cost)}원`)}</div>
       <div class="tbl-wrap"><table><thead><tr><th class="l">${esc(label)}</th><th>인원</th>${mh}<th>총 MM</th><th class="bar-cell">MM 비중</th><th></th><th>인건비(원)</th><th>금액 비중</th></tr></thead>
       <tbody>${rows || empty(r.months.length + 7, "이 조건에 맞는 인력이 없습니다.")}
       ${rows ? `<tr class="total"><td class="l">합계</td><td class="c">${r.total.people}</td>${r.months.map(m => `<td class="num">${r.total.mm[m]}</td>`).join("")}<td class="num">${r.total.total_mm}</td><td></td><td class="num">100%</td><td class="num">${won(r.total.cost)}</td><td class="num">100%</td></tr>` : ""}</tbody></table></div>`;
+  }
+
+  // ---------------- 부서별 손익 (부서 2개 이상) ----------------
+  function dept(p, c) {
+    const r = PC.Calc.deptSummary(p, c), t = r.total;
+    const row = (g, editable) => `<tr${editable ? "" : ' class="total"'}><td class="l"><b>${esc(g.dept)}</b></td>
+      <td class="num">${editable && g.dept !== "(미지정)" ? inp(`dept_revenue.${g.dept}`, (p.dept_revenue || {})[g.dept], { money: true, cls: "w-lg", ph: "0", label: `${g.dept} 매출` }) : won(g.revenue)}</td>
+      <td class="num">${won(g.internal_labor)}</td><td class="num">${won(g.external_labor)}</td><td class="num">${won(g.overhead)}</td><td class="num">${won(g.expense)}</td><td class="num">${won(g.common)}</td>
+      <td class="num"><b>${won(g.cost)}</b></td><td class="num">${won(g.profit)}</td><td class="num">${g.revenue > 0 ? `<span class="tag ${g.margin_rate >= c.summary.hurdle_rate ? "ok" : "bad"}">${g.margin_rate.toFixed(1)}%</span>` : "-"}</td>
+      <td class="num">${g.mm.toFixed(2)}</td><td class="c">${g.people}</td></tr>`;
+    const warn = [];
+    if (r.revenue_gap) warn.push(`부서 매출 합 ${won(t.revenue)}원이 계약 매출 ${won(c.summary.revenue)}원보다 ${won(Math.abs(r.revenue_gap))}원 ${r.revenue_gap > 0 ? "적습니다" : "많습니다"}.`);
+    if (r.unassigned) warn.push("부서를 고르지 않은 인력이 있습니다 — (미지정) 줄을 확인하세요.");
+    const kpi = (a, b) => `<div class="mini-kpi"><span>${esc(a)}</span><b>${b}</b></div>`;
+    return head("building", "부서별 손익", "인건비 · 인비례는 인력의 부서, 경비는 항목의 부서(공통은 기준에 따라 나눔), 매출은 부서마다 입력", "")
+      + `<div class="stat-bar"><label class="field"><span>공통경비 나누는 기준</span>${sel("settings.dept_common_basis", p.settings.dept_common_basis || "cost", PC.Calc.DEPT_BASIS, { label: "공통경비 기준" })}</label></div>
+      <div class="mini-kpis">${kpi("부서 매출 합", `${won(t.revenue)}원`)}${kpi("통합 원가", `${won(t.cost)}원`)}${kpi("공통경비", `${won(r.common)}원`)}${kpi("이익률", `${t.margin_rate.toFixed(1)}%`)}</div>
+      ${warn.length ? `<p class="note-warn">${warn.map(esc).join("<br>")}</p>` : ""}
+      <div class="tbl-wrap"><table class="dept-tbl"><thead><tr><th class="l">부서</th><th>매출 (입력)</th><th>내부 인건비</th><th>외주 인건비</th><th>인비례 경비</th><th>직접 경비</th><th>공통경비 배분</th><th>원가 합</th><th>이익</th><th>이익률</th><th>MM</th><th>인원</th></tr></thead>
+      <tbody>${r.rows.map(g => row(g, true)).join("")}${row(Object.assign({ dept: "합계 (통합)" }, t), false)}</tbody></table></div>`;
   }
 
   // ---------------- 버전 (기준선) ----------------
@@ -321,6 +353,7 @@
     { id: "internal", label: "내부 인력", icon: "users", view: internal, count: p => p.internal_labor.length },
     { id: "external", label: "외주 인력", icon: "partner", view: external, count: p => p.external_labor.length },
     { id: "stats", label: "투입 현황", icon: "chart", view: stats },
+    { id: "dept", label: "부서별", icon: "building", view: dept, show: p => M.multiDept(p) },
     { id: "expense", label: "경비", icon: "wallet", view: expense, count: p => p.general_expenses.length + p.custom_costs.length },
     { id: "phase", label: "분할계약", icon: "split", view: phase, count: p => p.phases.length },
     { id: "estimate", label: "견적서", icon: "receipt", view: estimate, count: p => p.estimate.items.length },

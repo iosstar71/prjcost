@@ -239,7 +239,8 @@
     grade: r => String(r.grade || "").trim() || "(미지정)",
     role: r => String(r.role || "").trim() || "(미지정)",
     vendor: r => (r.__kind === "internal" ? "내부" : String(r.vendor || "").trim() || "(미지정)"),
-    kind: r => (r.__kind === "internal" ? "내부" : "외주")
+    kind: r => (r.__kind === "internal" ? "내부" : "외주"),
+    dept: r => String(r.dept || "").trim() || "(미지정)"
   };
   function staffStats(calc, o = {}) {   // o.settings 가 있으면 기준정보 순서로
     const months = o.months && o.months.length ? calc.months.filter(m => o.months.includes(m)) : calc.months;
@@ -264,11 +265,70 @@
     const totalCost = rows.reduce((a, g) => pyRound(a + g.cost, 2), 0), totalMm = rows.reduce((a, g) => pyRound(a + g.total_mm, 2), 0);
     rows.forEach(g => { g.share = totalCost > 0 ? pyRound((g.cost / totalCost) * 100, 2) : 0; g.mm_share = totalMm > 0 ? pyRound((g.total_mm / totalMm) * 100, 2) : 0; });
     const st = o.settings || {};
-    const order = { area: st.areas, grade: gradeNames(st).concat(st.external_grades || []), vendor: ["내부"].concat(vendorNames(st)), kind: ["내부", "외주"] }[o.by];
+    const order = { dept: st.departments, area: st.areas, grade: gradeNames(st).concat(st.external_grades || []), vendor: ["내부"].concat(vendorNames(st)), kind: ["내부", "외주"] }[o.by];
     const rank = rankOf(order || []);
     const sorted = sortByRanks(rows, [g => rank(g.key)]);   // 기준정보에 없는 값(역할 등)은 나온 순서
     rows.length = 0; rows.push(...sorted);
     return { months, rows, total: { mm: Object.fromEntries(months.map(m => [m, pyRound(rows.reduce((a, g) => a + g.mm[m], 0), 2)])), total_mm: totalMm, cost: totalCost, people: rows.reduce((a, g) => a + g.people, 0) } };
+  }
+
+  // ---------- 부서별 손익 ----------
+  //  인건비 · 인비례 경비는 사람의 부서, 일반 · 기타경비는 항목의 부서(비우면 공통 → 기준에 따라 나눔), 매출은 부서별로 직접 입력
+  //  부서 합계 = 통합 원가 (나눌 때 생기는 1원 단위 끝수는 가장 큰 부서에)
+  const DEPT_BASIS = [{ v: "cost", t: "직접 원가 비율" }, { v: "mm", t: "MM 비율" }, { v: "revenue", t: "매출 비율" }, { v: "equal", t: "똑같이" }];
+  function deptSummary(project, calc) {
+    const st = project.settings || {}, depts = [...new Set((st.departments || []).map(d => String(d).trim()).filter(Boolean))];
+    const basis = DEPT_BASIS.some(b => b.v === st.dept_common_basis) ? st.dept_common_basis : "cost";
+    const UNK = "(미지정)", revIn = project.dept_revenue || {};
+    const rows = new Map();
+    const get = k => {
+      if (!rows.has(k)) rows.set(k, { dept: k, revenue: k === UNK ? 0 : pyRound(num(revIn[k]), 2), internal_labor: 0, external_labor: 0, overhead: 0, expense: 0, common: 0, mm: 0, people: 0 });
+      return rows.get(k);
+    };
+    depts.forEach(get);
+    const keyOf = d => (depts.includes(String(d || "").trim()) ? String(d).trim() : UNK);
+    const add = (g, f, v) => { g[f] = pyRound(g[f] + v, 2); };
+    // 끝수 맞추기: 나눈 합이 전체와 다르면 가장 큰 몫에
+    const settle = (parts, total, f) => {
+      const sum = parts.reduce((a, [g, v]) => a + v, 0), diff = pyRound(total - sum, 2);
+      parts.forEach(([g, v]) => add(g, f, v));
+      if (diff && parts.length) add(parts.reduce((m, x) => (x[1] > m[1] ? x : m))[0], f, diff);
+    };
+    [["internal_labor", calc.details.internal_labor], ["external_labor", calc.details.external_labor]].forEach(([f, list]) => list.forEach(r => {
+      const g = get(keyOf(r.dept));
+      add(g, f, num(r.total_cost)); add(g, "mm", num(r.total_mm));
+      if (num(r.total_mm)) g.people += 1;
+    }));
+    (calc.details.mm_overheads || []).forEach(o => {   // 인비례: 계정마다 그 사람 MM × 기준금액
+      const internal = o.category === "mm_internal";
+      const people = internal ? calc.details.internal_labor.filter(r => r.overhead_eligible) : calc.details.external_labor;
+      settle(people.map(r => [get(keyOf(r.dept)), pyRound(num(r.total_mm) * num(o.unit_amount), 2)]).filter(x => x[1]), o.total_cost, "overhead");
+    });
+    let common = 0;
+    calc.details.general_expenses.concat(calc.details.custom_costs).forEach(e => {
+      const d = String(e.dept || "").trim();
+      if (depts.includes(d)) add(get(d), "expense", num(e.total_cost)); else common = pyRound(common + num(e.total_cost), 2);
+    });
+    // 공통경비 나누기 (등록된 부서에만)
+    const real = depts.map(d => rows.get(d));
+    const weight = g => (basis === "mm" ? g.mm : basis === "revenue" ? g.revenue : basis === "equal" ? 1 : g.internal_labor + g.external_labor + g.overhead + g.expense);
+    if (common && real.length) {
+      let wsum = real.reduce((a, g) => a + weight(g), 0);
+      const w = wsum > 0 ? weight : () => 1;
+      wsum = wsum > 0 ? wsum : real.length;
+      settle(real.map(g => [g, pyRound((common * w(g)) / wsum, 2)]), common, "common");
+    }
+    const out = [...rows.values()].filter(g => g.dept !== UNK || g.internal_labor || g.external_labor || g.overhead || g.expense);
+    out.forEach(g => {
+      g.cost = pyRound(g.internal_labor + g.external_labor + g.overhead + g.expense + g.common, 2);
+      g.profit = pyRound(g.revenue - g.cost, 2);
+      g.margin_rate = g.revenue > 0 ? pyRound((g.profit / g.revenue) * 100, 2) : 0;
+    });
+    const sum = f => pyRound(out.reduce((a, g) => a + g[f], 0), 2);
+    const total = { revenue: sum("revenue"), internal_labor: sum("internal_labor"), external_labor: sum("external_labor"), overhead: sum("overhead"), expense: sum("expense"), common: sum("common"), cost: sum("cost"), mm: sum("mm"), people: out.reduce((a, g) => a + g.people, 0) };
+    total.profit = pyRound(total.revenue - total.cost, 2);
+    total.margin_rate = total.revenue > 0 ? pyRound((total.profit / total.revenue) * 100, 2) : 0;
+    return { rows: out, total, basis, common, revenue_gap: pyRound(calc.summary.revenue - total.revenue, 2), unassigned: out.some(g => g.dept === UNK) };
   }
 
   // 두 계산 결과(버전 · 지금) 비교 — 요약 줄과 사람별 MM · 인건비 (이름 + 내부/외주로 맞춤)
@@ -302,6 +362,6 @@
     return { summary, staff };
   }
 
-  PC.Calc = { orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
+  PC.Calc = { DEPT_BASIS, deptSummary, orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Calc;
 })(typeof window !== "undefined" ? window : globalThis);

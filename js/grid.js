@@ -17,6 +17,7 @@
     if (t === "num") return v === "" ? 0 : num(v);
     if (t === "mm") return v === "" ? 0 : PC.pyRound(num(v), 2);   // MM 은 소수 둘째 자리까지 (0.25)
     if (t === "mode") return MODE_OF(v);
+    if (t === "dept") return v === "공통" ? "" : v;
     if (t === "cat") return /외주/.test(v) || v === "mm_external" ? "mm_external" : /인비례|내부/.test(v) || v === "mm_internal" ? "mm_internal" : /기타|custom/.test(v) ? "custom" : "general";
     if (t === "blank-num") return v === "" ? "" : num(v);
     if (t === "bool") return TRUE.test(v);
@@ -164,7 +165,7 @@
           const v = parse(col.t, raw);
           this.h.setCell(list, row, col.b, v);
           cells++;
-          if (col.b === "grade" || col.b === "vendor" || col.b === "area") unknown += this.h.known(list, col.b, v) ? 0 : 1;
+          if (col.b === "grade" || col.b === "vendor" || col.b === "area" || col.b === "dept") unknown += this.h.known(list, col.b, v) ? 0 : 1;
         });
       });
       const fb = cols[colIdx ? Math.max(0, colIdx.find(x => x >= 0)) : c].b;

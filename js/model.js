@@ -17,7 +17,9 @@
   // 기준정보가 하나도 없을 때(새 폴더) 쓰는 값. 인비례 기준금액(원/MM)은 회사 기준으로 넣어 쓰도록 0
   function defaultSettings() {
     return {
-      raise_month: "",   // 연봉 인상월(MM) — 등급의 인상단가가 이 달부터 (비우면 인상 없음)
+      raise_month: "",
+      departments: [],           // 부서 — 2개 이상이면 부서 칸 · [부서별] 탭이 나타남
+      dept_common_basis: "cost", // 공통경비(부서를 정하지 않은 경비)를 나누는 기준   // 연봉 인상월(MM) — 등급의 인상단가가 이 달부터 (비우면 인상 없음)
       areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 담당 영역(시스템) — 투입 현황을 영역별로 볼 때 씀
       internal_grades: [{ grade: "수석", rate: 8500000 }, { grade: "책임", rate: 7200000 }, { grade: "선임", rate: 6000000 }, { grade: "전임", rate: 4800000 }],
       external_grades: ["특급", "고급", "중급", "초급"],
@@ -54,7 +56,7 @@
       project_id: id || `PRJ-${y}-NEW`, project_name: "신규 프로젝트", client_name: "", pm_name: "", sales_rep: "", description: "",
       date_mode: "month", start_date: `${y}-01`, end_date: `${y}-06`, contract_revenue: 0, target_hurdle_rate: 18.0,
       settings: ensureMmAccounts(clone(settings || defaultSettings())),
-      internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate(), versions: []
+      internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate(), versions: [], dept_revenue: {}
     };
   }
 
@@ -114,10 +116,16 @@
     });
     if (out.settings.raise_month === undefined) out.settings.raise_month = "";
     if (!Array.isArray(out.versions)) out.versions = [];
+    if (!Array.isArray(out.settings.departments)) out.settings.departments = [];
+    if (!out.settings.dept_common_basis) out.settings.dept_common_basis = "cost";
+    if (!out.dept_revenue || typeof out.dept_revenue !== "object") out.dept_revenue = {};
     out.estimate = Object.assign(emptyEstimate(), out.estimate || {});
     if (!Array.isArray(out.estimate.items)) out.estimate.items = [];
     return out;
   }
+
+  // 부서가 2개 이상일 때만 부서 칸 · 탭을 보여 줌 (하나 이하면 지금과 같은 화면)
+  const multiDept = p => ((p && p.settings && p.settings.departments) || []).filter(d => String(d).trim()).length >= 2;
 
   // 버전(기준선): 저장할 때 이름 · 메모를 붙여 그때의 자료를 통째로 남김 (초기 계획 · 실계약 · 수정계약 …) — project.versions[]
   const VERSION_NAMES = ["초기 계획", "실계약", "수정계약", "2차 수정계약", "3차 수정계약"];
@@ -161,6 +169,6 @@
     return p;
   }
 
-  PC.Model = { VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyNote };
+  PC.Model = { multiDept, VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyNote };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Model;
 })(typeof window !== "undefined" ? window : globalThis);
