@@ -121,7 +121,7 @@ const has = c => { try { execFileSync("which", [c], { stdio: "ignore" }); return
     await shot("13_save_version", { el: ".dialog" });
     await closeDialog();
     await tab("settings");
-    for (const s of ["rates", "vendors", "proposal_rates", "forms", "grades", "depts", "masterfile"]) { await sub(s); await shot(`14_set_${s}`, s === "forms" ? { el: "#panel", maxH: 900 } : { el: "#panel" }); }
+    for (const s of ["rates", "vendors", "proposal_rates", "forms", "grades", "masterfile"]) { await sub(s); await shot(`14_set_${s}`, s === "forms" ? { el: "#panel", maxH: 900 } : { el: "#panel" }); }
 
     // 4) 사업검토서 출력: 양식 고르기 → 만든 뒤 알림 (검증 결과)
     await tab("info");
