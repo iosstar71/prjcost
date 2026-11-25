@@ -123,8 +123,10 @@
       const list = el.dataset.new, cols = this.cols(this.table(el));
       this.h.pushUndo();
       const i = this.h.newRow(list);
-      this.h.setCell(list, i, cols[0].b, parse(cols[0].t, name));
-      this.h.render(cols[1] ? `${list}.${i}.${cols[1].b}` : `${list}.${i}${cols[0].b ? "." + cols[0].b : ""}`);
+      const k = Math.max(0, cols.findIndex(c => c.b === (el.dataset.newKey || cols[0].b)));   // 새 줄에 친 글이 들어갈 열 (보통 첫 열, 인력 표는 성명)
+      this.h.setCell(list, i, cols[k].b, parse(cols[k].t, name));
+      const next = cols[k + 1];
+      this.h.render(next ? `${list}.${i}.${next.b}` : `${list}.${i}${cols[k].b ? "." + cols[k].b : ""}`);
     },
 
     // 오른쪽 채우기: 이 달 값을 뒤의 모든 달에 (Ctrl+R) — 인력 MM · 경비 월별 금액

@@ -180,12 +180,12 @@ ws.print_area = "B1:J45"
 
 # ============================ 2번째 시트: 원가상세 ============================
 #  반복 줄: {{내부인력.이름}} · {{외주인력.이름}} · {{경비항목.이름}} 이 있는 줄은 인원 · 항목 수만큼 늘어남
-#  합계 열(총 MM · 금액)은 달 앞에, 달은 M1 … M24 (2년까지 — 쓰지 않는 달은 빈칸)
+#  합계 열(총 MM · 금액)은 달 앞에, 달은 M1 … M12 (1년까지 — 쓰지 않는 달은 빈칸)
 ws = wb.create_sheet("원가상세")
 ws.sheet_format.defaultRowHeight = 18
 ws.sheet_format.customHeight = True
 ws.sheet_view.showGridLines = False
-NM = 24
+NM = 12
 FIRST_M = 11                       # K 열부터 달
 LAST = FIRST_M + NM - 1            # AH
 from openpyxl.utils import get_column_letter as L
@@ -263,7 +263,7 @@ for name, key, fill_, font_ in [("내부 인건비", "내부합계", None, f10),
 cell(f"B{r + 1}", "{{기간초과}}", font=Font(name=FONT, size=9, color="C00000"))
 
 ws.freeze_panes = "K5"
-ws.page_setup.paperSize = 8        # A3
+ws.page_setup.paperSize = 9        # A4
 ws.page_setup.orientation = "landscape"
 ws.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
 ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0

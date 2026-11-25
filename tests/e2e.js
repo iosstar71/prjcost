@@ -120,10 +120,10 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Arrow keys and Enter move between cells like a spreadsheet (Enter on the last person goes to the blank new row)", f1 === "internal_labor.1.mm.2026-01" && f2 === "internal_labor.1.mm.2026-02" && f3 === "internal_labor", JSON.stringify([f1, f2, f3]));   // 마지막 사람 줄에서 Enter → 새 줄(이름 칸)
     const paste = (sel, text) => page.evaluate(([s2, t]) => { const el = document.querySelector(s2); el.focus(); const dt = new DataTransfer(); dt.setData("text/plain", t); el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, [sel, text]);
     // 엑셀에서 복사한 여러 줄 (성명 · 역할 · 등급) 을 새 줄에 붙여넣기 → 인력 2명 추가, 없는 등급은 빨갛게
-    await paste('input[data-new="internal_labor"]', "박신규\t개발\tPMO\t\t책임\r\n최추가\tQA\t\t\t없는등급\r\n");
+    await paste('input[data-new="internal_labor"]', "PMO\t\t개발\t박신규\t책임\r\n\t\tQA\t최추가\t없는등급\r\n");
     await page.waitForFunction(() => PC.App.S.proj.internal_labor.length === 4, null, { timeout: 3000 }).catch(() => {});
     const pv = await page.evaluate(() => ({ rows: PC.App.S.proj.internal_labor.map(r => [r.name, r.role, r.area, r.grade, r.base_rate]), invalid: document.querySelectorAll("select.invalid").length }));
-    check("Pasting rows copied from Excel adds people (area · grade; grade sets the rate; unknown grade shown in red)", pv.rows.length === 4 && pv.rows[2].join() === "박신규,개발,PMO,책임,7200000" && pv.rows[3][3] === "없는등급" && pv.invalid === 1, JSON.stringify(pv));
+    check("Pasting rows copied from Excel in the cost-detail column order (area · system · role · name · grade) adds people; grade sets the rate; unknown grade in red", pv.rows.length === 4 && pv.rows[2].join() === "박신규,개발,PMO,책임,7200000" && pv.rows[3][3] === "없는등급" && pv.invalid === 1, JSON.stringify(pv));
     // 머리글째 붙여넣기: 머리글 이름(성명 · 월)으로 열을 맞춤
     await paste(B("internal_labor.2.name"), "성명\t2026-02\t2026-03\n박신규\t0.5\t0.75");
     await page.waitForFunction(() => PC.App.S.proj.internal_labor[2].mm["2026-03"] === 0.75, null, { timeout: 3000 }).catch(() => {});
@@ -145,7 +145,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     await page.fill('input[data-new="internal_labor"]', "정신입");
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => PC.App.S.proj.internal_labor.length === 5, null, { timeout: 3000 }).catch(() => {});
-    check("Typing a name in the blank last row adds a person and moves to the role cell", (await page.evaluate(() => PC.App.S.proj.internal_labor[4].name)) === "정신입" && (await focused()) === "internal_labor.4.role", await focused());
+    check("Typing a name in the blank last row adds a person (name column) and moves to the next cell (grade)", (await page.evaluate(() => PC.App.S.proj.internal_labor[4].name)) === "정신입" && (await focused()) === "internal_labor.4.grade", await focused());
     await page.evaluate(() => { while (PC.App.S.proj.internal_labor.length > 2) PC.App.S.proj.internal_labor.pop(); PC.App.render(); });
 
     // 총 MM: 달별 MM 을 고치면 합으로 바뀜 / 기간을 골라 배분 (기간 밖은 0) / 기준정보 순서로 줄 세우기

@@ -50,7 +50,7 @@
     const mv = i => (o.order ? `<span class="mv">${btn("", "moveRow", [o.list, i, -1], "icon-only ghost", "위로", "up")}${btn("", "moveRow", [o.list, i, 1], "icon-only ghost", "아래로", "down")}</span>` : "");
     const ins = i => btn("", "insertRow", [o.list, i], "icon-only ghost ins", "이 줄 아래에 새 줄 넣기", "plus");
     const body = o.rows.map((r, i) => `<tr data-row="${i}"><td class="c nowrap">${o.fixed ? "" : mv(i) + ins(i) + del(o.list, i)}</td>${o.cols.map(x => x.cell(r, `${o.list}.${i}`, i)).join("")}${o.tail ? o.tail(r) : ""}</tr>${o.after ? o.after(r, i, o.cols.length + 1 + (o.tail ? 1 : 0)) : ""}`).join("");
-    const newRow = `<tr class="new-row"><td></td><td class="l"><input type="text" data-new="${o.list}" placeholder="＋ ${esc(o.newLabel)}" aria-label="${esc(o.newLabel)}"></td>${o.cols.length - 1 + (o.tail ? 1 : 0) > 0 ? `<td class="l hint-cell" colspan="${o.cols.length - 1 + (o.tail ? 1 : 0)}">값을 넣으면 한 줄이 추가됩니다 · 엑셀에서 복사한 영역을 붙여 넣어도 됩니다</td>` : ""}</tr>`;
+    const newRow = `<tr class="new-row"><td></td><td class="l"><input type="text" data-new="${o.list}"${o.newKey ? ` data-new-key="${o.newKey}"` : ""} placeholder="＋ ${esc(o.newLabel)}" aria-label="${esc(o.newLabel)}"></td>${o.cols.length - 1 + (o.tail ? 1 : 0) > 0 ? `<td class="l hint-cell" colspan="${o.cols.length - 1 + (o.tail ? 1 : 0)}">값을 넣으면 한 줄이 추가됩니다 · 엑셀에서 복사한 영역을 붙여 넣어도 됩니다</td>` : ""}</tr>`;
     return `<div class="tbl-wrap"><table class="grid" data-list="${o.list}" data-cols="${esc(JSON.stringify(meta))}"><thead><tr><th class="w-del"></th>${o.cols.map(x => x.th).join("")}${o.tailHead || ""}</tr></thead>
       <tbody>${body}${o.fixed ? "" : newRow}${o.foot || ""}</tbody></table></div>`;
   }
@@ -110,7 +110,7 @@
     const all = cols.concat(monthCols(months, "mm", (m, k) => (r, base) => { const st = k > 0 && r.calc[m].rate !== r.calc[months[k - 1]].rate; return `<td${st ? ` class="rate-step" title="${esc(m)}부터 단가 ${won(r.calc[m].rate)}원 (인상)"` : ""}>${mmInp(`${base}.mm.${m}`, r.calc[m].mm || "", `${m} MM`)}${r.calc[m].cost ? `<span class="cell-cost">${man(r.calc[m].cost)}만</span>` : ""}</td>`; }));
     const foot = rows.length ? `<tr class="total"><td></td><td colspan="${cols.length}" class="l">합계 · ${sumBy(rows, r => r.total_mm).toFixed(2)} MM</td>${months.map(m => `<td class="num">${man(sumBy(rows, r => r.calc[m].cost))}만</td>`).join("")}<td class="num">${won(o.total)}</td></tr>` : "";
     return head(o.icon, o.title, GRID_HINT, sortBtn(list) + btn(o.addLabel, "addRow", [list], "primary sm", "", "plus"))
-      + gridTable({ list, rows, cols: all, newLabel: "이름 입력", foot, tailHead: `<th>합계(원)</th>`, after: o.after,
+      + gridTable({ list, rows, cols: all, newLabel: "이름 입력", newKey: "name", foot, tailHead: `<th>합계(원)</th>`, after: o.after,
         tail: r => `<td class="num"><b>${won(r.total_cost)}</b><span class="cell-cost">${r.total_mm} MM</span></td>` });
   }
   // 총 MM: 직접 넣고 [고르게]로 전체 기간에 나누거나 [기간 배분]으로 고른 기간에만. 달별 MM 을 고치면 총 MM 은 그 합으로 바뀜
@@ -119,16 +119,16 @@
   function internal(p, c, ctx) {
     const grades = (p.settings.internal_grades || []).map(g => g.grade), areas = p.settings.areas || [];
     return laborTab("internal_labor", p, c, [
-      { b: "name", t: "text", l: "성명", th: `<th class="l">성명</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
-      { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "PM/개발", label: "역할" })}</td>` },
       { b: "area", t: "text", l: "영역", th: `<th>영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "영역", cls: "s-md" })}</td>` },
       systemCol(p),
+      { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "PM/개발", label: "역할" })}</td>` },
       ...deptColumn(p),
+      { b: "name", t: "text", l: "성명", th: `<th class="l">성명</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "grade", t: "text", l: "직급", th: `<th>직급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "직급", cls: "s-sm" })}</td>` },
-      { b: "base_rate", t: "blank-num", l: "기준단가", th: `<th>기준단가</th>`, cell: (r, base) => `<td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>` },
-      { b: "overhead_eligible", t: "bool", l: "인비례", th: `<th title="내부 인비례 경비(MM × 기준금액)를 매길 인력">인비례</th>`, cell: (r, base) => `<td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례")}</td>` },
       ...propCols(p),
-      { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("internal_labor", r, base, i) }
+      { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("internal_labor", r, base, i) },
+      { b: "base_rate", t: "blank-num", l: "매입단가", th: `<th title="비우면 직급 단가">매입단가</th>`, cell: (r, base) => `<td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>` },
+      { b: "overhead_eligible", t: "bool", l: "인비례", th: `<th title="내부 인비례 경비(MM × 기준금액)를 매길 인력">인비례</th>`, cell: (r, base) => `<td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례")}</td>` }
     ], { icon: "users", title: "내부 인력 투입 계획", addLabel: "내부 인력", total: c.summary.breakdown.internal_labor });
   }
 
@@ -136,16 +136,16 @@
     const vendors = [...new Set((p.settings.vendor_rates || []).map(v => v.vendor))];
     const grades = p.settings.external_grades || [], areas = p.settings.areas || [];
     return laborTab("external_labor", p, c, [
-      { b: "name", t: "text", l: "성명", th: `<th class="l">성명/구분</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
-      { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "개발/디자인", label: "역할" })}</td>` },
       { b: "area", t: "text", l: "영역", th: `<th>영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "영역", cls: "s-md" })}</td>` },
       systemCol(p),
+      { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "개발/디자인", label: "역할" })}</td>` },
       ...deptColumn(p),
-      { b: "vendor", t: "text", l: "외주업체", th: `<th>외주업체</th>`, cell: (r, base) => `<td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체", cls: "s-md" })}</td>` },
+      { b: "vendor", t: "text", l: "협력사", th: `<th>협력사</th>`, cell: (r, base) => `<td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체", cls: "s-md" })}</td>` },
+      { b: "name", t: "text", l: "성명", th: `<th class="l">성명</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "grade", t: "text", l: "기술등급", th: `<th>기술등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "기술등급", cls: "s-sm" })}</td>` },
-      { b: "custom_rate", t: "blank-num", l: "적용단가", th: `<th title="비워 두면 업체 · 등급 단가표의 단가 (인상월 · 인상단가도 단가표대로)">적용단가</th>`, cell: (r, base) => `<td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>` },
       ...propCols(p),
-      { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("external_labor", r, base, i) }
+      { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("external_labor", r, base, i) },
+      { b: "custom_rate", t: "blank-num", l: "매입단가", th: `<th title="비워 두면 협력사 · 기술등급 단가표의 단가 (인상월 · 인상단가도 단가표대로)">매입단가</th>`, cell: (r, base) => `<td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>` }
     ], { icon: "partner", title: "외주 인력 투입 계획", addLabel: "외주 인력", total: c.summary.breakdown.external_labor });
   }
 
