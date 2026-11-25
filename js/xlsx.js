@@ -63,7 +63,8 @@
 
   // ---------- XML ----------
   const xmlEsc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
-  const xmlUnesc = s => String(s).replace(/&(#x[0-9a-fA-F]+|#\d+|lt|gt|amp|quot|apos);/g, (m, e) =>
+  // XML 규칙: 글 속 줄바꿈 CR LF · CR 은 LF 하나로 읽음 (Excel 이 저장한 양식의 여러 줄 칸)
+  const xmlUnesc = s => String(s).replace(/\r\n?/g, "\n").replace(/&(#x[0-9a-fA-F]+|#\d+|lt|gt|amp|quot|apos);/g, (m, e) =>
     e[0] === "#" ? String.fromCodePoint(e[1] === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10)) : { lt: "<", gt: ">", amp: "&", quot: '"', apos: "'" }[e]);
   const attr = (tag, name) => { const m = new RegExp(`\\s${name}="([^"]*)"`).exec(tag); return m ? xmlUnesc(m[1]) : null; };
   const colName = i => { let s = ""; i += 1; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
