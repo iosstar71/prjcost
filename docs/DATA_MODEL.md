@@ -19,7 +19,6 @@
 | estimate | estimate_no · estimate_date · note · applied_to_revenue · items[{item_name, spec, qty, unit_price, memo}] |
 
 ## settings
-default_promotion_month("03") ·
 raise_month("03" — 연봉 인상월, 비우면 인상 없음) · internal_grades[{grade, rate, raise_rate(인상단가)}] · external_grades["특급", …] · vendor_rates[{vendor, grade, rate, raise_ym(인상월 YYYY-MM), raise_rate(인상단가)}] · external_rates{"업체|등급": 단가}(예전 형식) ·
 areas["PMO", …](담당 영역) ·
 expense_accounts[{account, category, unit_amount, desc}] — category: `general` 일반경비 · `custom` 기타경비 · `mm_internal` 인비례(내부) · `mm_external` 인비례(외주), unit_amount = 인비례 기준금액(원/MM)
