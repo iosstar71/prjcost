@@ -10,6 +10,7 @@ const PC = require("../js/util.js");
 require("../js/calc.js");
 require("../js/xlsx.js");
 require("../js/model.js");
+require("../js/formula.js");
 require("../js/template.js");
 
 let pass = 0, fail = 0;
@@ -228,6 +229,32 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   const t5x = new TextDecoder().decode((await X.unzip(await filled.blob.arrayBuffer()))[Object.keys(await X.unzip(await filled.blob.arrayBuffer())).find(n => /sheet3\.xml$/.test(n))]);
   const hidden = [...t5x.matchAll(/<col\b[^>]*hidden="1"[^>]*\/>/g)].map(m => Number(/min="(\d+)"/.exec(m[0])[1]));
   eq("template: month columns outside the period are hidden", [8, 13, 14, 19].map(c => hidden.includes(c)), [false, false, true, true]);
+  // 수식: 계산기 (사업검토서 합계 수식 검증용) — Excel 과 같은 규칙
+  const Fm = PC.Formula;
+  const fv = Fm.evaluate({ S: { A1: { v: 1 }, A2: { v: 2 }, A3: { v: "AI예비비" }, B1: { f: "SUM(A1:A3)" }, B2: { f: 'COUNTIF(A1:A3,">1")' }, B3: { f: "IF(B1=0,0,A2/B1)" }, B4: { f: "'T 1'!A1+1" }, B5: { f: "VLOOKUP(1,A1:A2,1)" }, B6: { f: "1/0" }, B7: { f: "-2^2+50%" }, B8: { f: 'SUMIF(A3:A3,"AI예비비",A1:A1)+COUNTA(A1:A9)' }, B9: { f: "IFERROR(B6,7)&\"원\"" } }, "T 1": { A1: { f: "S!B1*2" } } });
+  eq("formula: SUM · COUNTIF · IF · other sheet · -2^2 · % · SUMIF · COUNTA · IFERROR", [fv.values.S.B1, fv.values.S.B2, PC.pyRound(fv.values.S.B3, 4), fv.values.S.B4, fv.values.S.B7, fv.values.S.B8, fv.values.S.B9], [3, 1, 0.6667, 7, 4.5, 4, "7원"]);
+  eq("formula: #DIV/0! is a value, unknown function reported", [Fm.isErr(fv.values.S.B6) && fv.values.S.B6.v, fv.problems.map(x => [x.ref, x.reason])], ["#DIV/0!", [["B5", "함수 VLOOKUP"]]]);
+  eq("formula: move references only (text and strings kept), shared formula offset", [Fm.mapRefs('SUM(O5:O6)+원가상세!O7&"A1"', t => ({ a: Object.assign({}, t.a, { r: t.a.r + 2 }), b: t.b && Object.assign({}, t.b, { r: t.b.r + 2 }) })), Fm.offset("SUM(H5:S5)+$A$1+B$2", 2, 1)],
+    ['SUM(O7:O8)+원가상세!O9&"A1"', "SUM(I7:T7)+$A$1+C$2"]);
+  // 사업검토서: 여러 명이면 합계 범위가 늘고, 아래 칸 · 다른 시트 참조가 밀리고, 반복 줄 안의 수식은 줄마다 — 검증 시트로 프로그램 값과 비교
+  const fbig = M.sampleProject(M.defaultSettings());
+  fbig.internal_labor = Array.from({ length: 5 }, (_, i) => Object.assign(PC.clone(tp.internal_labor[i % 2]), { name: `내부${i + 1}` }));
+  fbig.external_labor = Array.from({ length: 3 }, (_, i) => Object.assign(PC.clone(tp.external_labor[0]), { name: `외주${i + 1}` }));
+  fbig.ot_cost = 3000000; fbig.materials = [{ category: "HW", content: "서버", amount: 5000000 }, { category: "SW", content: "DB", amount: 1000000 }];
+  const bf = await T.fill(tf, T.values(fbig, PC.Calc.calculateProjectCost(fbig, fbig.settings), {}));
+  const bfiles = await X.unzip(await bf.blob.arrayBuffer()), sx = n => new TextDecoder().decode(bfiles[Object.keys(bfiles).find(k => k.endsWith(`/${n}`))]);
+  const fOf = (xml, ref) => X.xmlUnesc((new RegExp(`<c r="${ref}"[^>]*><f>([^<]*)</f>`).exec(xml) || [])[1] || "");
+  const s1 = sx("sheet1.xml"), s2 = sx("sheet2.xml"), s3 = sx("sheet3.xml");
+  eq("template formulas: ranges grow with rows, cells below and other-sheet refs move, row formulas per copy",
+    [fOf(s2, "O11"), fOf(s2, "H11"), fOf(s2, "O17"), fOf(s2, "O18"), fOf(s1, "D13"), fOf(s1, "D14"), fOf(s1, "D17"), fOf(s3, "G7"), fOf(s3, "G12"), fOf(s3, "H13")],
+    ["SUM(O5:O10)", 'COUNTIF(M5:M9,">0")', "SUM(O14:O16)", "O11+O17", "원가상세!O11", "원가상세!O17", 'SUMIF(원가상세!D28:D31,"AI예비비",원가상세!O28:O31)', "SUM(H7:S7)", "SUM(H12:S12)", "SUM(H5:H12)"]);
+  eq("template check: every check row matches the program (cost, ratios, margin, gap, subtotals, 5Tier)", [bf.check.items.length, bf.check.failed.map(x => x.name), bf.check.problems.length], [40, [], 0]);
+  eq("template: formula cells carry the computed value (for viewers that do not recalc)", /<c r="D19"[^>]*><f>[^<]*<\/f><v>([\d.]+)<\/v>/.exec(s1)[1], String(PC.Calc.calculateProjectCost(fbig, fbig.settings).summary.total_cost));
+  // 양식 수식이 틀리면 검증에서 잡힘 (내부 소계가 OT 줄을 빠뜨림)
+  const tfiles = await X.unzip(tf), tname = Object.keys(tfiles).find(k => k.endsWith("/sheet2.xml"));
+  tfiles[tname] = new TextEncoder().encode(new TextDecoder().decode(tfiles[tname]).replace("<f>SUM(O5:O6)</f>", "<f>SUM(O5:O5)</f>"));
+  const wr = await T.fill(await X.zip(Object.keys(tfiles).map(n => ({ name: n, data: tfiles[n] }))).arrayBuffer(), T.values(fbig, PC.Calc.calculateProjectCost(fbig, fbig.settings), {}));
+  eq("template check: a subtotal that misses the OT row is reported", wr.check.failed.map(x => x.name).slice(0, 2), ["사업개요 노무비", "사업개요 원가 합계"]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

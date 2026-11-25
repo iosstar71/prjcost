@@ -3,13 +3,15 @@
 //  양식: 자료 폴더의 templates/*.xlsx (Excel 에서 직접 고침). 칸에 {{매출액}} 처럼 적어 둠
 //   - 칸에 자리표시 하나만 있으면 값 그대로 (숫자는 숫자로 → 양식의 통화 · % 서식이 적용됨, 비율은 0.4667 같은 소수)
 //   - 글과 섞여 있으면 글자로 바꿔 넣음 (숫자는 1,234 꼴)
-//  칸의 꾸밈 · 병합 · 열 너비 · 인쇄 설정 · 수식은 건드리지 않음. 열 때 Excel 이 수식을 다시 계산하도록 표시
+//  칸의 꾸밈 · 병합 · 열 너비 · 인쇄 설정은 그대로. 수식은 반복 줄에 맞춰 칸 참조만 옮기고, 계산한 값도 넣음 (열 때 Excel 이 다시 계산)
+//  숨긴 시트 「검증」이 있으면 양식 수식 값과 프로그램 값을 맞춰 봄 (fill 결과의 check)
 //  쓸 수 있는 값: KEYS (docs/TEMPLATE_KEYS.md 와 같게)
 // =============================================================================
 (function (root) {
   "use strict";
   const PC = root.PC || require("./util.js");
   const X = PC.Xlsx || require("./xlsx.js");
+  const Fm = PC.Formula || require("./formula.js");
   const { num, pyRound } = PC;
   const dec = new TextDecoder();
 
@@ -29,7 +31,7 @@
     ["내부인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 직급 · 제안직무 · 제안등급 · 단가 · 총MM · 금액 · M1 … M12(MM)"],
     ["외주인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 업체 · 기술등급 · 제안직무 · 제안등급 · 단가 · 총MM · 금액 · M1 … M12(MM)"],
     ["경비항목.이름", "반복 줄: 구분 · 항목 · 방식 · 기준금액 · 금액 · M1 … M12(금액)"],
-    ["내부합계.이름 · 외주합계.이름 · 인건비합계.이름", "인원수 · 총MM · 금액 · M1 … M12(MM) · C1 … C12(인건비) — 내부 · 전체 금액은 OT비용 포함"],
+    ["내부합계.이름 · 외주합계.이름 · 인건비합계.이름", "인원수 · 총MM · 표시MM(양식의 1년 MM) · 금액 · M1 … M12(MM) · C1 … C12(인건비) — 내부 · 전체 금액은 OT비용 포함"],
     ["재료비항목.이름", "반복 줄: 구분 · 내용 · 금액"],
     ["재료비합계.이름", "금액 · M1 … M12"],
     ["경비합계.이름 · 월원가.이름 · 누적원가.이름", "금액 · M1 … M12 (원가: 내부 · 외주 인건비 + 경비)"]
@@ -88,13 +90,14 @@
     out.내부인력 = d.internal_labor.map(r => person(r, "internal"));
     out.외주인력 = d.external_labor.map(r => person(r, "external"));
     const sum = (rows, f) => pyRound(rows.reduce((a, r) => a + num(f(r)), 0), 2);
-    const laborTotal = rows => Object.assign({ 총MM: sum(rows, r => r.total_mm), 금액: sum(rows, r => r.total_cost) }, perMonth(m => sum(rows, r => r.calc[m].mm)), perMonth(m => sum(rows, r => r.calc[m].cost), "C"));
+    const shownMM = rows => pyRound(months.reduce((a, m) => a + sum(rows, r => r.calc[m].mm), 0), 2);   // 양식에 보이는 달(1년)의 MM
+    const laborTotal = rows => Object.assign({ 총MM: sum(rows, r => r.total_mm), 표시MM: shownMM(rows), 금액: sum(rows, r => r.total_cost) }, perMonth(m => sum(rows, r => r.calc[m].mm)), perMonth(m => sum(rows, r => r.calc[m].cost), "C"));
     const people = rows => rows.filter(r => num(r.total_mm)).length;
     const ot = d.ot_monthly || {};
     out.내부합계 = Object.assign(laborTotal(d.internal_labor), { 인원수: people(d.internal_labor), 금액: calc.summary.breakdown.internal_labor }, perMonth(m => pyRound(sum(d.internal_labor, r => r.calc[m].cost) + num(ot[m]), 2), "C"));   // 금액 · 월 인건비는 OT비용 포함
     out.외주합계 = Object.assign(laborTotal(d.external_labor), { 인원수: people(d.external_labor) });
     const all = d.internal_labor.concat(d.external_labor);
-    out.인건비합계 = Object.assign({ 인원수: people(all), 총MM: sum(all, r => r.total_mm), 금액: pyRound(calc.summary.breakdown.internal_labor + calc.summary.breakdown.external_labor, 2) }, perMonth(m => sum(all, r => r.calc[m].mm)), perMonth(m => pyRound(sum(all, r => r.calc[m].cost) + num(ot[m]), 2), "C"));
+    out.인건비합계 = Object.assign({ 인원수: people(all), 총MM: sum(all, r => r.total_mm), 표시MM: shownMM(all), 금액: pyRound(calc.summary.breakdown.internal_labor + calc.summary.breakdown.external_labor, 2) }, perMonth(m => sum(all, r => r.calc[m].mm)), perMonth(m => pyRound(sum(all, r => r.calc[m].cost) + num(ot[m]), 2), "C"));
     out.재료비항목 = (d.materials || []).map(x => ({ 구분: x.category || "", 내용: x.content || "", 금액: x.total_cost }));
     out.재료비합계 = Object.assign({ 금액: calc.summary.breakdown.material || 0 }, perMonth(m => num((d.material_monthly || {})[m])));
     const exp = [
@@ -149,9 +152,81 @@
   // 줄 번호 바꾸기: 줄 · 칸의 r 속성 (A5 → A7)
   const renumber = (rowXml, n) => rowXml.replace(/^<row\b([^>]*?)\br="\d+"/, `<row$1r="${n}"`).replace(/(<c\b[^>]*?\br=")([A-Z]+)\d+"/g, `$1$2${n}"`);
 
-  // 양식(xlsx)을 채워 새 파일(Blob)로. → { blob, used, unknown(모르는 이름), empty(값이 없는 이름) }
+  // 반복 줄로 줄이 늘어난 시트의 줄 번호 바꾸기. grow: [[템플릿 줄, 늘어난 줄 수]]
+  const newRowOf = grow => old => old + grow.filter(([r]) => r < old).reduce((a, [, k]) => a + k, 0);
+  // 수식의 칸 참조 옮기기 (sheet 의 원래 r 줄, 반복 j 번째 복사본에 있는 수식)
+  //  - 범위의 끝이 반복 줄이면 늘어난 줄까지 넓힘: SUM(O5:O6) → 사람 3명이면 SUM(O5:O8)
+  //  - 아래 칸은 늘어난 만큼 내림 (다른 시트에서 가리키는 것도: 원가상세!O7 → 원가상세!O9)
+  //  - 반복 줄 안에서 같은 줄을 가리키는 것은 복사본마다 그 줄로: SUM(H5:S5) → SUM(H6:S6)
+  function shiftFormula(f, sheet, r0, j, growOf) {
+    return Fm.mapRefs(f, t => {
+      const target = t.sheet === null ? sheet : Object.keys(growOf).find(n => n.toLowerCase() === String(t.sheet).toLowerCase());
+      const grow = growOf[target] || [];
+      const own = target === sheet;
+      if (!grow.length && !(own && j)) return null;
+      const nr = newRowOf(grow), extra = q => (grow.find(([r]) => r === q) || [0, 0])[1];
+      const sameRow = x => own && j && x.r === r0 && !x.ra;
+      const mv = (x, r) => x && { ca: x.ca, c: x.c, ra: x.ra, r };
+      if (!t.b) return { a: mv(t.a, nr(t.a.r) + (sameRow(t.a) ? j : 0)) };
+      if (own && t.a.r === r0 && t.b.r === r0) return { a: mv(t.a, nr(r0) + (sameRow(t.a) ? j : 0)), b: mv(t.b, nr(r0) + (sameRow(t.b) ? j : 0)) };
+      const lo = Math.min(t.a.r, t.b.r), hi = Math.max(t.a.r, t.b.r), first = t.a.r <= t.b.r;
+      const nlo = nr(lo), nhi = nr(hi) + extra(hi);
+      return { a: mv(t.a, first ? nlo : nhi), b: mv(t.b, first ? nhi : nlo) };
+    });
+  }
+  // 공유 수식(끌어 채운 칸 — 첫 칸에만 식이 있음)을 칸마다 보통 수식으로 풂 (줄이 늘면 공유 범위가 어긋나므로)
+  function unshare(xml) {
+    const masters = {};
+    (xml.match(CELL) || []).forEach(cXml => {
+      const f = /<f\b([^>]*)>([\s\S]*?)<\/f>/.exec(cXml);
+      if (!f || !/\bt="shared"/.test(f[1])) return;
+      const si = (/\bsi="(\d+)"/.exec(f[1]) || [])[1], ref = /\br="([A-Z]+)(\d+)"/.exec(cXml);
+      if (si !== undefined && ref) masters[si] = { f: X.xmlUnesc(f[2]), c: colNo(ref[1]), r: Number(ref[2]) };
+    });
+    if (!Object.keys(masters).length) return xml;
+    return xml.replace(CELL, cXml => {
+      const f = /<f\b([^>]*?)(?:\/>|>[\s\S]*?<\/f>)/.exec(cXml);
+      if (!f || !/\bt="shared"/.test(f[1])) return cXml;
+      const m = masters[(/\bsi="(\d+)"/.exec(f[1]) || [])[1]], ref = /\br="([A-Z]+)(\d+)"/.exec(cXml);
+      if (!m || !ref) return cXml;
+      return cXml.replace(f[0], `<f>${X.xmlEsc(Fm.offset(m.f, Number(ref[2]) - m.r, colNo(ref[1]) - m.c))}</f>`);
+    });
+  }
+  // 시트 칸 읽기 → { "A1": { v, f } } (수식 계산용)
+  function sheetCells(xml, shared) {
+    const out = {};
+    (xml.match(CELL) || []).forEach(cXml => {
+      const tag = /^<c\b[^>]*?\/?>/.exec(cXml)[0], ref = (/\br="([A-Z]+\d+)"/.exec(tag) || [])[1];
+      if (!ref) return;
+      const type = (/\st="([^"]*)"/.exec(tag) || [])[1], f = /<f\b[^>]*>([\s\S]*?)<\/f>/.exec(cXml), v = /<v>([\s\S]*?)<\/v>/.exec(cXml);
+      const c = {};
+      if (f) c.f = X.xmlUnesc(f[1]);
+      if (type === "s" || type === "inlineStr" || type === "str") c.v = cellText(cXml, type, shared);
+      else if (type === "b") c.v = v ? v[1] === "1" : null;
+      else if (type === "e") c.v = null;
+      else c.v = v ? Number(v[1]) : null;
+      if (c.f !== undefined || c.v !== null) out[ref] = c;
+    });
+    return out;
+  }
+  // 수식 칸에 계산한 값을 넣음 (Excel 은 열 때 다시 계산하지만, 다시 계산하지 않는 미리보기에서도 숫자가 보이게)
+  const withValue = (cXml, v) => {
+    const tag = /^<c\b[^>]*?>/.exec(cXml)[0], body = cXml.slice(tag.length).replace(/<v>[\s\S]*?<\/v>|<v\/>/g, "");
+    const head = tag.replace(/\s+t="[^"]*"/, "").replace(/>$/, "");
+    if (Fm.isErr(v)) return `${head} t="e">${body.replace("</c>", `<v>${X.xmlEsc(v.v)}</v></c>`)}`;
+    if (typeof v === "boolean") return `${head} t="b">${body.replace("</c>", `<v>${v ? 1 : 0}</v></c>`)}`;
+    if (typeof v === "string") return `${head} t="str">${body.replace("</c>", `<v>${X.xmlEsc(v)}</v></c>`)}`;
+    if (typeof v === "number" && Number.isFinite(v)) return `${head}>${body.replace("</c>", `<v>${v}</v></c>`)}`;
+    return `${head}>${body}`;
+  };
+  // 검증: 숨긴 시트 「검증」의 줄마다 A 항목 · B 양식 수식 값 · C 프로그램 값({{자리표시}}) → 같은지
+  const CHECK_SHEET = "검증";
+  const near = (a, b) => Math.abs(a - b) <= Math.max(1e-6, Math.abs(b) * 1e-9);
+
+  // 양식(xlsx)을 채워 새 파일(Blob)로. → { blob, used, unknown(모르는 이름), empty(값이 없는 이름), check }
   //  {{이름}}: 값 하나 · {{묶음.이름}}: vals[묶음] 이 객체면 그 안의 값
-  //  {{목록.이름}}: vals[목록] 이 배열이면 그 줄을 항목 수만큼 복사해서 채움 (반복 줄 — 아래 줄 · 병합 · 인쇄 영역은 밀림)
+  //  {{목록.이름}}: vals[목록] 이 배열이면 그 줄을 항목 수만큼 복사해서 채움 (반복 줄 — 아래 줄 · 병합 · 인쇄 영역 · 수식 참조는 맞춰 옮김)
+  //  check: { items: [{ name, sheet(양식 수식 값), program(프로그램 값), ok }], failed, problems(계산 못 한 수식) }
   async function fill(src, vals) {
     const buf = src instanceof ArrayBuffer ? src : ArrayBuffer.isView(src) ? src.buffer.slice(src.byteOffset, src.byteOffset + src.byteLength) : await src.arrayBuffer();
     const files = await X.unzip(buf);
@@ -162,6 +237,7 @@
     const shared = ssName ? (text(ssName).match(/<si\b[\s\S]*?<\/si>/g) || []).map(si => X.xmlUnesc((si.match(/<t\b[^>]*>([\s\S]*?)<\/t>/g) || []).map(t => t.replace(/^<t\b[^>]*>|<\/t>$/g, "")).join(""))) : [];
     const used = new Set(), unknown = new Set(), empty = new Set();
     const has = (o, k) => o && Object.prototype.hasOwnProperty.call(o, k);
+    let quiet = false;   // 검증 시트: 값이 없는 칸 알림에서 뺌
     // 자리표시 이름 → 값 (item: 반복 줄의 항목)
     const resolve = (key, list, item) => {
       used.add(key);
@@ -176,13 +252,13 @@
       else known = false;
       if (!known) { unknown.add(key); return ""; }
       // 값이 없는 칸 알림 — 기간 밖의 달(월N · …MN · …CN)과 반복 줄 · 안내 문구는 빼고
-      if ((v === "" || v === null || v === undefined) && !(list && key.startsWith(list + ".")) && !/^월\d+$|\.[MC]\d+$|^기간초과$/.test(key)) empty.add(key);
+      if (!quiet && (v === "" || v === null || v === undefined) && !(list && key.startsWith(list + ".")) && !/^월\d+$|\.[MC]\d+$|^기간초과$/.test(key)) empty.add(key);
       return v === null || v === undefined ? "" : v;
     };
-    // 칸 하나 채우기
-    const fillCell = (cXml, list, item) => {
+    // 칸 하나 채우기 (수식 칸은 칸 참조만 옮김)
+    const fillCell = (cXml, list, item, moveF) => {
       const tag = /^<c\b[^>]*?\/?>/.exec(cXml)[0];
-      if (/<f\b/.test(cXml)) return cXml;   // 수식 칸은 그대로
+      if (/<f\b/.test(cXml)) return moveF ? cXml.replace(/(<f\b[^>]*>)([\s\S]*?)(<\/f>)/, (m, a, f, z) => a + X.xmlEsc(moveF(X.xmlUnesc(f))) + z) : cXml;
       const type = (/\st="([^"]*)"/.exec(tag) || [])[1];
       const t = cellText(cXml, type, shared);
       if (t === null || t === undefined || !t.includes("{{")) return cXml;
@@ -203,17 +279,27 @@
       return null;
     };
 
-    // 시트 파일 → 시트 이름 (인쇄 영역 등 이름 정의를 밀 때)
+    // 시트 파일 ↔ 시트 이름 (인쇄 영역 · 다른 시트를 가리키는 수식을 옮길 때)
     const wbName = find("xl/workbook.xml"), relName = find("xl/_rels/workbook.xml.rels");
     const rels = {};
     if (relName) (text(relName).match(/<Relationship\b[^>]*>/g) || []).forEach(r => { const id = (/\bId="([^"]+)"/.exec(r) || [])[1], tg = (/\bTarget="([^"]+)"/.exec(r) || [])[1]; if (id && tg) rels[id] = tg.replace(/^\/?xl\//, ""); });
     const sheetOf = {};
     if (wbName) (text(wbName).match(/<sheet\b[^>]*>/g) || []).forEach(t => { const nm = X.xmlUnesc((/\bname="([^"]*)"/.exec(t) || [])[1] || ""), id = (/\br:id="([^"]+)"/.exec(t) || [])[1]; if (id && rels[id]) sheetOf[`xl/${rels[id]}`.toLowerCase()] = nm; });
-    const shifts = {};   // 시트 이름 → 줄 번호 바꾸기 함수
-
-    names.filter(n => /^xl\/worksheets\/[^/]+\.xml$/i.test(n)).forEach(n => {
-      let xml = text(n);
-      if (!xml.includes("{{") && !shared.some(t => t && t.includes("{{"))) return;
+    const sheetFiles = names.filter(n => /^xl\/worksheets\/[^/]+\.xml$/i.test(n));
+    const nameOf = n => sheetOf[n.toLowerCase()] || n;
+    const listOf = r => (vals[r] || []).length;
+    // 1) 시트마다 반복 줄과 늘어날 줄 수 (다른 시트의 수식이 가리키는 칸을 옮기려면 먼저 모두 알아야 함)
+    const growOf = {};
+    sheetFiles.forEach(n => {
+      const g = [];
+      (text(n).match(ROW) || []).forEach(rowXml => { const list = repeatList(rowXml); if (list) g.push([rowNo(rowXml), Math.max(listOf(list), 1) - 1]); });
+      growOf[nameOf(n)] = g;
+    });
+    // 2) 채우기
+    sheetFiles.forEach(n => {
+      const sname = nameOf(n), grow = growOf[sname];
+      quiet = sname === CHECK_SHEET;
+      let xml = unshare(text(n));
       // 기간 밖의 달: 머리글 칸이 {{월N}} 이고 값이 없으면 그 열을 숨김 (열을 지우면 수식 · 병합이 어긋나므로 숨기기로)
       const hide = new Set();
       (xml.match(CELL) || []).forEach(cXml => {
@@ -222,20 +308,15 @@
         if (m && ref && has(vals, m[1]) && (vals[m[1]] === "" || vals[m[1]] === null)) hide.add(colNo(ref));
       });
       if (hide.size) xml = hideCols(xml, hide);
-      const grow = [];   // [템플릿 줄, 늘어난 줄 수]
-      let offset = 0;
+      const newRow = newRowOf(grow);
       xml = xml.replace(/<sheetData>([\s\S]*?)<\/sheetData>/, (m, body) => `<sheetData>${body.replace(ROW, rowXml => {
         const r = rowNo(rowXml), list = repeatList(rowXml);
-        if (!list) { const out = renumber(rowXml, r + offset).replace(CELL, c => fillCell(c)); return out; }
+        if (!list) return renumber(rowXml, newRow(r)).replace(CELL, c => fillCell(c, null, null, f => shiftFormula(f, sname, r, 0, growOf)));
         const items = vals[list].length ? vals[list] : [null];   // 항목이 없으면 빈 줄 하나 (양식의 테두리는 남김)
-        const out = items.map((it, j) => renumber(rowXml, r + offset + j).replace(CELL, c => fillCell(c, list, it))).join("");
-        grow.push([r, items.length - 1]);
-        offset += items.length - 1;
-        return out;
+        return items.map((it, j) => renumber(rowXml, newRow(r) + j).replace(CELL, c => fillCell(c, list, it, f => shiftFormula(f, sname, r, j, growOf)))).join("");
       })}</sheetData>`);
-      const newRow = old => old + grow.filter(([r]) => r < old).reduce((a, [, k]) => a + k, 0);
       const shiftRef = ref => ref.replace(/(\$?[A-Z]+\$?)(\d+)/g, (m, col, row) => `${col}${newRow(Number(row))}`);
-      if (grow.length) {
+      if (grow.some(([, k]) => k > 0)) {
         // 병합: 반복 줄 안의 병합은 줄마다 복사, 아래 병합은 밀기
         xml = xml.replace(/<mergeCells\b[^>]*>([\s\S]*?)<\/mergeCells>/, (m, body) => {
           const refs = (body.match(/<mergeCell\b[^>]*\bref="([^"]+)"/g) || []).map(t => /ref="([^"]+)"/.exec(t)[1]);
@@ -249,16 +330,36 @@
           return `<mergeCells count="${out.length}">${out.map(r => `<mergeCell ref="${r}"/>`).join("")}</mergeCells>`;
         });
         xml = xml.replace(/<dimension\b[^>]*\/>/, "").replace(/\bsqref="([^"]+)"/g, (m, v) => `sqref="${shiftRef(v)}"`);
-        const sname = sheetOf[n.toLowerCase()];
-        if (sname) shifts[sname] = shiftRef;
       }
+      growOf[sname].shiftRef = shiftRef;
       files[n] = new TextEncoder().encode(xml);
     });
+    // 3) 수식 계산 → 수식 칸에 값 · 검증 시트 비교
+    const book = {};
+    sheetFiles.forEach(n => { book[nameOf(n)] = sheetCells(text(n), shared); });
+    const ev = Fm.evaluate(book);
+    sheetFiles.forEach(n => {
+      const got = ev.values[nameOf(n)];
+      if (!got) return;
+      files[n] = new TextEncoder().encode(text(n).replace(CELL, cXml => {
+        const ref = (/^<c\b[^>]*?\br="([A-Z]+\d+)"/.exec(cXml) || [])[1];
+        return ref && has(got, ref) && /<f\b/.test(cXml) ? withValue(cXml, got[ref]) : cXml;
+      }));
+    });
+    const items = [];
+    const cs = book[CHECK_SHEET];
+    if (cs) Object.keys(cs).filter(ref => /^B\d+$/.test(ref) && cs[ref].f !== undefined).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))).forEach(ref => {
+      const row = ref.slice(1), got = (ev.values[CHECK_SHEET] || {})[ref], want = (cs[`C${row}`] || {}).v;
+      const name = String((cs[`A${row}`] || {}).v || ref), prog = typeof want === "number" ? want : 0;
+      const ok = typeof got === "number" && (want === null || want === undefined || want === "" || typeof want === "number") && near(got, prog);
+      items.push({ name, sheet: got === undefined ? null : Fm.isErr(got) ? got.v : got, program: want === undefined ? null : want, ok });
+    });
+    const check = { items, failed: items.filter(x => !x.ok), problems: ev.problems };
     // 통합 문서: 반복 줄로 밀린 시트의 인쇄 영역 등 · 열 때 수식 다시 계산
     if (wbName) {
       let w = text(wbName);
       w = w.replace(/(<definedName\b[^>]*>)([\s\S]*?)(<\/definedName>)/g, (m, a, body, c) => {
-        const val = X.xmlUnesc(body).replace(/('?)([^'!,]+)\1!([^,]+)/g, (mm, q, sh, ref) => (shifts[sh] ? `${q}${sh}${q}!${shifts[sh](ref)}` : mm));
+        const val = X.xmlUnesc(body).replace(/('?)([^'!,]+)\1!([^,]+)/g, (mm, q, sh, ref) => (growOf[sh] && growOf[sh].shiftRef ? `${q}${sh}${q}!${growOf[sh].shiftRef(ref)}` : mm));
         return `${a}${X.xmlEsc(val)}${c}`;
       });
       if (/<calcPr\b/.test(w)) w = w.replace(/<calcPr\b([^>]*?)(\/?)>/, (m, a, sl) => `<calcPr${a.replace(/\s+fullCalcOnLoad="[^"]*"/, "")} fullCalcOnLoad="1"${sl}>`);
@@ -266,7 +367,15 @@
       else w = w.replace("</sheets>", `</sheets><calcPr fullCalcOnLoad="1"/>`);
       files[wbName] = new TextEncoder().encode(w);
     }
-    return { blob: X.zip(names.map(n => ({ name: n, data: files[n] }))), used: [...used], unknown: [...unknown], empty: [...empty] };
+    // 예전 계산 결과 목록(calcChain)은 칸 위치가 바뀌어 맞지 않으므로 뺌 — Excel 이 다시 만듦
+    const chain = find("xl/calcChain.xml");
+    const keep = names.filter(n => n !== chain);
+    if (chain) {
+      const ct = find("[Content_Types].xml"), rl = relName;
+      if (ct) files[ct] = new TextEncoder().encode(text(ct).replace(/<Override\b[^>]*calcChain[^>]*\/>/, ""));
+      if (rl) files[rl] = new TextEncoder().encode(text(rl).replace(/<Relationship\b[^>]*calcChain[^>]*\/>/, ""));
+    }
+    return { blob: X.zip(keep.map(n => ({ name: n, data: files[n] }))), used: [...used], unknown: [...unknown], empty: [...empty], check };
   }
 
   // 출력 파일 이름: <양식 이름>_<프로젝트ID>_<프로젝트명>_<최종작성일 YYYYMMDD>.xlsx
@@ -276,6 +385,6 @@
   // 업로드 양식(프로젝트 올리기)은 보고서 양식 목록에서 뺌
   const isReportTemplate = name => /\.xlsx$/i.test(name) && !/^~\$/.test(name) && !/^project_upload_template/i.test(name);
 
-  PC.Template = { KEYS, values, fill, outName, isReportTemplate };
+  PC.Template = { KEYS, values, fill, outName, isReportTemplate, CHECK_SHEET };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Template;
 })(typeof window !== "undefined" ? window : globalThis);

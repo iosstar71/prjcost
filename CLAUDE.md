@@ -19,6 +19,7 @@ PM Hub(저장소 `ioagent2`)의 자매 프로그램이라 화면 색(Slate · Ob
 | 선 아이콘 | `js/icons.js` (`PC.icon(이름)`, HTML 은 `<i data-icon>`) — 이모지 대신 |
 | 종합보고서 엑셀 ([종합보고서]) | `js/report.js` (`Report.sheets` — 칸 놓기 `Canvas`, 꾸밈 `S`), 엑셀 꾸밈 정의는 `js/xlsx.js` (`NAMED` · `Styles`) |
 | 사업검토서 양식(템플릿) 채우기 · 자리표시 목록 ([사업검토서]) | `js/template.js` (`KEYS` · `values` · `fill`), 문서 `docs/TEMPLATE_KEYS.md`. 기본 양식은 회사에서 Excel 로 고친 `data/templates/*.xlsx` → `python3 tools/make_templates.py` 로 `js/builtin-templates.js` 에 담음 |
+| 엑셀 수식 (칸 참조 옮기기 · 계산 · 검증) | `js/formula.js` (`mapRefs` · `evaluate`), 양식의 숨긴 시트 「검증」, LibreOffice 비교 시험 `tests/excel_recalc.js` |
 | 꾸밈 (색 변수) | `assets/app.css` |
 
 ## 규칙
@@ -28,4 +29,4 @@ PM Hub(저장소 `ioagent2`)의 자매 프로그램이라 화면 색(Slate · Ob
 - 화면: 브라우저 `alert` · `confirm` 금지 (`PC.UI.toast` · `confirm` · `choose`). 새 코드에 인라인 `style=""` · 고정 색 금지 — 색은 `app.css` 의 변수
 - 입력칸은 `data-bind="경로" data-type="text|num|blank-num|bool|pct|month2"`, 버튼은 `data-act` + `data-args`(JSON). 이벤트는 `app.js` 한 곳에서 받음
 - 버전 · 이력은 코드 주석이 아니라 `RELEASE_NOTES.md` 에. 버전 번호는 `js/app.js` 의 `VERSION`
-- 시험: 작은 수정 → `node --check` + `node tests/run.js`, 화면 · 저장 수정 → `node tests/e2e.js` 도
+- 시험: 작은 수정 → `node --check` + `node tests/run.js`, 화면 · 저장 수정 → `node tests/e2e.js` 도, 사업검토서 양식 · 수식 수정 → `node tests/excel_recalc.js` 도

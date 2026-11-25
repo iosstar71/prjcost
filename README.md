@@ -1,4 +1,4 @@
-# PM Hub Cost — 프로젝트 원가 관리 (v1.0.0)
+# PM Hub Cost — 프로젝트 원가 관리 (v1.0.1)
 
 착수 전 프로젝트의 인건비 · 경비 · 분할계약 · 견적을 넣고 원가와 이익률을 바로 계산합니다.
 **설치도 서버도 필요 없습니다.** 엑셀 파일을 DB 처럼 써서, 고른 폴더에 프로젝트마다 엑셀 파일 하나로 저장합니다.
@@ -103,6 +103,6 @@
 폴더 저장을 지원하지 않습니다. 그 경우 [저장]을 누르면 엑셀 파일을 내려받고, [⬆ 엑셀 열기]로 다시 엽니다.
 
 ## 개발
-- 시험: `node tests/run.js` (계산 회귀 · 엑셀 단위 시험, 1초 — 계산 규칙을 일부러 바꾸면 `node tools/make_golden.js`) · `node tests/e2e.js` (화면 시험, 약 20초, Playwright)
+- 시험: `node tests/run.js` (계산 회귀 · 엑셀 단위 시험, 1초 — 계산 규칙을 일부러 바꾸면 `node tools/make_golden.js`) · `node tests/e2e.js` (화면 시험, 약 20초, Playwright) · `node tests/excel_recalc.js` (사업검토서 수식을 LibreOffice 로 다시 계산해 비교, 약 5초)
 - 배포 zip: `python tools/make_release.py <출력 폴더>`
 - 규칙: `CLAUDE.md`, 자료 정의: `docs/DATA_MODEL.md`, 변경 이력: `RELEASE_NOTES.md`

@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.0";
+  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.1";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -481,10 +481,17 @@
         const name = PC.Template.outName(f.name, S.proj, lastSaved);
         UI.download(r.blob, name);
         if (Store.dir) { try { await Store.saveReport(r.blob, name); } catch (e) { console.warn("[App] report copy", e); } }
-        const notes = [];
+        const notes = [], ck = r.check;
         if (r.unknown.length) notes.push(`모르는 자리표시 ${r.unknown.map(k => `{{${k}}}`).join(", ")} — 빈칸으로 둠`);
         if (r.empty.length) notes.push(`값이 없는 칸: ${r.empty.join(", ")}`);
+        if (ck.items.length && !ck.failed.length) notes.push(`합계 수식 검증 ${ck.items.length}개 항목 일치`);
+        if (ck.problems.length) notes.push(`계산해 보지 못한 수식 ${ck.problems.length}개 (${ck.problems.slice(0, 3).map(x => `${x.sheet}!${x.ref} ${x.reason}`).join(", ")}) — Excel 에서는 계산됨`);
         UI.toast(`${name} 을(를) 만들었습니다${Store.dir ? " (reports 폴더에도 저장)" : ""}.${notes.length ? " " + notes.join(" · ") : ""}`, r.unknown.length ? "error" : "ok");
+        // 양식 수식 값이 화면 값과 다르면 (양식의 합계 범위 · 참조가 틀린 경우) 알려 줌
+        if (ck.failed.length) {
+          const show = v => (typeof v === "number" ? (Math.abs(v) >= 1000 ? PC.pyRound(v, 2).toLocaleString("ko-KR") : String(PC.pyRound(v, 4))) : v === null || v === "" ? "빈칸" : String(v));
+          await UI.choose("사업검토서 수식 검증", `파일은 만들었지만, 양식의 수식으로 계산한 값이 프로그램 값과 다른 항목이 있습니다. 양식(templates 폴더)의 합계 수식 범위 · 참조를 확인해 주세요.\n\n${ck.failed.slice(0, 10).map(x => `· ${x.name}: 양식 ${show(x.sheet)} / 프로그램 ${show(x.program)}`).join("\n")}${ck.failed.length > 10 ? `\n… 외 ${ck.failed.length - 10}개` : ""}`, [{ id: "ok", label: "확인", cls: "primary" }]);
+        }
       } catch (e) { console.error(e); UI.toast(`양식을 채우지 못했습니다: ${e.message}`, "error"); }
     },
     // 보고서: 통합보고 · 항목별 상세 2시트 엑셀 — 내려받고, 폴더가 연결돼 있으면 reports 폴더에도 남김
