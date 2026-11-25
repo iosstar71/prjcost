@@ -255,6 +255,9 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   tfiles[tname] = new TextEncoder().encode(new TextDecoder().decode(tfiles[tname]).replace("<f>SUM(O5:O6)</f>", "<f>SUM(O5:O5)</f>"));
   const wr = await T.fill(await X.zip(Object.keys(tfiles).map(n => ({ name: n, data: tfiles[n] }))).arrayBuffer(), T.values(fbig, PC.Calc.calculateProjectCost(fbig, fbig.settings), {}));
   eq("template check: a subtotal that misses the OT row is reported", wr.check.failed.map(x => x.name).slice(0, 2), ["사업개요 노무비", "사업개요 원가 합계"]);
+  // 사용자 매뉴얼: 머리줄 링크 · 그림 파일이 모두 있는지
+  const man = fs.readFileSync(path.join(__dirname, "..", "manual", "index.html"), "utf8"), imgs = [...man.matchAll(/<img src="([^"]+)"/g)].map(m => m[1]);
+  eq("manual: linked from the header, every picture exists", [/href="manual\/index.html"/.test(fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8")), imgs.length > 20, imgs.filter(f => !fs.existsSync(path.join(__dirname, "..", "manual", f)))], [true, true, []]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

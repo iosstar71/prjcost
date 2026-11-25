@@ -21,6 +21,7 @@ PM Hub(저장소 `ioagent2`)의 자매 프로그램이라 화면 색(Slate · Ob
 | 사업검토서 양식(템플릿) 채우기 · 자리표시 목록 ([사업검토서]) | `js/template.js` (`KEYS` · `values` · `fill`), 문서 `docs/TEMPLATE_KEYS.md`. 기본 양식은 회사에서 Excel 로 고친 `data/templates/*.xlsx` → `python3 tools/make_templates.py` 로 `js/builtin-templates.js` 에 담음 |
 | 엑셀 수식 (칸 참조 옮기기 · 계산 · 검증) | `js/formula.js` (`mapRefs` · `evaluate`), 양식의 숨긴 시트 「검증」, LibreOffice 비교 시험 `tests/excel_recalc.js` |
 | 꾸밈 (색 변수) | `assets/app.css` |
+| 사용자 매뉴얼 (머리줄 ? 버튼) | `manual/index.html` — 그림 `manual/img/` 는 `node tools/make_manual_shots.js` 로 다시 찍음. 화면 · 기능을 바꾸면 매뉴얼 글과 그림도 함께 |
 
 ## 규칙
 - **계산을 바꾸면** 결과가 맞는지 확인한 뒤 `node tools/make_golden.js` → `node tests/run.js`. 계산은 `calc.js` 에만 (화면에서 비율 · 합계를 새로 만들지 않음, 표 합계 줄 같은 표시용 합만 예외)

@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.1";
+  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.2";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -106,7 +106,7 @@
     sel.disabled = !Store.dir;
   }
   // 지금 테마의 반대로 바꾸는 버튼: 밝을 때 [Dark], 어두울 때 [Light]
-  const renderTheme = () => { const dark = document.documentElement.dataset.theme === "dark"; $("btnTheme").innerHTML = `${PC.icon(dark ? "sun" : "moon")}${dark ? "Light" : "Dark"}`; };
+  const renderTheme = () => { const dark = document.documentElement.dataset.theme === "dark"; $("btnTheme").innerHTML = `${PC.icon(dark ? "sun" : "moon")}<span class="lbl">${dark ? "Light" : "Dark"}</span>`; };
   function notice(html) { const n = $("noticeBox"); n.hidden = !html; n.innerHTML = html || ""; }
 
   // 다시 그려도 입력 중이던 칸을 잃지 않게
