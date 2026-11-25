@@ -31,7 +31,8 @@
     const opts = options.map(x => (typeof x === "object" ? x : { v: x, t: x }));
     const unknown = value !== undefined && value !== "" && !opts.some(x => String(x.v) === String(value));
     if (unknown) opts.unshift({ v: value, t: `${value} (목록에 없음)` });
-    return `<select data-bind="${esc(path)}" data-type="${o.kind || "text"}"${unknown ? ` class="invalid" title="기준정보에 없는 값입니다"` : ""}${o.label ? ` aria-label="${esc(o.label)}"` : ""}>${opts.map(x => `<option value="${esc(x.v)}"${String(x.v) === String(value) ? " selected" : ""}>${esc(x.t)}</option>`).join("")}</select>`;
+    const cls = [o.cls || "", unknown ? "invalid" : ""].join(" ").trim();
+    return `<select data-bind="${esc(path)}" data-type="${o.kind || "text"}"${cls ? ` class="${cls}"` : ""}${unknown ? ` title="기준정보에 없는 값입니다"` : ""}${o.label ? ` aria-label="${esc(o.label)}"` : ""}>${opts.map(x => `<option value="${esc(x.v)}"${String(x.v) === String(value) ? " selected" : ""}>${esc(x.t)}</option>`).join("")}</select>`;
   }
   const chk = (path, on, label) => `<input type="checkbox" data-bind="${esc(path)}" data-type="bool"${on ? " checked" : ""}${label ? ` aria-label="${esc(label)}"` : ""}>`;
   const field = (label, control, o = {}) => `<label class="field${o.full ? " full" : ""}"><span>${esc(label)}</span>${control}${o.help ? `<small class="help">${esc(o.help)}</small>` : ""}</label>`;
@@ -88,7 +89,7 @@
   // ---------------- 인력 표 (내부 · 외주 공통) ----------------
   // 부서 칸: 부서가 2개 이상일 때만 (하나 이하면 지금과 같은 화면)
   const deptChoices = p => (p.settings.departments || []).filter(d => String(d).trim());
-  const deptColumn = p => (M.multiDept(p) ? [{ b: "dept", t: "text", l: "부서", th: `<th>부서</th>`, cell: (r, base) => `<td>${sel(`${base}.dept`, r.dept || "", [{ v: "", t: "-" }].concat(deptChoices(p)), { label: "부서" })}</td>` }] : []);
+  const deptColumn = p => (M.multiDept(p) ? [{ b: "dept", t: "text", l: "부서", th: `<th>부서</th>`, cell: (r, base) => `<td>${sel(`${base}.dept`, r.dept || "", [{ v: "", t: "-" }].concat(deptChoices(p)), { label: "부서", cls: "s-md" })}</td>` }] : []);
 
   // 기준정보 순서로 줄을 다시 세움 (인력: 영역 → 등급(외주는 업체 → 등급), 경비: 계정)
   const sortBtn = list => btn("기준정보 순서로", "sortRows", [list], "sm", "담당 영역 · 등급 · 업체 · 계정을 기준정보에 등록한 순서대로 줄 세우기", "sort");
@@ -109,9 +110,9 @@
     return laborTab("internal_labor", p, c, [
       { b: "name", t: "text", l: "성명", th: `<th class="l">성명</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "PM/개발", label: "역할" })}</td>` },
-      { b: "area", t: "text", l: "담당 영역", th: `<th>담당 영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "담당 영역" })}</td>` },
+      { b: "area", t: "text", l: "담당 영역", th: `<th>담당 영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "담당 영역", cls: "s-md" })}</td>` },
       ...deptColumn(p),
-      { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>` },
+      { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급", cls: "s-sm" })}</td>` },
       { b: "base_rate", t: "blank-num", l: "기준단가", th: `<th>기준단가</th>`, cell: (r, base) => `<td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>` },
       { b: "overhead_eligible", t: "bool", l: "인비례", th: `<th title="내부 인비례 경비(MM × 기준금액)를 매길 인력">인비례</th>`, cell: (r, base) => `<td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례")}</td>` },
       { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("internal_labor", r, base, i) }
@@ -124,10 +125,10 @@
     return laborTab("external_labor", p, c, [
       { b: "name", t: "text", l: "성명", th: `<th class="l">성명/구분</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "개발/디자인", label: "역할" })}</td>` },
-      { b: "area", t: "text", l: "담당 영역", th: `<th>담당 영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "담당 영역" })}</td>` },
+      { b: "area", t: "text", l: "담당 영역", th: `<th>담당 영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "담당 영역", cls: "s-md" })}</td>` },
       ...deptColumn(p),
-      { b: "vendor", t: "text", l: "외주업체", th: `<th>외주업체</th>`, cell: (r, base) => `<td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체" })}</td>` },
-      { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급" })}</td>` },
+      { b: "vendor", t: "text", l: "외주업체", th: `<th>외주업체</th>`, cell: (r, base) => `<td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체", cls: "s-md" })}</td>` },
+      { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급", cls: "s-sm" })}</td>` },
       { b: "custom_rate", t: "blank-num", l: "적용단가", th: `<th title="비워 두면 업체 · 등급 단가표의 단가 (인상월 · 인상단가도 단가표대로)">적용단가</th>`, cell: (r, base) => `<td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>` },
       { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("external_labor", r, base, i) }
     ], { icon: "partner", title: "외주 인력 투입 계획", addLabel: "외주 인력", total: c.summary.breakdown.external_labor });
@@ -141,8 +142,8 @@
     const accounts = (p.settings.expense_accounts || []).filter(a => a.category === cat).map(a => `<option value="${esc(a.account)}"></option>`).join("");
     const cols = [
       { b: "name", t: "text", l: "계정", th: `<th class="l">계정 / 항목</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-lg", list: `acc_${list}`, label: "계정" })}</td>` },
-      ...(M.multiDept(p) ? [{ b: "dept", t: "dept", l: "부서", th: `<th title="비우면 공통 — 부서별 손익에서 기준에 따라 나눔">부서</th>`, cell: (r, base) => `<td>${sel(`${base}.dept`, r.dept || "", [{ v: "", t: "공통" }].concat(deptChoices(p)), { label: "부서" })}</td>` }] : []),
-      { b: "dist_mode", t: "mode", l: "분배", th: `<th>분배 방식</th>`, cell: (r, base) => `<td>${sel(`${base}.dist_mode`, r.dist_mode || "equal_total", MODES, { label: "분배 방식" })}</td>` },
+      ...(M.multiDept(p) ? [{ b: "dept", t: "dept", l: "부서", th: `<th title="비우면 공통 — 부서별 손익에서 기준에 따라 나눔">부서</th>`, cell: (r, base) => `<td>${sel(`${base}.dept`, r.dept || "", [{ v: "", t: "공통" }].concat(deptChoices(p)), { label: "부서", cls: "s-md" })}</td>` }] : []),
+      { b: "dist_mode", t: "mode", l: "분배", th: `<th>분배 방식</th>`, cell: (r, base) => `<td>${sel(`${base}.dist_mode`, r.dist_mode || "equal_total", MODES, { label: "분배 방식", cls: "s-lg" })}</td>` },
       { b: "@amount", t: "num", l: "금액", th: `<th title="총액 균등: 전체 금액 / 매달 같은 금액: 한 달 금액">입력 금액</th>`, cell: (r, base) => r.dist_mode === "manual" ? `<td class="c"><span class="tag">달마다</span></td>`
         : `<td>${inp(r.dist_mode === "fill_all" ? `${base}.unit_input` : `${base}.total_input`, r.dist_mode === "fill_all" ? r.unit_input : r.total_input, { money: true, cls: "w-md", label: "입력 금액" })}</td>` },
       ...months.map(m => ({ b: `monthly.${m}`, t: "num", l: m, fill: true, th: `<th class="m">${esc(m.slice(2).replace("-", "."))}</th>`,
@@ -190,7 +191,7 @@
     const full = (p.phases || []).length >= 5;
     return head("split", "분할계약", gap && p.phases.length ? `회차 매출 합이 계약 매출보다 ${won(Math.abs(gap))}원 ${gap > 0 ? "적습니다" : "많습니다"}` : "최대 5회차",
       full ? `<button class="btn primary sm" disabled title="최대 5회차">${icon("plus")}회차</button>` : btn("회차", "addRow", ["phases"], "primary sm", "", "plus"))
-      + `<div class="stack"><div class="tbl-wrap"><table><thead><tr><th class="w-del"></th><th class="l">차수명</th><th>시작월</th><th>종료월</th><th>회차 매출(원)</th><th>별도 원가(원)</th></tr></thead>
+      + `<div class="stack"><div class="tbl-wrap"><table class="fill"><thead><tr><th class="w-del"></th><th class="l">차수명</th><th>시작월</th><th>종료월</th><th>회차 매출(원)</th><th>별도 원가(원)</th></tr></thead>
         <tbody>${editor || empty(6, "등록된 분할계약이 없습니다.")}</tbody></table></div>
       <div class="tbl-wrap"><table><thead><tr><th class="l" rowspan="2">회차</th><th rowspan="2">기간</th><th rowspan="2">회차 매출</th><th colspan="4" class="grp">회차 원가</th><th rowspan="2">이익률</th><th rowspan="2">누적 매출</th><th rowspan="2">누적 원가</th><th rowspan="2">잔여 매출</th><th rowspan="2">잔여 원가</th></tr>
         <tr><th>합계</th><th>내부 인건비</th><th>외주 인건비</th><th title="일반 · 인비례 · 기타경비">경비</th></tr></thead>
@@ -211,7 +212,7 @@
     return head("receipt", "견적서", est.applied_to_revenue ? "공급가액이 계약 매출에 적용됨" : "",
       btn("품목", "addRow", ["estimate.items"], "sm", "", "plus") + btn("공급가액 → 계약 매출", "applyEstimate", [], "primary sm", "견적 공급가액을 계약 매출로 씁니다"))
       + `<div class="form-grid compact">${field("견적번호", inp("estimate.estimate_no", p.estimate.estimate_no, { ph: "EST-2026-001" }))}${field("견적일자", inp("estimate.estimate_date", p.estimate.estimate_date, { type: "date" }))}${field("비고", inp("estimate.note", p.estimate.note, { ph: "조건 · 유효기간" }))}</div>
-      <div class="tbl-wrap"><table><thead><tr><th class="w-del"></th><th class="l">항목명</th><th class="l">규격/등급</th><th>수량</th><th>단가(원)</th><th>금액(원)</th><th class="l">비고</th></tr></thead><tbody>
+      <div class="tbl-wrap"><table class="fill"><thead><tr><th class="w-del"></th><th class="l">항목명</th><th class="l">규격/등급</th><th>수량</th><th>단가(원)</th><th>금액(원)</th><th class="l">비고</th></tr></thead><tbody>
         ${body || empty(7, "등록된 품목이 없습니다.")}
         <tr class="total"><td></td><td colspan="4" class="l">공급가액</td><td class="num">${won(est.supply_total)}</td><td></td></tr>
         <tr class="auto"><td></td><td colspan="4" class="l">부가세 (10%)</td><td class="num">${won(est.vat)}</td><td></td></tr>
@@ -245,13 +246,13 @@
       + gridTable({ order: true, list: "settings.external_grades", rows: st.external_grades || [], newLabel: "등급 입력", cols: [text("", "등급")] }));
     else if (sub === "vendors") body = narrow(subHead("외주업체별 등급 단가", "외주 인력의 적용단가를 비워 두면 이 단가 · 협상으로 바뀌면 인상월 · 인상단가 · " + GRID_HINT)
       + gridTable({ order: true, list: "settings.vendor_rates", rows: st.vendor_rates || [], newLabel: "업체 입력", cols: [text("vendor", "업체"),
-        { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", st.external_grades || [], { label: "등급" })}</td>` },
+        { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", st.external_grades || [], { label: "등급", cls: "s-sm" })}</td>` },
         moneyCol("rate", "월 단가 (원)"),
         { b: "raise_ym", t: "month", l: "인상월", th: `<th title="협상으로 단가가 바뀌는 달">인상월</th>`, cell: (r, base) => `<td>${inp(`${base}.raise_ym`, r.raise_ym, { type: "month", label: "인상월" })}</td>` },
         blankMoney("raise_rate", "인상단가 (원)")] }));
     else if (sub === "accounts") body = subHead("경비 계정", "인비례 계정은 인력 MM × 기준금액(원/MM)으로 자동 계산 — 내부: [인비례]에 체크한 인력, 외주: 외주 인력")
       + gridTable({ order: true, list: "settings.expense_accounts", rows: st.expense_accounts || [], newLabel: "계정 입력", cols: [text("account", "계정"),
-        { b: "category", t: "cat", l: "구분", th: `<th>구분</th>`, cell: (r, base) => `<td>${sel(`${base}.category`, r.category || "general", M.CATEGORIES, { label: "구분" })}</td>` },
+        { b: "category", t: "cat", l: "구분", th: `<th>구분</th>`, cell: (r, base) => `<td>${sel(`${base}.category`, r.category || "general", M.CATEGORIES, { label: "구분", cls: "s-md" })}</td>` },
         { b: "unit_amount", t: "num", l: "기준금액", th: `<th>기준금액 (원/MM)</th>`, cell: (r, base) => (M.isMmCategory(r.category) ? `<td>${inp(`${base}.unit_amount`, r.unit_amount, { money: true, cls: "w-md", label: "기준금액" })}</td>` : `<td class="c muted">-</td>`) },
         text("desc", "설명", "w-xl")] });
     else if (sub === "areas") body = narrow(subHead("담당 영역 (시스템)", "인력마다 고르는 담당 영역 — [투입 현황]에서 영역별로 MM · 금액을 봅니다")

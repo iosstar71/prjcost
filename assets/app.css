@@ -78,6 +78,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--p
 .save-state { font-size: var(--fs-xs); color: var(--muted); min-width: 70px; text-align: right; font-weight: 600; }
 .save-state.dirty { color: var(--warn); font-weight: 800; }
 #projectSelect { height: 32px; min-width: 240px; max-width: 340px; font-weight: 700; }
+@media (max-width: 1366px) { #projectSelect { min-width: 170px; max-width: 230px; } }
 
 /* ---------- 본문 ---------- */
 .workspace { max-width: 1560px; margin: 16px auto; padding: 0 20px 48px; display: grid; gap: 14px; }
@@ -266,3 +267,11 @@ th.grp { border-bottom: 1px solid var(--line); }
 .phase-dept { margin-top: 14px; }
 .phase-dept h4 { margin: 0 0 8px; font-size: var(--fs); }
 .phase-dept h4 .muted { font-weight: 500; font-size: var(--fs-sm); margin-left: 6px; }
+
+/* 칸 너비: 표가 패널 밖으로 밀어내지 않게 (넓으면 표 안에서 가로 스크롤) · 고르기 칸은 글자가 잘리지 않을 만큼 */
+.stack > *, #panel > *, .narrow > * { min-width: 0; }
+table.grid td > select.s-sm { min-width: 92px; }
+table.grid td > select.s-md { min-width: 124px; }
+table.grid td > select.s-lg { min-width: 140px; }
+table.fill td > input:not([type="checkbox"]):not([type="number"]) { width: 100%; min-width: 0; }
+table.fill td > input[type="month"] { min-width: 150px; }

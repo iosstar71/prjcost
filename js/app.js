@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.5";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.6";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
