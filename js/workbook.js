@@ -72,9 +72,7 @@
       { cells: ["합계 (인건비 + 기타)", "", "", "", est.subtotal, ""], style: "total" },
       { cells: [`할인 (${est.discount_rate}%)`, "", "", "", -est.discount, ""] },
       { cells: [`절사 (${est.round_unit > 1 ? `${est.round_unit.toLocaleString("ko-KR")}원 단위` : "없음"})`, "", "", "", -est.truncation, ""] },
-      { cells: ["공급가액 합계", "", "", "", est.supply_total, ""], style: "total" },
-      { cells: ["부가세(10%)", "", "", "", est.vat, ""], style: "total" },
-      { cells: ["견적 총액(VAT포함)", "", "", "", est.grand_total, ""], style: "total" }
+      { cells: ["견적 금액", "", "", "", est.supply_total, ""], style: "total" }
     ];
     const audit = [head(["일시", "작업자", "프로젝트ID", "계약매출", "총원가", "이익률(%)"]),
       ...(auditRows || []).slice(-(AUDIT_KEEP - 1)).map(r => ({ cells: r })),

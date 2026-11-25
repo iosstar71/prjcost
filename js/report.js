@@ -156,7 +156,7 @@
         if (est.discount) line(C, r++, [[2, 8], [9, 9], [10, 10]], [[`할인 ${est.discount_rate}%`, S.center], [-est.discount, S.won], ["", S.center]]);
         if (est.truncation) line(C, r++, [[2, 8], [9, 9], [10, 10]], [[`절사 (${est.round_unit.toLocaleString("ko-KR")}원 단위)`, S.center], [-est.truncation, S.won], ["", S.center]]);
       }
-      line(C, r++, [[2, 6], [7, 7], [8, 8], [9, 9], [10, 10]], [["공급가액 (VAT 별도)", tot(S.center)], [pyRound(est.labor.reduce((a, l) => a + l.mm, 0), 2), tot(S.mm)], ["", tot(S.center)], [est.supply_total, tot(S.won)], [est.supply_total ? 1 : 0, tot(S.pct)]]);
+      line(C, r++, [[2, 6], [7, 7], [8, 8], [9, 9], [10, 10]], [["견적 금액", tot(S.center)], [pyRound(est.labor.reduce((a, l) => a + l.mm, 0), 2), tot(S.mm)], ["", tot(S.center)], [est.supply_total, tot(S.won)], [est.supply_total ? 1 : 0, tot(S.pct)]]);
       C.box(r, 2, r, 10, `계약 매출 ${Math.round(rev).toLocaleString("ko-KR")}원 · 견적 대비 ${est.supply_total ? (ratio(rev, est.supply_total) * 100).toFixed(1) : "-"}%${est.applied_to_revenue ? " (견적을 매출에 적용)" : ""}`, S.note); r++;
       r++;
     }

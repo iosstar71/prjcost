@@ -217,11 +217,11 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   const od = PC.Calc.deptSummary(op, PC.Calc.calculateProjectCost(op, op.settings));
   eq("departments: OT split by internal labor, materials as common — totals reconcile", [od.total.cost, od.total.internal_labor], [oc.summary.total_cost, ob.internal_labor]);
 
-  // 견적: 합계 → 할인(%) → 절사(단위 아래 버림) → 공급가액 · VAT
+  // 견적: 합계 → 할인(%) → 절사(단위 아래 버림) → 견적 금액 (부가세 없음)
   const xp = M.sampleProject(M.defaultSettings());
   xp.estimate.discount_rate = 3.5; xp.estimate.round_unit = 100000;
   const xe = PC.Calc.calculateProjectCost(xp, xp.settings).estimate;
-  eq("estimate discount and truncation (232,000,000 → −8,120,000 → 223,880,000 → 223,800,000)", [xe.subtotal, xe.discount, xe.truncation, xe.supply_total, xe.vat], [232000000, 8120000, 80000, 223800000, 22380000]);
+  eq("estimate discount and truncation (232,000,000 → −8,120,000 → 223,880,000 → 223,800,000)", [xe.subtotal, xe.discount, xe.truncation, xe.supply_total, "vat" in xe], [232000000, 8120000, 80000, 223800000, false]);
   xp.estimate.discount_rate = 0; xp.estimate.round_unit = 100; xp.estimate.items[0].unit_price = 30009999;
   eq("truncation by 100 won (…9,999 → …9,900)", PC.Calc.calculateProjectCost(xp, xp.settings).estimate.supply_total, 232009900);
   // 양식: 기간 밖의 달 열은 숨김 (샘플 6개월 → 5Tier 의 7~12월 열 N~S 숨김, H~M 보임)

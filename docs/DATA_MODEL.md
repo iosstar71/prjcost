@@ -45,4 +45,4 @@ expense_accounts[{account, category, unit_amount, desc}] — category: `general`
 - 원가 구성(summary.composition) = internal_labor · external_labor · expense(일반경비 이름별 + 인비례 계정별) · custom_cost(기타경비 이름별)의 금액 · 총 원가 대비 비중
 - 투입 현황(Calc.staffStats) = 인력 계획을 area · grade · role · vendor · kind 로 묶은 인원 · 달별 MM · 인건비 (months 를 주면 그 달만 — 분할계약 기간)
 - 이익률 = (매출 − 총 원가) ÷ 매출 × 100. 반올림은 파이썬 round(…, 2) 와 같음 (한가운데는 짝수 쪽)
-- 견적: 인건비 = 견적 MM × (직접 넣은 단가 또는 제안 직무 × 등급 단가), 기타 항목 = 수량 × 단가 → 합계 − 할인(합계 × 할인율) → 절사(절사 단위 아래 버림) = 공급가액, 부가세 10%. 인력 계획에서 가져오기 = Calc.estimateFromPlan (제안 직무 · 등급별 MM 합)
+- 견적: 인건비 = 견적 MM × (직접 넣은 단가 또는 제안 직무 × 등급 단가), 기타 항목 = 수량 × 단가 → 합계 − 할인(합계 × 할인율) → 절사(절사 단위 아래 버림) = 견적 금액 (부가세는 넣지 않음). 인력 계획에서 가져오기 = Calc.estimateFromPlan (제안 직무 · 등급별 MM 합)

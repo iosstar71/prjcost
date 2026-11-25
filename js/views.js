@@ -259,14 +259,12 @@
         ${items || empty(7, "등록된 품목이 없습니다.")}
         <tr class="total"><td></td><td colspan="4" class="l">기타 항목 소계</td><td class="num">${won(est.items_total)}</td><td></td></tr>
       </tbody></table></div></section>
-      <section class="mt">${subHead("견적 금액", "합계 → 할인 → 절사 → 공급가액 (VAT 별도)")}
+      <section class="mt">${subHead("견적 금액", "합계 → 할인 → 절사 → 견적 금액")}
       <div class="tbl-wrap"><table class="est-sum"><tbody>
         <tr><td class="l">합계 (인건비 + 기타 항목)</td><td></td><td class="num">${won(est.subtotal)}</td></tr>
         <tr><td class="l">할인</td><td class="c nowrap">${inp("estimate.discount_rate", p.estimate.discount_rate || "", { type: "number", step: "0.1", kind: "num", cls: "w-xs", ph: "0", label: "할인율(%)" })} %</td><td class="num">${est.discount ? `− ${won(est.discount)}` : "-"}</td></tr>
         <tr><td class="l">절사</td><td class="c">${sel("estimate.round_unit", String(p.estimate.round_unit || 1), ROUND_UNITS, { kind: "num", label: "절사 단위", cls: "s-md" })}</td><td class="num">${est.truncation ? `− ${won(est.truncation)}` : "-"}</td></tr>
-        <tr class="total"><td class="l">공급가액 (VAT 별도)</td><td></td><td class="num">${won(est.supply_total)}</td></tr>
-        <tr class="auto"><td class="l">부가세 (10%)</td><td></td><td class="num">${won(est.vat)}</td></tr>
-        <tr class="total"><td class="l">견적 총액 (VAT 포함)</td><td></td><td class="num">${won(est.grand_total)}</td></tr>
+        <tr class="total"><td class="l">견적 금액</td><td></td><td class="num">${won(est.supply_total)}</td></tr>
       </tbody></table></div></section>`;
   }
 

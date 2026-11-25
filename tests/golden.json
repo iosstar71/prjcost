@@ -718,9 +718,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 249999999.5,
-    "vat": 24999999.95,
-    "grand_total": 274999999.45
+    "supply_total": 249999999.5
    }
   }
  },
@@ -1423,9 +1421,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 143833333.33,
-    "vat": 14383333.33,
-    "grand_total": 158216666.66
+    "supply_total": 143833333.33
    }
   }
  },
@@ -2687,9 +2683,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 190166666.67,
-    "vat": 19016666.67,
-    "grand_total": 209183333.34
+    "supply_total": 190166666.67
    }
   }
  },
@@ -3629,9 +3623,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 204541666.66,
-    "vat": 20454166.67,
-    "grand_total": 224995833.33
+    "supply_total": 204541666.66
    }
   }
  },
@@ -4961,9 +4953,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 665000000,
-    "vat": 66500000,
-    "grand_total": 731500000
+    "supply_total": 665000000
    }
   }
  },
@@ -6709,9 +6699,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 0,
-    "vat": 0,
-    "grand_total": 0
+    "supply_total": 0
    }
   }
  },
@@ -8457,9 +8445,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 125000,
-    "vat": 12500,
-    "grand_total": 137500
+    "supply_total": 125000
    }
   }
  },
@@ -9841,9 +9827,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 97499999.99,
-    "vat": 9750000,
-    "grand_total": 107249999.99
+    "supply_total": 97499999.99
    }
   }
  },
@@ -11015,9 +10999,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 237541666.67,
-    "vat": 23754166.67,
-    "grand_total": 261295833.34
+    "supply_total": 237541666.67
    }
   }
  },
@@ -12843,9 +12825,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 0,
-    "vat": 0,
-    "grand_total": 0
+    "supply_total": 0
    }
   }
  },
@@ -13923,9 +13903,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 238333333.33,
-    "vat": 23833333.33,
-    "grand_total": 262166666.66
+    "supply_total": 238333333.33
    }
   }
  },
@@ -14804,9 +14782,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 166666.67,
-    "vat": 16666.67,
-    "grand_total": 183333.34
+    "supply_total": 166666.67
    }
   }
  },
@@ -17271,9 +17247,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 125000,
-    "vat": 12500,
-    "grand_total": 137500
+    "supply_total": 125000
    }
   }
  },
@@ -17898,9 +17872,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 237500000,
-    "vat": 23750000,
-    "grand_total": 261250000
+    "supply_total": 237500000
    }
   }
  },
@@ -18937,9 +18909,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 59916666.67,
-    "vat": 5991666.67,
-    "grand_total": 65908333.34
+    "supply_total": 59916666.67
    }
   }
  },
@@ -19768,9 +19738,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 50500000,
-    "vat": 5050000,
-    "grand_total": 55550000
+    "supply_total": 50500000
    }
   }
  },
@@ -20670,9 +20638,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 0,
-    "vat": 0,
-    "grand_total": 0
+    "supply_total": 0
    }
   }
  },
@@ -21268,9 +21234,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 2000000,
-    "vat": 200000,
-    "grand_total": 2200000
+    "supply_total": 2000000
    }
   }
  },
@@ -22347,9 +22311,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 12541666.66,
-    "vat": 1254166.67,
-    "grand_total": 13795833.33
+    "supply_total": 12541666.66
    }
   }
  },
@@ -23116,9 +23078,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 1833333.32,
-    "vat": 183333.33,
-    "grand_total": 2016666.65
+    "supply_total": 1833333.32
    }
   }
  },
@@ -24125,9 +24085,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 499999.99,
-    "vat": 50000,
-    "grand_total": 549999.99
+    "supply_total": 499999.99
    }
   }
  },
@@ -25501,9 +25459,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 47541666.67,
-    "vat": 4754166.67,
-    "grand_total": 52295833.34
+    "supply_total": 47541666.67
    }
   }
  },
@@ -26230,9 +26186,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 142625000,
-    "vat": 14262500,
-    "grand_total": 156887500
+    "supply_total": 142625000
    }
   }
  },
@@ -27108,9 +27062,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 0,
-    "vat": 0,
-    "grand_total": 0
+    "supply_total": 0
    }
   }
  },
@@ -28923,9 +28875,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 1166666.66,
-    "vat": 116666.67,
-    "grand_total": 1283333.33
+    "supply_total": 1166666.66
    }
   }
  },
@@ -30023,9 +29973,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 97666666.67,
-    "vat": 9766666.67,
-    "grand_total": 107433333.34
+    "supply_total": 97666666.67
    }
   }
  },
@@ -31234,9 +31182,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 2958333.33,
-    "vat": 295833.33,
-    "grand_total": 3254166.66
+    "supply_total": 2958333.33
    }
   }
  },
@@ -32922,9 +32868,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 166666.67,
-    "vat": 16666.67,
-    "grand_total": 183333.34
+    "supply_total": 166666.67
    }
   }
  },
@@ -34876,9 +34820,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 95166666.67,
-    "vat": 9516666.67,
-    "grand_total": 104683333.34
+    "supply_total": 95166666.67
    }
   }
  },
@@ -36248,9 +36190,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 125000.01,
-    "vat": 12500,
-    "grand_total": 137500.01
+    "supply_total": 125000.01
    }
   }
  },
@@ -37017,9 +36957,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 190666666.67,
-    "vat": 19066666.67,
-    "grand_total": 209733333.34
+    "supply_total": 190666666.67
    }
   }
  },
@@ -38284,9 +38222,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 2958333.33,
-    "vat": 295833.33,
-    "grand_total": 3254166.66
+    "supply_total": 2958333.33
    }
   }
  },
@@ -41052,9 +40988,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 0,
-    "vat": 0,
-    "grand_total": 0
+    "supply_total": 0
    }
   }
  },
@@ -42247,9 +42181,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 2166666.67,
-    "vat": 216666.67,
-    "grand_total": 2383333.34
+    "supply_total": 2166666.67
    }
   }
  },
@@ -43688,9 +43620,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 12541666.66,
-    "vat": 1254166.67,
-    "grand_total": 13795833.33
+    "supply_total": 12541666.66
    }
   }
  },
@@ -44779,9 +44709,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 1000000,
-    "vat": 100000,
-    "grand_total": 1100000
+    "supply_total": 1000000
    }
   }
  },
@@ -45836,9 +45764,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 0,
-    "vat": 0,
-    "grand_total": 0
+    "supply_total": 0
    }
   }
  },
@@ -46931,9 +46857,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 47500000,
-    "vat": 4750000,
-    "grand_total": 52250000
+    "supply_total": 47500000
    }
   }
  },
@@ -47922,9 +47846,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 0,
-    "vat": 0,
-    "grand_total": 0
+    "supply_total": 0
    }
   }
  },
@@ -49315,9 +49237,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 0,
-    "vat": 0,
-    "grand_total": 0
+    "supply_total": 0
    }
   }
  },
@@ -49922,9 +49842,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 95000000,
-    "vat": 9500000,
-    "grand_total": 104500000
+    "supply_total": 95000000
    }
   }
  },
@@ -50566,9 +50484,7 @@
     "discount": 0,
     "round_unit": 1,
     "truncation": 0,
-    "supply_total": 249999999.5,
-    "vat": 24999999.95,
-    "grand_total": 274999999.45
+    "supply_total": 249999999.5
    }
   }
  }

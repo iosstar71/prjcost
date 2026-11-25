@@ -98,14 +98,13 @@
     const unit = num(estimate.round_unit) > 1 ? num(estimate.round_unit) : 0;
     supply = unit ? Math.floor(afterDiscount / unit) * unit : afterDiscount;
     const truncation = pyRound(afterDiscount - supply, 2);
-    const vat = pyRound(supply * 0.1, 2);
     return {
       estimate_no: String(estimate.estimate_no || ""),
       estimate_date: String(estimate.estimate_date || ""),
       note: String(estimate.note || ""),
       applied_to_revenue: !!estimate.applied_to_revenue,
       labor, labor_total: laborTotal, items, items_total: pyRound(subtotal - laborTotal, 2), subtotal, discount_rate: rate, discount, round_unit: unit || 1, truncation,
-      supply_total: supply, vat, grand_total: pyRound(supply + vat, 2)
+      supply_total: supply   // 견적에는 부가세를 넣지 않음
     };
   }
 
