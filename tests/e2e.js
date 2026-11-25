@@ -260,7 +260,21 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     const rn = await page.evaluate(() => [PC.App.S.proj.external_labor[0].dept, PC.App.S.proj.dept_revenue["AI본부"]]);
     check("Renaming a department carries over to staff and department revenue", rn[0] === "AI본부" && rn[1] === 100000000, JSON.stringify(rn));
     if (shotDir) { await page.click('[data-act="showTab"][data-args*="dept"]'); await page.screenshot({ path: path.join(shotDir, "light_dept.png"), fullPage: true }); await page.click('[data-act="showTab"][data-args*="internal"]'); await page.screenshot({ path: path.join(shotDir, "light_internal_dept.png") }); }
-    for (let k = 0; k < 7; k++) await page.keyboard.press("Control+z");
+    // 분할계약 회차 × 부서: 회차마다 부서별 표 (매출은 회차 × 부서 입력, 원가 합 = 회차 원가), [부서별] 탭에서 회차 고르기
+    await page.click('[data-act="showTab"][data-args*="phase"]');
+    await page.fill(B("phases.0.dept_revenue.SI사업부"), "70000000"); await page.keyboard.press("Tab");
+    await page.fill(B("phases.0.dept_revenue.AI본부"), "40000000"); await page.keyboard.press("Tab");
+    await page.waitForFunction(() => PC.App.S.proj.phases[0].dept_revenue["AI본부"] === 40000000, null, { timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(50);
+    const pd = await page.evaluate(() => ({ blocks: document.querySelectorAll(".phase-dept").length, totals: [...document.querySelectorAll(".phase-dept tr.total")].map(r => r.cells[7].innerText.trim()), costs: PC.App.S.calc.phases.map(p => p.cost.toLocaleString("ko-KR")), warn0: !!document.querySelectorAll(".phase-dept")[0].querySelector(".note-warn"), warn1: !!document.querySelectorAll(".phase-dept")[1].querySelector(".note-warn") }));
+    if (shotDir) await page.screenshot({ path: path.join(shotDir, "light_phase_dept.png"), fullPage: true });
+    await page.click('[data-act="showTab"][data-args*="dept"]');
+    await page.selectOption('select[data-key="phase"]', "1");
+    const dph = await page.evaluate(() => ({ rev: document.querySelector('[data-bind="phases.0.dept_revenue.SI사업부"]') ? document.querySelector('[data-bind="phases.0.dept_revenue.SI사업부"]').value : "", total: document.querySelector(".dept-tbl tr.total").cells[7].innerText.trim() }));
+    check("Split contracts by department: a table per phase (revenue entered per phase and department, cost total = phase cost); Department tab can pick a phase",
+      pd.blocks === 2 && pd.totals.join() === pd.costs.join() && !pd.warn0 && pd.warn1 && dph.rev === "70,000,000" && dph.total === pd.costs[0], JSON.stringify({ pd, dph }));
+    await page.selectOption('select[data-key="phase"]', "0");
+    for (let k = 0; k < 20 && (await page.evaluate(() => PC.App.S.proj.settings.departments.length)); k++) await page.keyboard.press("Control+z");
     const back = await page.evaluate(() => PC.App.S.proj.settings.departments.length);
     check("Undo removes the department setup again", back === 0, String(back));
 

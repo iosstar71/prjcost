@@ -40,6 +40,7 @@
       ...(st.vendor_rates || []).filter(r => r.raise_rate !== undefined && r.raise_rate !== "").map(r => ["외주업체인상", `${r.vendor || ""} ${r.grade || ""}`, r.raise_ym || "", num(r.raise_rate)]),
       ...(st.areas || []).map(a => ["담당영역", String(a), "", ""]),
       ...(st.departments || []).map(a => ["부서", String(a), "부서매출", num((project.dept_revenue || {})[a])]),
+      ...(project.phases || []).flatMap((ph, i) => (st.departments || []).filter(a => num((ph.dept_revenue || {})[a])).map(a => ["회차부서매출", `${i + 1}차 ${ph.title || ""}`, String(a), num(ph.dept_revenue[a])])),
       ...(st.expense_accounts || []).map(a => ["경비계정", a.account || "", catName(a.category), PC.Model.isMmCategory(a.category) ? num(a.unit_amount) : a.desc || ""])
     ].map(cells => ({ cells }));
 
@@ -132,7 +133,11 @@
       { cells: [`공통경비 ${Math.round(r.common).toLocaleString("ko-KR")}원은 ${basis}로 나눔`] }, { cells: [] },
       head(["부서", "매출", "내부 인건비", "외주 인건비", "인비례 경비", "직접 경비", "공통경비 배분", "원가 합", "이익", "이익률(%)", "MM", "인원"]),
       ...r.rows.map(g => line(g)), line(Object.assign({ dept: "합계 (통합)" }, t), "total"),
-      ...(r.revenue_gap ? [{ cells: [] }, { cells: [{ v: `부서 매출 합이 계약 매출보다 ${Math.abs(r.revenue_gap).toLocaleString("ko-KR")}원 ${r.revenue_gap > 0 ? "적음" : "많음"}`, s: "warn" }] }] : [])];
+      ...(r.revenue_gap ? [{ cells: [] }, { cells: [{ v: `부서 매출 합이 계약 매출보다 ${Math.abs(r.revenue_gap).toLocaleString("ko-KR")}원 ${r.revenue_gap > 0 ? "적음" : "많음"}`, s: "warn" }] }] : []),
+      // 분할계약 회차마다
+      ...PC.Calc.phaseDeptSummary(project, calc).flatMap(pr => [{ cells: [] }, { cells: [{ v: `${pr.phase.title} (${pr.phase.start_ym} ~ ${pr.phase.end_ym}) — 회차 매출 ${pr.phase.revenue.toLocaleString("ko-KR")}원${pr.overridden ? " · 별도 원가에 맞춤" : ""}`, s: "title" }] },
+        head(["부서", "매출", "내부 인건비", "외주 인건비", "인비례 경비", "직접 경비", "공통경비 배분", "원가 합", "이익", "이익률(%)", "MM", "인원"]),
+        ...pr.rows.map(g => line(g)), line(Object.assign({ dept: "회차 합계" }, pr.total), "total")])];
   }
 
   // ---------- 보고서 (통합보고 · 항목별 상세 · 투입현황 · 부서별손익) ----------

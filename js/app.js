@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.4";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.5";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -21,6 +21,7 @@
     noted: new Set(),
     settingsTab: "grades",         // 기준정보 안의 작은 탭
     stats: { by: "area", scope: "all", phase: 0 },
+    deptPhase: 0,                   // 부서별 탭의 기간 (0 = 전체, n = n 회차)
     cmp: { a: null, b: 0 }          // 버전 비교: 기준 버전 번호 · 비교 대상 (0 = 지금 화면)   // 투입 현황 보기 조건 (phase: 분할계약 회차, 0 = 전체 기간)               // 이번에 이미 알린 '예전 비율 방식' 파일           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
   };
   const UNDO_KEEP = 100;
@@ -43,7 +44,7 @@
     renderKpis();
     renderTabs();
     const tab = shownTabs().find(t => t.id === S.tab) || Views.TABS[0];
-    $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file, sub: S.settingsTab, stats: S.stats, cmp: S.cmp });
+    $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file, sub: S.settingsTab, stats: S.stats, cmp: S.cmp, deptPhase: S.deptPhase });
     renderSaveState();
     renderUndo();
     restoreFocus(focus);
@@ -165,7 +166,7 @@
     const f = m[1] === "areas" ? "area" : "dept";
     const lists = f === "area" ? [p.internal_labor, p.external_labor] : [p.internal_labor, p.external_labor, p.general_expenses, p.custom_costs];
     lists.forEach(l => l.forEach(r => { if (r[f] === oldV) r[f] = newV; }));
-    if (f === "dept" && p.dept_revenue && oldV in p.dept_revenue) { p.dept_revenue[newV] = p.dept_revenue[oldV]; delete p.dept_revenue[oldV]; }
+    if (f === "dept") [p.dept_revenue].concat(p.phases.map(ph => ph.dept_revenue)).forEach(m => { if (m && oldV in m) { m[newV] = m[oldV]; delete m[oldV]; } });
   }
   // 총 MM = 프로젝트 기간 달별 MM 의 합
   function syncTotal(row) {
@@ -226,6 +227,7 @@
     showTab(id) { S.tab = id; render(); },
     showSettings(id) { S.settingsTab = id; render(); },
     setStats(key, v) { S.stats[key] = key === "phase" ? Number(v) || 0 : v; render(); },
+    setDeptPhase(key, v) { S.deptPhase = Number(v) || 0; render(); },
     setCompare(key, v) { S.cmp[key] = Number(v) || 0; render(); },
     // 버전 저장: 이름 · 메모를 받아 지금 자료를 버전으로 남기고 파일에 저장 (저장을 못 하면 버전도 되돌림)
     async saveVersion() {

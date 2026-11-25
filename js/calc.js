@@ -276,10 +276,14 @@
   //  인건비 · 인비례 경비는 사람의 부서, 일반 · 기타경비는 항목의 부서(비우면 공통 → 기준에 따라 나눔), 매출은 부서별로 직접 입력
   //  부서 합계 = 통합 원가 (나눌 때 생기는 1원 단위 끝수는 가장 큰 부서에)
   const DEPT_BASIS = [{ v: "cost", t: "직접 원가 비율" }, { v: "mm", t: "MM 비율" }, { v: "revenue", t: "매출 비율" }, { v: "equal", t: "똑같이" }];
-  function deptSummary(project, calc) {
+  //  o: { months: 이 달들만 (분할계약 회차), revenue: 부서별 매출 {부서: 원} (없으면 project.dept_revenue),
+  //       override: 회차에 별도 원가를 넣었으면 그 금액 — 계산한 부서 비율대로 맞춤, target_revenue: 비교할 매출 (회차 매출) }
+  function deptSummary(project, calc, o = {}) {
     const st = project.settings || {}, depts = [...new Set((st.departments || []).map(d => String(d).trim()).filter(Boolean))];
     const basis = DEPT_BASIS.some(b => b.v === st.dept_common_basis) ? st.dept_common_basis : "cost";
-    const UNK = "(미지정)", revIn = project.dept_revenue || {};
+    const UNK = "(미지정)", revIn = o.revenue || project.dept_revenue || {};
+    const months = o.months ? calc.months.filter(m => o.months.includes(m)) : calc.months;
+    const sumM = f => pyRound(months.reduce((a, m) => a + num(f(m)), 0), 2);
     const rows = new Map();
     const get = k => {
       if (!rows.has(k)) rows.set(k, { dept: k, revenue: k === UNK ? 0 : pyRound(num(revIn[k]), 2), internal_labor: 0, external_labor: 0, overhead: 0, expense: 0, common: 0, mm: 0, people: 0 });
@@ -294,33 +298,57 @@
       parts.forEach(([g, v]) => add(g, f, v));
       if (diff && parts.length) add(parts.reduce((m, x) => (x[1] > m[1] ? x : m))[0], f, diff);
     };
+    // 달마다 나눠서 더함 → 회차(기간)별 부서 금액을 더하면 전체 기간과 같음
+    const dm = (g, m, v, f) => { const k = f || "d"; g[k] = g[k] || {}; g[k][m] = (g[k][m] || 0) + v; };   // 부서의 달별 직접 원가(d) · MM(mmM)
     [["internal_labor", calc.details.internal_labor], ["external_labor", calc.details.external_labor]].forEach(([f, list]) => list.forEach(r => {
       const g = get(keyOf(r.dept));
-      add(g, f, num(r.total_cost)); add(g, "mm", num(r.total_mm));
-      if (num(r.total_mm)) g.people += 1;
+      let mm = 0;
+      months.forEach(m => { const c = r.calc[m] || {}; add(g, f, num(c.cost)); dm(g, m, num(c.cost)); dm(g, m, num(c.mm), "mmM"); mm += num(c.mm); });
+      add(g, "mm", pyRound(mm, 2));
+      if (mm) g.people += 1;
     }));
-    (calc.details.mm_overheads || []).forEach(o => {   // 인비례: 계정마다 그 사람 MM × 기준금액
-      const internal = o.category === "mm_internal";
-      const people = internal ? calc.details.internal_labor.filter(r => r.overhead_eligible) : calc.details.external_labor;
-      settle(people.map(r => [get(keyOf(r.dept)), pyRound(num(r.total_mm) * num(o.unit_amount), 2)]).filter(x => x[1]), o.total_cost, "overhead");
+    (calc.details.mm_overheads || []).forEach(o => {   // 인비례: 계정 · 달마다 그 사람 MM × 기준금액
+      const people = o.category === "mm_internal" ? calc.details.internal_labor.filter(r => r.overhead_eligible) : calc.details.external_labor;
+      months.forEach(m => {
+        const parts = people.map(r => [get(keyOf(r.dept)), pyRound(num((r.calc[m] || {}).mm) * num(o.unit_amount), 2)]).filter(x => x[1]);
+        settle(parts, num(o.calc_monthly[m]), "overhead");
+        parts.forEach(([g, v]) => dm(g, m, v));
+      });
     });
-    let common = 0;
+    const commonM = {};
     calc.details.general_expenses.concat(calc.details.custom_costs).forEach(e => {
       const d = String(e.dept || "").trim();
-      if (depts.includes(d)) add(get(d), "expense", num(e.total_cost)); else common = pyRound(common + num(e.total_cost), 2);
+      months.forEach(m => {
+        const v = num(e.calc_monthly[m]);
+        if (!v) return;
+        if (depts.includes(d)) { add(get(d), "expense", v); dm(get(d), m, v); } else commonM[m] = pyRound((commonM[m] || 0) + v, 2);
+      });
     });
-    // 공통경비 나누기 (등록된 부서에만)
+    // 공통경비 나누기 (등록된 부서에만, 달마다): 그 달의 직접 원가 · MM 비율, 매출 비율, 또는 똑같이
     const real = depts.map(d => rows.get(d));
-    const weight = g => (basis === "mm" ? g.mm : basis === "revenue" ? g.revenue : basis === "equal" ? 1 : g.internal_labor + g.external_labor + g.overhead + g.expense);
-    if (common && real.length) {
+    Object.entries(commonM).forEach(([m, cm]) => {
+      if (!cm || !real.length) return;
+      const weight = g => (basis === "mm" ? num((g.mmM || {})[m]) : basis === "revenue" ? g.revenue : basis === "equal" ? 1 : num((g.d || {})[m]));
       let wsum = real.reduce((a, g) => a + weight(g), 0);
       const w = wsum > 0 ? weight : () => 1;
       wsum = wsum > 0 ? wsum : real.length;
-      settle(real.map(g => [g, pyRound((common * w(g)) / wsum, 2)]), common, "common");
-    }
+      settle(real.map(g => [g, pyRound((cm * w(g)) / wsum, 2)]), cm, "common");
+    });
+    rows.forEach(g => { delete g.d; delete g.mmM; });
     const out = [...rows.values()].filter(g => g.dept !== UNK || g.internal_labor || g.external_labor || g.overhead || g.expense);
+    const PARTS = ["internal_labor", "external_labor", "overhead", "expense", "common"];
+    const costOf = g => pyRound(PARTS.reduce((a, f) => a + g[f], 0), 2);
+    // 별도 원가: 계산한 금액을 같은 비율로 늘이거나 줄여 별도 원가에 맞춤 (끝수는 가장 큰 부서의 공통경비 칸에)
+    const calcCost = pyRound(out.reduce((a, g) => a + costOf(g), 0), 2);
+    const overridden = o.override !== undefined && o.override !== null && calcCost > 0 && pyRound(o.override, 2) !== calcCost;
+    if (overridden) {
+      const k = o.override / calcCost;
+      out.forEach(g => PARTS.forEach(f => { g[f] = pyRound(g[f] * k, 2); }));
+      const diff = pyRound(o.override - out.reduce((a, g) => a + costOf(g), 0), 2);
+      if (diff) { const big = out.reduce((m, g) => (costOf(g) > costOf(m) ? g : m)); add(big, "common", diff); }
+    }
     out.forEach(g => {
-      g.cost = pyRound(g.internal_labor + g.external_labor + g.overhead + g.expense + g.common, 2);
+      g.cost = costOf(g);
       g.profit = pyRound(g.revenue - g.cost, 2);
       g.margin_rate = g.revenue > 0 ? pyRound((g.profit / g.revenue) * 100, 2) : 0;
     });
@@ -328,7 +356,15 @@
     const total = { revenue: sum("revenue"), internal_labor: sum("internal_labor"), external_labor: sum("external_labor"), overhead: sum("overhead"), expense: sum("expense"), common: sum("common"), cost: sum("cost"), mm: sum("mm"), people: out.reduce((a, g) => a + g.people, 0) };
     total.profit = pyRound(total.revenue - total.cost, 2);
     total.margin_rate = total.revenue > 0 ? pyRound((total.profit / total.revenue) * 100, 2) : 0;
-    return { rows: out, total, basis, common, revenue_gap: pyRound(calc.summary.revenue - total.revenue, 2), unassigned: out.some(g => g.dept === UNK) };
+    const target = o.target_revenue !== undefined ? o.target_revenue : calc.summary.revenue;
+    return { rows: out, total, basis, common: sum("common"), months, overridden, revenue_gap: pyRound(target - total.revenue, 2), unassigned: out.some(g => g.dept === UNK) };
+  }
+  // 분할계약 회차마다 부서별 손익 (기간은 회차 기간 그대로, 매출은 회차 × 부서로 입력: phases[i].dept_revenue)
+  function phaseDeptSummary(project, calc) {
+    return calc.phases.map((ph, i) => Object.assign({ phase: ph }, deptSummary(project, calc, {
+      months: ph.start_ym && ph.end_ym ? monthRange(ph.start_ym, ph.end_ym) : [],
+      revenue: ((project.phases || [])[i] || {}).dept_revenue || {},
+      override: ph.overridden ? ph.cost : undefined, target_revenue: ph.revenue })));
   }
 
   // 두 계산 결과(버전 · 지금) 비교 — 요약 줄과 사람별 MM · 인건비 (이름 + 내부/외주로 맞춤)
@@ -362,6 +398,6 @@
     return { summary, staff };
   }
 
-  PC.Calc = { DEPT_BASIS, deptSummary, orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
+  PC.Calc = { DEPT_BASIS, deptSummary, phaseDeptSummary, orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Calc;
 })(typeof window !== "undefined" ? window : globalThis);

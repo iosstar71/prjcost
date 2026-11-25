@@ -194,7 +194,7 @@
         <tbody>${editor || empty(6, "등록된 분할계약이 없습니다.")}</tbody></table></div>
       <div class="tbl-wrap"><table><thead><tr><th class="l" rowspan="2">회차</th><th rowspan="2">기간</th><th rowspan="2">회차 매출</th><th colspan="4" class="grp">회차 원가</th><th rowspan="2">이익률</th><th rowspan="2">누적 매출</th><th rowspan="2">누적 원가</th><th rowspan="2">잔여 매출</th><th rowspan="2">잔여 원가</th></tr>
         <tr><th>합계</th><th>내부 인건비</th><th>외주 인건비</th><th title="일반 · 인비례 · 기타경비">경비</th></tr></thead>
-        <tbody>${summary || empty(12, "회차를 추가하면 회차 · 누적 · 잔여 손익이 보입니다.")}</tbody></table></div></div>`;
+        <tbody>${summary || empty(12, "회차를 추가하면 회차 · 누적 · 잔여 손익이 보입니다.")}</tbody></table></div>${phaseDepts(p, c)}</div>`;
   }
 
   // ---------------- 견적서 ----------------
@@ -289,23 +289,42 @@
   }
 
   // ---------------- 부서별 손익 (부서 2개 이상) ----------------
-  function dept(p, c) {
-    const r = PC.Calc.deptSummary(p, c), t = r.total;
+  //  r: Calc.deptSummary 결과, revPath: 부서 매출 입력 경로 앞부분 (프로젝트: dept_revenue / 회차: phases.i.dept_revenue)
+  function deptTable(p, c, r, revPath, revenueOf, totalLabel) {
+    const t = r.total;
     const row = (g, editable) => `<tr${editable ? "" : ' class="total"'}><td class="l"><b>${esc(g.dept)}</b></td>
-      <td class="num">${editable && g.dept !== "(미지정)" ? inp(`dept_revenue.${g.dept}`, (p.dept_revenue || {})[g.dept], { money: true, cls: "w-lg", ph: "0", label: `${g.dept} 매출` }) : won(g.revenue)}</td>
+      <td class="num">${editable && g.dept !== "(미지정)" ? inp(`${revPath}.${g.dept}`, revenueOf[g.dept], { money: true, cls: "w-lg", ph: "0", label: `${g.dept} 매출` }) : won(g.revenue)}</td>
       <td class="num">${won(g.internal_labor)}</td><td class="num">${won(g.external_labor)}</td><td class="num">${won(g.overhead)}</td><td class="num">${won(g.expense)}</td><td class="num">${won(g.common)}</td>
       <td class="num"><b>${won(g.cost)}</b></td><td class="num">${won(g.profit)}</td><td class="num">${g.revenue > 0 ? `<span class="tag ${g.margin_rate >= c.summary.hurdle_rate ? "ok" : "bad"}">${g.margin_rate.toFixed(1)}%</span>` : "-"}</td>
       <td class="num">${g.mm.toFixed(2)}</td><td class="c">${g.people}</td></tr>`;
-    const warn = [];
-    if (r.revenue_gap) warn.push(`부서 매출 합 ${won(t.revenue)}원이 계약 매출 ${won(c.summary.revenue)}원보다 ${won(Math.abs(r.revenue_gap))}원 ${r.revenue_gap > 0 ? "적습니다" : "많습니다"}.`);
-    if (r.unassigned) warn.push("부서를 고르지 않은 인력이 있습니다 — (미지정) 줄을 확인하세요.");
+    return `<div class="tbl-wrap"><table class="dept-tbl"><thead><tr><th class="l">부서</th><th>매출 (입력)</th><th>내부 인건비</th><th>외주 인건비</th><th>인비례 경비</th><th>직접 경비</th><th>공통경비 배분</th><th>원가 합</th><th>이익</th><th>이익률</th><th>MM</th><th>인원</th></tr></thead>
+      <tbody>${r.rows.map(g => row(g, true)).join("")}${row(Object.assign({ dept: totalLabel || "합계 (통합)" }, t), false)}</tbody></table></div>`;
+  }
+  const deptWarn = (r, what, target) => {
+    const w = [];
+    if (r.revenue_gap) w.push(`부서 매출 합 ${won(r.total.revenue)}원이 ${what} ${won(target)}원보다 ${won(Math.abs(r.revenue_gap))}원 ${r.revenue_gap > 0 ? "적습니다" : "많습니다"}.`);
+    if (r.unassigned) w.push("부서를 고르지 않은 인력이 있습니다 — (미지정) 줄을 확인하세요.");
+    if (r.overridden) w.push("이 회차는 별도 원가를 넣어서, 계산한 부서 비율대로 별도 원가에 맞췄습니다.");
+    return w.length ? `<p class="note-warn">${w.map(esc).join("<br>")}</p>` : "";
+  };
+  // [부서별] 탭: 기간에서 '전체' 또는 분할계약 회차를 고름
+  function dept(p, c, ctx) {
+    const pi = Number((ctx.deptPhase) || 0), ph = c.phases[pi - 1];
+    const r = ph ? PC.Calc.phaseDeptSummary(p, c)[pi - 1] : PC.Calc.deptSummary(p, c), t = r.total;
+    const phaseSel = `<select data-change-act="setDeptPhase" data-key="phase" aria-label="기간"><option value="0">전체 기간 (${c.months[0] || ""} ~ ${c.months[c.months.length - 1] || ""})</option>${c.phases.map((x, i) => `<option value="${i + 1}"${pi === i + 1 ? " selected" : ""}>${esc(x.title)} (${x.start_ym} ~ ${x.end_ym})</option>`).join("")}</select>`;
     const kpi = (a, b) => `<div class="mini-kpi"><span>${esc(a)}</span><b>${b}</b></div>`;
     return head("building", "부서별 손익", "인건비 · 인비례는 인력의 부서, 경비는 항목의 부서(공통은 기준에 따라 나눔), 매출은 부서마다 입력", "")
-      + `<div class="stat-bar"><label class="field"><span>공통경비 나누는 기준</span>${sel("settings.dept_common_basis", p.settings.dept_common_basis || "cost", PC.Calc.DEPT_BASIS, { label: "공통경비 기준" })}</label></div>
-      <div class="mini-kpis">${kpi("부서 매출 합", `${won(t.revenue)}원`)}${kpi("통합 원가", `${won(t.cost)}원`)}${kpi("공통경비", `${won(r.common)}원`)}${kpi("이익률", `${t.margin_rate.toFixed(1)}%`)}</div>
-      ${warn.length ? `<p class="note-warn">${warn.map(esc).join("<br>")}</p>` : ""}
-      <div class="tbl-wrap"><table class="dept-tbl"><thead><tr><th class="l">부서</th><th>매출 (입력)</th><th>내부 인건비</th><th>외주 인건비</th><th>인비례 경비</th><th>직접 경비</th><th>공통경비 배분</th><th>원가 합</th><th>이익</th><th>이익률</th><th>MM</th><th>인원</th></tr></thead>
-      <tbody>${r.rows.map(g => row(g, true)).join("")}${row(Object.assign({ dept: "합계 (통합)" }, t), false)}</tbody></table></div>`;
+      + `<div class="stat-bar"><label class="field"><span>기간 (분할계약)</span>${phaseSel}</label><label class="field"><span>공통경비 나누는 기준</span>${sel("settings.dept_common_basis", p.settings.dept_common_basis || "cost", PC.Calc.DEPT_BASIS, { label: "공통경비 기준" })}</label></div>
+      <div class="mini-kpis">${kpi(ph ? "회차 부서 매출 합" : "부서 매출 합", `${won(t.revenue)}원`)}${kpi(ph ? "회차 원가" : "통합 원가", `${won(t.cost)}원`)}${kpi("공통경비", `${won(r.common)}원`)}${kpi("이익률", `${t.margin_rate.toFixed(1)}%`)}</div>
+      ${deptWarn(r, ph ? "회차 매출" : "계약 매출", ph ? ph.revenue : c.summary.revenue)}
+      ${ph ? deptTable(p, c, r, `phases.${pi - 1}.dept_revenue`, p.phases[pi - 1].dept_revenue || {}, "회차 합계") : deptTable(p, c, r, "dept_revenue", p.dept_revenue || {})}`;
+  }
+  // 분할계약 탭 아래: 회차마다 부서별 손익 (부서 2개 이상일 때)
+  function phaseDepts(p, c) {
+    if (!M.multiDept(p) || !c.phases.length) return "";
+    return `<section>${subHead("회차별 부서 손익", "회차 매출을 부서마다 한 번 넣으면 됩니다 · 기간은 회차 기간 그대로")}`
+      + PC.Calc.phaseDeptSummary(p, c).map((r, i) => `<div class="phase-dept"><h4>${esc(r.phase.title)} <span class="muted">${esc(r.phase.start_ym)} ~ ${esc(r.phase.end_ym)} · 회차 매출 ${won(r.phase.revenue)}원</span></h4>
+        ${deptWarn(r, "회차 매출", r.phase.revenue)}${deptTable(p, c, r, `phases.${i}.dept_revenue`, p.phases[i].dept_revenue || {}, "회차 합계")}</div>`).join("") + `</section>`;
   }
 
   // ---------------- 버전 (기준선) ----------------

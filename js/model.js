@@ -119,6 +119,7 @@
     if (!Array.isArray(out.settings.departments)) out.settings.departments = [];
     if (!out.settings.dept_common_basis) out.settings.dept_common_basis = "cost";
     if (!out.dept_revenue || typeof out.dept_revenue !== "object") out.dept_revenue = {};
+    out.phases.forEach(ph => { if (!ph.dept_revenue || typeof ph.dept_revenue !== "object") ph.dept_revenue = {}; });   // 회차 × 부서 매출
     out.estimate = Object.assign(emptyEstimate(), out.estimate || {});
     if (!Array.isArray(out.estimate.items)) out.estimate.items = [];
     return out;

@@ -142,6 +142,18 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("dept: common split equally", de.rows[0].common, de.rows[1].common);
   dp.internal_labor[1].dept = "";
   eq("dept: unassigned staff shown as (미지정)", PC.Calc.deptSummary(dp, PC.Calc.calculateProjectCost(dp, dp.settings)).rows.map(g => g.dept), ["SI", "AI", "(미지정)"]);
+
+  // 분할계약 회차 × 부서: 기간은 회차 그대로, 원가 합 = 회차 원가, 매출은 회차 × 부서 입력, 별도 원가는 부서 비율대로
+  dp.internal_labor[1].dept = "AI";
+  dp.settings.dept_common_basis = "cost";
+  dp.phases[0].dept_revenue = { SI: 70000000, AI: 40000000 };
+  const pc = PC.Calc.calculateProjectCost(dp, dp.settings), pds = PC.Calc.phaseDeptSummary(dp, pc);
+  eq("phase x dept: each phase's dept cost sums to the phase cost", pds.map(r => r.total.cost), pc.phases.map(ph => ph.cost));
+  eq("phase x dept: revenue entered per phase (gap vs phase revenue)", [pds[0].total.revenue, pds[0].revenue_gap, pds[1].revenue_gap], [110000000, 0, 130000000]);
+  eq("phase x dept: sum over phases = project dept cost (per dept)", ["SI", "AI"].map(d => PC.pyRound(pds.reduce((a, r) => a + r.rows.find(g => g.dept === d).cost, 0), 2)), ["SI", "AI"].map(d => PC.Calc.deptSummary(dp, pc).rows.find(g => g.dept === d).cost));
+  dp.phases[1].override_cost = 50000000;
+  const po = PC.Calc.phaseDeptSummary(dp, PC.Calc.calculateProjectCost(dp, dp.settings))[1];
+  eq("phase x dept: override cost scaled to the dept ratio", [po.overridden, po.total.cost], [true, 50000000]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
