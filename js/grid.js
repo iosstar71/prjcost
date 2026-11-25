@@ -93,6 +93,7 @@
     },
 
     onKey(e) {
+      if (e.isComposing || e.keyCode === 229) return;   // 한글 조합 중: 칸을 옮기면 글자가 두 번 들어가고 화면이 깜빡임
       const el = e.target, tbl = this.table(el);
       if (!tbl || !(el.matches("input, select"))) return;
       const { r, c } = this.pos(el);

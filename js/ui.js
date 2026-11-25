@@ -57,7 +57,7 @@
       };
       const onKey = e => {
         if (e.key === "Escape") { e.stopPropagation(); done(false); }
-        else if (e.key === "Enter" && e.target.tagName === "INPUT" && ov.contains(e.target)) { e.preventDefault(); e.stopPropagation(); done(true); }
+        else if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229 && e.target.tagName === "INPUT" && ov.contains(e.target)) { e.preventDefault(); e.stopPropagation(); done(true); }
       };
       ov.addEventListener("click", e => { const b = e.target.closest("button[data-id]"); if (b) done(b.dataset.id === "ok"); else if (e.target === ov) done(false); });
       document.addEventListener("keydown", onKey, true);

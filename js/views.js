@@ -48,7 +48,8 @@
   function gridTable(o) {
     const meta = o.cols.map(x => ({ b: x.b, t: x.t, l: x.l, fill: !!x.fill }));
     const mv = i => (o.order ? `<span class="mv">${btn("", "moveRow", [o.list, i, -1], "icon-only ghost", "위로", "up")}${btn("", "moveRow", [o.list, i, 1], "icon-only ghost", "아래로", "down")}</span>` : "");
-    const body = o.rows.map((r, i) => `<tr data-row="${i}"><td class="c nowrap">${o.fixed ? "" : mv(i) + del(o.list, i)}</td>${o.cols.map(x => x.cell(r, `${o.list}.${i}`, i)).join("")}${o.tail ? o.tail(r) : ""}</tr>${o.after ? o.after(r, i, o.cols.length + 1 + (o.tail ? 1 : 0)) : ""}`).join("");
+    const ins = i => btn("", "insertRow", [o.list, i], "icon-only ghost ins", "이 줄 아래에 새 줄 넣기", "plus");
+    const body = o.rows.map((r, i) => `<tr data-row="${i}"><td class="c nowrap">${o.fixed ? "" : mv(i) + ins(i) + del(o.list, i)}</td>${o.cols.map(x => x.cell(r, `${o.list}.${i}`, i)).join("")}${o.tail ? o.tail(r) : ""}</tr>${o.after ? o.after(r, i, o.cols.length + 1 + (o.tail ? 1 : 0)) : ""}`).join("");
     const newRow = `<tr class="new-row"><td></td><td class="l"><input type="text" data-new="${o.list}" placeholder="＋ ${esc(o.newLabel)}" aria-label="${esc(o.newLabel)}"></td>${o.cols.length - 1 + (o.tail ? 1 : 0) > 0 ? `<td class="l hint-cell" colspan="${o.cols.length - 1 + (o.tail ? 1 : 0)}">값을 넣으면 한 줄이 추가됩니다 · 엑셀에서 복사한 영역을 붙여 넣어도 됩니다</td>` : ""}</tr>`;
     return `<div class="tbl-wrap"><table class="grid" data-list="${o.list}" data-cols="${esc(JSON.stringify(meta))}"><thead><tr><th class="w-del"></th>${o.cols.map(x => x.th).join("")}${o.tailHead || ""}</tr></thead>
       <tbody>${body}${o.fixed ? "" : newRow}${o.foot || ""}</tbody></table></div>`;

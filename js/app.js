@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.10";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.11";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -38,9 +38,15 @@
   function redo() { if (!S.future.length) return; S.past.push(JSON.stringify(S.proj)); S.proj = JSON.parse(S.future.pop()); render(); }
 
   // ---------------- 그리기 ----------------
+  const renderTimes = [];
   function render(focusBind) {
+    const now = Date.now();
+    while (renderTimes.length && now - renderTimes[0] > 1000) renderTimes.shift();
+    renderTimes.push(now);
+    const storm = renderTimes.length > 40;
+    if (storm && !render.warned) { render.warned = true; console.error("[App] render storm — focus restore paused"); UI.toast("화면이 너무 자주 다시 그려져 커서 되돌리기를 잠시 멈췄습니다. 칸을 다시 눌러 주세요.", "error"); setTimeout(() => { render.warned = false; }, 3000); }
     S.calc = Calc.calculateProjectCost(S.proj, S.master);
-    const focus = focusBind ? { bind: focusBind } : captureFocus();
+    const focus = storm ? null : focusBind ? { bind: focusBind } : captureFocus();
     renderKpis();
     renderTabs();
     const tab = shownTabs().find(t => t.id === S.tab) || Views.TABS[0];
@@ -175,6 +181,9 @@
       people.forEach(r => { if (r.prop_role === oldV) r.prop_role = newV; });
       return (p.estimate.labor || []).forEach(l => { if (l.role === oldV) l.role = newV; });
     }
+    if (/^settings\.internal_grades\.\d+\.grade$/.test(path)) return p.internal_labor.forEach(r => { if (r.grade === oldV) r.grade = newV; });
+    if (/^settings\.external_grades\.\d+$/.test(path)) { p.external_labor.forEach(r => { if (r.grade === oldV) r.grade = newV; }); return (p.settings.vendor_rates || []).forEach(v => { if (v.grade === oldV) v.grade = newV; }); }
+    if (/^settings\.expense_accounts\.\d+\.account$/.test(path)) return p.general_expenses.concat(p.custom_costs).forEach(e => { if (e.name === oldV) e.name = newV; });
     const m = /^settings\.(areas|departments)\.\d+$/.exec(path);
     if (!m) return;
     const f = m[1] === "areas" ? "area" : "dept";
@@ -330,6 +339,12 @@
       S.proj[list] = Calc.orderRows(list, S.proj[list], S.proj.settings);
       render();
       UI.toast("기준정보에 등록한 순서로 줄을 세웠습니다. Ctrl+Z 로 되돌릴 수 있습니다.");
+    },
+    insertRow(list, i) {   // 이 줄 아래에 새 줄 (위아래로 여러 번 옮기지 않아도 되게)
+      const l = listAt(list), row = ROW[list](S.proj);
+      pushUndo();
+      l.splice(i + 1, 0, row);
+      render(typeof row === "object" && row ? `${list}.${i + 1}.${Object.keys(row)[0]}` : `${list}.${i + 1}`);
     },
     moveRow(list, i, dir) {   // 기준정보 목록의 순서 바꾸기
       const l = listAt(list), j = i + dir;
@@ -591,6 +606,7 @@
     });
     // Enter = 칸 확정 (다음 계산), Ctrl+S = 저장
     document.addEventListener("keydown", e => {
+      if (e.isComposing || e.keyCode === 229) return;   // 한글 조합 중 키는 입력기 몫
       const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
       // 되돌리기: 칸에 치던 중(아직 확정 전)이면 브라우저의 글자 되돌리기, 아니면 자료 되돌리기
       if (mod && (k === "z" || k === "y")) {
@@ -629,6 +645,9 @@
         ? (list === "internal_labor" ? (S.proj.settings.internal_grades || []).some(g => g.grade === v) : (S.proj.settings.external_grades || []).includes(v))
         : (S.proj.settings.vendor_rates || []).some(r => r.vendor === v))
     });
+    const oops = msg => { console.error(msg); if (!oops.shown) { oops.shown = true; UI.toast(`프로그램 오류가 났습니다: ${String(msg).slice(0, 120)} — 저장 후 새로 고침(F5)을 권합니다.`, "error"); setTimeout(() => { oops.shown = false; }, 5000); } };
+    window.addEventListener("error", e => oops(e.message || e.error));
+    window.addEventListener("unhandledrejection", e => oops((e.reason && e.reason.message) || e.reason));
     window.addEventListener("beforeunload", e => { if (isDirty()) { e.preventDefault(); e.returnValue = ""; } });
     render();
     renderFolder();
