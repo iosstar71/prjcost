@@ -27,7 +27,7 @@
       ["프로젝트 설명", { v: project.description || "", s: "wrap" }, textHeight(project.description, 46)],
       ["계약 매출(원)", s.revenue], ["총 원가(원)", s.total_cost], ["예상 이익(원)", s.profit], ["예상 이익률(%)", { v: s.margin_rate, s: "dec" }],
       ["목표 허들(%)", { v: s.hurdle_rate, s: "dec" }], ["허들 대비(%p)", { v: s.hurdle_gap, s: s.hurdle_met ? "ok" : "warn" }],
-      ["내부 인건비(원)", b.internal_labor], ["외주 인건비(원)", b.external_labor], ["일반 경비(원)", b.general_expense],
+      ["내부 인건비(원)", b.internal_labor], ["OT비용(원)", b.ot_cost || 0], ["외주 인건비(원)", b.external_labor], ["재료비(원)", b.material || 0], ["일반 경비(원)", b.general_expense],
       ["내부 인비례경비(원)", b.internal_overhead], ["외주 인비례경비(원)", b.external_overhead], ["기타 비용(원)", b.custom_cost]
     ].map(([k, v, ht]) => ({ cells: [{ v: k, s: "label" }, v === undefined || v === null ? "" : v], ht }));
 
@@ -40,6 +40,7 @@
       ...(st.vendor_rates || []).filter(r => r.raise_rate !== undefined && r.raise_rate !== "").map(r => ["외주업체인상", `${r.vendor || ""} ${r.grade || ""}`, r.raise_ym || "", num(r.raise_rate)]),
       ...(st.areas || []).map(a => ["영역", String(a), "", ""]),
       ...(st.systems || []).map(a => ["대표시스템", String(a), "", ""]),
+      ...(st.work_sites || []).map(a => ["근무지", String(a), "", ""]),
       ...(st.proposal_roles || []).flatMap(r => (st.proposal_levels || []).map(l => ["제안단가", r.role || "", l, num((r.rates || {})[l])])),
       ...(st.approvers || []).map((a, i) => ["결재자", ["기안(PM)", "검토", "사업팀장", "영업팀장", "본부장"][i] || `결재${i + 1}`, "", String(a || "")]),
       ...(st.departments || []).map(a => ["부서", String(a), "부서매출", num((project.dept_revenue || {})[a])]),
@@ -49,15 +50,16 @@
 
     const d = calc.details;
     const internal = d.internal_labor.map(m => {
-      return { cells: [m.name || "", m.role || "", m.area || "", m.system || "", m.dept || "", m.prop_role || "", m.prop_level || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", { v: m.total_mm, s: "dec" },
+      return { cells: [m.name || "", m.role || "", m.area || "", m.system || "", m.dept || "", m.prop_role || "", m.prop_level || "", m.site || "", m.tech_grade || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", { v: m.total_mm, s: "dec" },
         ...months.map(mo => ({ v: m.calc[mo].mm, s: "dec" })), m.total_cost] };
     });
-    const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.area || "", e.system || "", e.dept || "", e.prop_role || "", e.prop_level || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, { v: e.total_mm, s: "dec" },
+    const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.area || "", e.system || "", e.dept || "", e.prop_role || "", e.prop_level || "", e.site || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, { v: e.total_mm, s: "dec" },
       ...months.map(mo => ({ v: e.calc[mo].mm, s: "dec" })), e.total_cost] }));
     const expIn = e => (e.dist_mode === "fill_all" ? num(e.unit_input) : num(e.total_input));
     const expenses = [
       ...d.general_expenses.map(e => ["일반경비", e.name || "", e.dist_mode || "", expIn(e), ...months.map(m => e.calc_monthly[m]), e.total_cost, e.dept || ""]),
       ...(d.mm_overheads || []).map(o => [o.category === "mm_internal" ? "인비례(내부)" : "인비례(외주)", o.account, "MM×기준금액", o.unit_amount, ...months.map(m => o.calc_monthly[m]), o.total_cost]),
+      ...(d.materials || []).map(x => ["재료비", `${x.category || ""} ${x.content || ""}`.trim(), "총액 균등", num(x.amount), ...months.map(m => x.calc_monthly[m]), x.total_cost, ""]),
       ...d.custom_costs.map(e => ["기타경비", e.name || "", e.dist_mode || "", expIn(e), ...months.map(m => e.calc_monthly[m]), e.total_cost, e.dept || ""])
     ].map(cells => ({ cells }));
     const phases = calc.phases.map(p => ({ cells: [p.phase_no, p.title, p.start_ym, p.end_ym, p.revenue, p.cost, { v: p.margin_rate, s: "dec" }, p.cum_revenue, p.cum_cost, p.rem_revenue, p.rem_cost, p.internal_labor, p.external_labor, p.expense] }));
@@ -82,8 +84,8 @@
     return [
       { name: "01_Project_Info", cols: [22, 48], rows: [head(["항목", "내용"]), ...info] },
       { name: "02_Project_Settings", cols: widths(4, 22), rows: [head(["구분", "항목1(업체/등급/키)", "항목2(등급/유형)", "값(단가/비율/설명)"]), ...settingsRows] },
-      { name: "03_Internal_Labor", cols: widths(12 + months.length), rows: [head(["성명", "역할", "영역", "대표시스템", "부서", "제안직무", "제안등급", "직급", "기준단가", "인비례포함", "총MM", ...mHead, "합계금액"]), ...internal] },
-      { name: "04_External_Labor", cols: widths(13 + months.length), rows: [head(["성명/구분", "역할", "영역", "대표시스템", "부서", "제안직무", "제안등급", "외주업체", "등급", "기준단가", "적용단가", "총MM", ...mHead, "합계금액"]), ...external] },
+      { name: "03_Internal_Labor", cols: widths(14 + months.length), rows: [head(["성명", "역할", "영역", "대표시스템", "부서", "제안직무", "제안등급", "근무지", "기술등급", "직급", "기준단가", "인비례포함", "총MM", ...mHead, "합계금액"]), ...internal] },
+      { name: "04_External_Labor", cols: widths(14 + months.length), rows: [head(["성명/구분", "역할", "영역", "대표시스템", "부서", "제안직무", "제안등급", "근무지", "외주업체", "등급", "기준단가", "적용단가", "총MM", ...mHead, "합계금액"]), ...external] },
       { name: "05_Expenses", cols: widths(6 + months.length), rows: [head(["구분", "경비계정/항목", "분배방식", "입력금액", ...mHead, "합계금액", "부서(비우면 공통)"]), ...expenses] },
       { name: "06_Phases", cols: widths(14), rows: [head(["회차", "구분", "시작월", "종료월", "회차매출", "회차원가", "회차이익률(%)", "누적매출", "누적원가", "잔여매출", "잔여원가", "내부인건비", "외주인건비", "경비"]), ...phases] },
       { name: "07_Estimate", cols: widths(6, 18), freeze: false, rows: estimate },
@@ -108,6 +110,7 @@
       list("Proposal_Levels", st.proposal_levels || []),
       list("Areas", st.areas || []),
       list("Departments", st.departments || []),
+      list("Work_Sites", st.work_sites || []),
       { name: "Expense_Accounts", cols: [18, 14, 32], rows: [head(["account", "category", "desc"]), ...(st.expense_accounts || []).map(a => ({ cells: [a.account || "", a.category || "general", a.desc || ""] }))] },
       { name: "Master_JSON", hidden: true, rows: X.jsonRows(st) }
     ];

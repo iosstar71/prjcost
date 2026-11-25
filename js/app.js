@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.12";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.13";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -62,13 +62,14 @@
     $("kRevSub").textContent = est.supply_total > 0 ? `견적 공급가 ${won(est.supply_total)}원${est.applied_to_revenue ? " · 매출 적용" : ""}` : "견적 미등록";
     $("kCost").textContent = `${won(s.total_cost)}원`;
     const labor = b.internal_labor + b.external_labor, exp = b.general_expense + b.internal_overhead + b.external_overhead + b.custom_cost;
+    const nonLabor = exp + (b.material || 0);
     const m = v => (v / 1e6).toFixed(1);
-    $("kCostSub").textContent = `내부 ${m(b.internal_labor)} · 외주 ${m(b.external_labor)} · 경비 ${m(exp)} (백만 원)`;
+    $("kCostSub").textContent = `내부 ${m(b.internal_labor)} · 외주 ${m(b.external_labor)}${b.material ? ` · 재료 ${m(b.material)}` : ""} · 경비 ${m(exp)} (백만 원)`;
     const mix = $("kMix");
     mix.innerHTML = `<i class="m1"></i><i class="m2"></i><i class="m3"></i>`;
     const tot = s.total_cost || 1;
-    [b.internal_labor, b.external_labor, exp].forEach((v, i) => { mix.children[i].style.width = `${Math.max(0, (v / tot) * 100)}%`; });
-    mix.title = `인건비 ${won(labor)}원 · 경비 ${won(exp)}원`;
+    [b.internal_labor, b.external_labor, nonLabor].forEach((v, i) => { mix.children[i].style.width = `${Math.max(0, (v / tot) * 100)}%`; });
+    mix.title = `인건비 ${won(labor)}원 · 재료비 · 경비 ${won(nonLabor)}원`;
     $("kMargin").textContent = `${s.margin_rate.toFixed(1)}%`;
     $("kProfit").textContent = `이익 ${won(s.profit)}원`;
     $("kMarginCard").className = `kpi ${s.revenue > 0 ? (s.hurdle_met ? "ok" : "bad") : ""}`;
@@ -172,6 +173,7 @@
     if (!oldV || oldV === newV) return;
     const people = p.internal_labor.concat(p.external_labor);
     if (/^settings\.systems\.\d+$/.test(path)) return people.forEach(r => { if (r.system === oldV) r.system = newV; });
+    if (/^settings\.work_sites\.\d+$/.test(path)) return people.forEach(r => { if (r.site === oldV) r.site = newV; });
     if (/^settings\.proposal_levels\.\d+$/.test(path)) {
       (p.settings.proposal_roles || []).forEach(r => { if (r.rates && oldV in r.rates) { r.rates[newV] = r.rates[oldV]; delete r.rates[oldV]; } });
       people.forEach(r => { if (r.prop_level === oldV) r.prop_level = newV; });
@@ -182,7 +184,7 @@
       return (p.estimate.labor || []).forEach(l => { if (l.role === oldV) l.role = newV; });
     }
     if (/^settings\.internal_grades\.\d+\.grade$/.test(path)) return p.internal_labor.forEach(r => { if (r.grade === oldV) r.grade = newV; });
-    if (/^settings\.external_grades\.\d+$/.test(path)) { p.external_labor.forEach(r => { if (r.grade === oldV) r.grade = newV; }); return (p.settings.vendor_rates || []).forEach(v => { if (v.grade === oldV) v.grade = newV; }); }
+    if (/^settings\.external_grades\.\d+$/.test(path)) { p.external_labor.forEach(r => { if (r.grade === oldV) r.grade = newV; }); p.internal_labor.forEach(r => { if (r.tech_grade === oldV) r.tech_grade = newV; }); return (p.settings.vendor_rates || []).forEach(v => { if (v.grade === oldV) v.grade = newV; }); }
     if (/^settings\.expense_accounts\.\d+\.account$/.test(path)) return p.general_expenses.concat(p.custom_costs).forEach(e => { if (e.name === oldV) e.name = newV; });
     const m = /^settings\.(areas|departments)\.\d+$/.exec(path);
     if (!m) return;
@@ -221,12 +223,12 @@
   const ROW = {
     internal_labor: p => {
       const g0 = (p.settings.internal_grades || [])[0] || { grade: "선임", rate: 6000000 };
-      return { name: "신규인력", role: "개발", area: "", system: "", prop_role: "", prop_level: "", dept: firstDept(p), grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
+      return { name: "신규인력", role: "개발", area: "", system: "", prop_role: "", prop_level: "", site: "", tech_grade: "", dept: firstDept(p), grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
         mm: {} };
     },
     external_labor: p => {
       const v0 = (p.settings.vendor_rates || [])[0] || { vendor: "파트너A", grade: "고급" };
-      return { name: "외주인력", role: "개발", area: "", system: "", prop_role: "", prop_level: "", dept: firstDept(p), vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, mm: {} };
+      return { name: "외주인력", role: "개발", area: "", system: "", prop_role: "", prop_level: "", site: "", dept: firstDept(p), vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, mm: {} };
     },
     general_expenses: p => expenseRow(p, "general", "일반경비"),
     custom_costs: p => expenseRow(p, "custom", "기타비용"),
@@ -236,6 +238,8 @@
     "settings.proposal_levels": () => "새 등급",
     "settings.proposal_roles": () => ({ role: "새 직무", rates: {} }),
     "settings.systems": () => "새 시스템",
+    "settings.work_sites": () => "새 근무지",
+    materials: () => ({ category: "재료", content: "", amount: 0 }),
     "settings.internal_grades": () => ({ grade: "신규등급", rate: 5000000 }),
     "settings.external_grades": () => "신규등급",
     "settings.vendor_rates": p => ({ vendor: "신규업체", grade: (p.settings.external_grades || [])[0] || "고급", rate: 7500000 }),
@@ -461,12 +465,12 @@
       } catch (e) { UI.toast(e.message, "error"); }
     },
     save: () => save(false),
-    // 양식 출력: templates 폴더의 회사 양식에 값을 채워 새 파일로 (양식 파일은 그대로)
+    // 사업검토서 출력: templates 폴더의 회사 양식에 값을 채워 새 파일로 (양식 파일은 그대로)
     async exportTemplate() {
       let names = [];
       try { names = Store.dir ? await Store.listTemplates() : Object.keys(PC.BUILTIN_TEMPLATES || {}); } catch (e) { console.warn("[App] templates", e); }
       if (!names.length) return UI.toast("templates 폴더에 보고서 양식(xlsx)이 없습니다.", "error");
-      const f = await UI.form("양식 출력", `고른 양식의 {{자리표시}} 칸에 이 프로젝트의 값을 넣어 새 파일로 만듭니다. 양식은 ${Store.dir ? `${Store.label}/templates` : "기본 양식"} 에 있습니다.`,
+      const f = await UI.form("사업검토서 출력", `고른 양식의 {{자리표시}} 칸에 이 프로젝트의 값을 넣어 새 파일로 만듭니다. 양식은 ${Store.dir ? `${Store.label}/templates` : "기본 양식"} 에 있습니다.`,
         [{ key: "name", label: "보고서 양식", choices: names.map(n => ({ v: n, t: n.replace(/\.xlsx$/i, "") })), value: S.lastTemplate && names.includes(S.lastTemplate) ? S.lastTemplate : names[0] }], "출력");
       if (!f) return;
       S.lastTemplate = f.name;
@@ -641,7 +645,7 @@
         setPath(S.proj, `${list}.${row}.${b}`, v);
         afterBind(`${list}.${row}.${b}`, v);
       },
-      known: (list, key, v) => !v || (key === "dept" ? (S.proj.settings.departments || []).includes(v) : key === "area" ? (S.proj.settings.areas || []).includes(v) : key === "grade"
+      known: (list, key, v) => !v || (key === "site" ? (S.proj.settings.work_sites || []).includes(v) : key === "tech_grade" ? (S.proj.settings.external_grades || []).includes(v) : key === "dept" ? (S.proj.settings.departments || []).includes(v) : key === "area" ? (S.proj.settings.areas || []).includes(v) : key === "grade"
         ? (list === "internal_labor" ? (S.proj.settings.internal_grades || []).some(g => g.grade === v) : (S.proj.settings.external_grades || []).includes(v))
         : (S.proj.settings.vendor_rates || []).some(r => r.vendor === v))
     });

@@ -376,7 +376,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     let tchk = "";
     try { tchk = execFileSync("python3", ["-c", `import openpyxl,sys;ws=openpyxl.load_workbook(sys.argv[1])["사업개요"];print(ws["D8"].value, ws["D8"].number_format, ws["I8"].value, ws["F4"].value, ws["B7"].fill.fgColor.rgb, ws["D9"].value, round(ws["F13"].value,4), ws["E26"].number_format, len(ws.merged_cells.ranges), ws.column_dimensions["A"].hidden, sep="|")`, tpath], { encoding: "utf8" }).trim(); } catch (e) { tchk = "openpyxl: " + e.message.split("\n")[0]; }
     check("Template output: built-in 사업검토서 seeded in templates/, values filled with the template's formats kept, file named 양식_ID_이름_최종작성일",
-      tplList.includes("Offline사업검토서.xlsx") && /^Offline사업검토서_PRJ-2026-01_차세대 원가·공정 시스템 구축_\d{8}\.xlsx$/.test(tname) && /^240000000\|"₩"#,##0\|SI-AD\|김철수\|00D9D9D9\|2026\.01\.01 ~ 2026\.06\.30 \(6개월\)\|0\.\d+\|0\.00%\|\d+\|True$/.test(tchk), JSON.stringify({ tplList, tname, tchk }));
+      tplList.includes("Offline사업검토서.xlsx") && /^Offline사업검토서_PRJ-2026-01_차세대 원가·공정 시스템 구축_\d{8}\.xlsx$/.test(tname) && /^240000000\|"₩"#,##0\|SI-AD\|김철수\|(FF|00)D9D9D9\|2026\.01\.01 ~ 2026\.06\.30 \(6개월\)\|0\.\d+\|0\.00%\|\d+\|True$/.test(tchk), JSON.stringify({ tplList, tname, tchk }));
     await page.keyboard.press("Control+z"); await page.keyboard.press("Control+z");
     check("Theme button says Dark in light mode", (await page.textContent("#btnTheme")).trim() === "Dark");
     if (shotDir) {

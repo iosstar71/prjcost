@@ -93,6 +93,7 @@
   // ---------------- 인력 표 (내부 · 외주 공통) ----------------
   // 대표 시스템(프로젝트 기준정보) · 고객 제안 직무 · 등급(마스터 — 견적서에 씀, 인력 표에서는 부가정보)
   const systemCol = p => ({ b: "system", t: "text", l: "대표 시스템", th: `<th>대표 시스템</th>`, cell: (r, base) => `<td>${sel(`${base}.system`, r.system || "", [{ v: "", t: "-" }].concat(p.settings.systems || []), { label: "대표 시스템", cls: "s-md" })}</td>` });
+  const siteCol = p => ({ b: "site", t: "text", l: "근무지", th: `<th>근무지</th>`, cell: (r, base) => `<td>${sel(`${base}.site`, r.site || "", [{ v: "", t: "-" }].concat(p.settings.work_sites || []), { label: "근무지", cls: "s-sm" })}</td>` });
   const propCols = p => [
     { b: "prop_role", t: "text", l: "제안직무", th: `<th class="prop" title="고객 제안 직무 — 견적서의 인건비를 만들 때 씀">제안 직무</th>`, cell: (r, base) => `<td class="prop">${sel(`${base}.prop_role`, r.prop_role || "", [{ v: "", t: "-" }].concat((p.settings.proposal_roles || []).map(x => x.role)), { label: "제안 직무", cls: "s-md" })}</td>` },
     { b: "prop_level", t: "text", l: "제안등급", th: `<th class="prop" title="고객 제안 등급">제안 등급</th>`, cell: (r, base) => `<td class="prop">${sel(`${base}.prop_level`, r.prop_level || "", [{ v: "", t: "-" }].concat(p.settings.proposal_levels || []), { label: "제안 등급", cls: "s-sm" })}</td>` }
@@ -108,8 +109,8 @@
   function laborTab(list, p, c, cols, o) {
     const months = c.months, rows = c.details[list];
     const all = cols.concat(monthCols(months, "mm", (m, k) => (r, base) => { const st = k > 0 && r.calc[m].rate !== r.calc[months[k - 1]].rate; return `<td${st ? ` class="rate-step" title="${esc(m)}부터 단가 ${won(r.calc[m].rate)}원 (인상)"` : ""}>${mmInp(`${base}.mm.${m}`, r.calc[m].mm || "", `${m} MM`)}${r.calc[m].cost ? `<span class="cell-cost">${man(r.calc[m].cost)}만</span>` : ""}</td>`; }));
-    const foot = rows.length ? `<tr class="total"><td></td><td colspan="${cols.length}" class="l">합계 · ${sumBy(rows, r => r.total_mm).toFixed(2)} MM</td>${months.map(m => `<td class="num">${man(sumBy(rows, r => r.calc[m].cost))}만</td>`).join("")}<td class="num">${won(o.total)}</td></tr>` : "";
-    return head(o.icon, o.title, GRID_HINT, sortBtn(list) + btn(o.addLabel, "addRow", [list], "primary sm", "", "plus"))
+    const foot = rows.length ? `<tr class="total"><td></td><td colspan="${cols.length}" class="l">합계 · ${sumBy(rows, r => r.total_mm).toFixed(2)} MM${list === "internal_labor" && num(p.ot_cost) ? ` (OT비용 ${won(p.ot_cost)}원 포함)` : ""}</td>${months.map(m => `<td class="num">${man(sumBy(rows, r => r.calc[m].cost))}만</td>`).join("")}<td class="num">${won(o.total)}</td></tr>` : "";
+    return head(o.icon, o.title, GRID_HINT, sortBtn(list) + btn(o.addLabel, "addRow", [list], "primary sm", "", "plus")) + (o.top || "")
       + gridTable({ list, rows, cols: all, newLabel: "이름 입력", newKey: "name", foot, tailHead: `<th>합계(원)</th>`, after: o.after,
         tail: r => `<td class="num"><b>${won(r.total_cost)}</b><span class="cell-cost">${r.total_mm} MM</span></td>` });
   }
@@ -125,11 +126,14 @@
       ...deptColumn(p),
       { b: "name", t: "text", l: "성명", th: `<th class="l">성명</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "grade", t: "text", l: "직급", th: `<th>직급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "직급", cls: "s-sm" })}</td>` },
+      { b: "tech_grade", t: "text", l: "기술등급", th: `<th>기술등급</th>`, cell: (r, base) => `<td>${sel(`${base}.tech_grade`, r.tech_grade || "", [{ v: "", t: "-" }].concat(p.settings.external_grades || []), { label: "기술등급", cls: "s-sm" })}</td>` },
       ...propCols(p),
       { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("internal_labor", r, base, i) },
       { b: "base_rate", t: "blank-num", l: "매입단가", th: `<th title="비우면 직급 단가">매입단가</th>`, cell: (r, base) => `<td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>` },
+      siteCol(p),
       { b: "overhead_eligible", t: "bool", l: "인비례", th: `<th title="내부 인비례 경비(MM × 기준금액)를 매길 인력">인비례</th>`, cell: (r, base) => `<td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례")}</td>` }
-    ], { icon: "users", title: "내부 인력 투입 계획", addLabel: "내부 인력", total: c.summary.breakdown.internal_labor });
+    ], { icon: "users", title: "내부 인력 투입 계획", addLabel: "내부 인력", total: c.summary.breakdown.internal_labor,
+      top: `<div class="form-grid compact raise-bar">${field("OT비용 (프로젝트 전체, 원)", inp("ot_cost", p.ot_cost || "", { money: true, ph: "0", label: "OT비용" }), { help: "내부 인건비(노무비)에 들어가고 달에는 고르게 나눔" })}</div>` });
   }
 
   function external(p, c, ctx) {
@@ -145,7 +149,8 @@
       { b: "grade", t: "text", l: "기술등급", th: `<th>기술등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "기술등급", cls: "s-sm" })}</td>` },
       ...propCols(p),
       { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("external_labor", r, base, i) },
-      { b: "custom_rate", t: "blank-num", l: "매입단가", th: `<th title="비워 두면 협력사 · 기술등급 단가표의 단가 (인상월 · 인상단가도 단가표대로)">매입단가</th>`, cell: (r, base) => `<td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>` }
+      { b: "custom_rate", t: "blank-num", l: "매입단가", th: `<th title="비워 두면 협력사 · 기술등급 단가표의 단가 (인상월 · 인상단가도 단가표대로)">매입단가</th>`, cell: (r, base) => `<td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>` },
+      siteCol(p)
     ], { icon: "partner", title: "외주 인력 투입 계획", addLabel: "외주 인력", total: c.summary.breakdown.external_labor });
   }
 
@@ -178,9 +183,15 @@
     }).join("");
     const mmHead = `<tr><th class="l">계정</th><th>대상 인력</th><th>기준금액 (원/MM)</th>${months.map(m => `<th class="m">${esc(m.slice(2).replace("-", "."))}</th>`).join("")}<th>합계(원)</th></tr>`;
     const totalAll = b.general_expense + b.internal_overhead + b.external_overhead + b.custom_cost;
-    return head("wallet", "경비", `일반 ${won(b.general_expense)} · 인비례 ${won(b.internal_overhead + b.external_overhead)} · 기타 ${won(b.custom_cost)} = ${won(totalAll)}원`, "")
+    return head("wallet", "경비 · 재료비", `${b.material ? `재료 ${won(b.material)} · ` : ""}일반 ${won(b.general_expense)} · 인비례 ${won(b.internal_overhead + b.external_overhead)} · 기타 ${won(b.custom_cost)} = ${won(totalAll + b.material)}원`, "")
       + `<div class="stack">
       <section>${subHead("일반경비", "금액을 넣고 달에 나누는 방식을 고릅니다 · " + GRID_HINT, sortBtn("general_expenses") + btn("일반경비", "addRow", ["general_expenses"], "primary sm", "", "plus"))}${expenseGrid("general_expenses", p, c, "일반경비")}</section>
+      <section>${subHead("재료비", "구분 · 내용 · 금액 — 총 원가에 들어가고 달에는 고르게 나눔 · " + GRID_HINT, btn("재료비", "addRow", ["materials"], "sm", "", "plus"))}
+        ${gridTable({ list: "materials", rows: p.materials || [], newLabel: "구분 입력", cols: [
+          { b: "category", t: "text", l: "구분", th: `<th class="l">구분</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.category`, r.category, { cls: "w-md", label: "구분" })}</td>` },
+          { b: "content", t: "text", l: "내용", th: `<th class="l">내용</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.content`, r.content, { cls: "w-xl", label: "내용" })}</td>` },
+          { b: "amount", t: "num", l: "금액", th: `<th>금액(원)</th>`, cell: (r, base) => `<td>${inp(`${base}.amount`, r.amount, { money: true, cls: "w-lg", label: "금액" })}</td>` }],
+          foot: (p.materials || []).length ? `<tr class="total"><td></td><td colspan="2" class="l">재료비 합계</td><td class="num">${won(b.material)}</td></tr>` : "" })}</section>
       <section>${subHead("인비례 경비 (자동)", "계정별로 인력 MM × 기준금액 — 내부는 [인비례]에 체크한 인력, 외주는 전체 외주 인력. 계정 추가 · 삭제는 [기준정보 > 경비 계정]")}
         <div class="tbl-wrap"><table><thead>${mmHead}</thead><tbody>${mmRows || empty(months.length + 4, "인비례 계정이 없습니다. [기준정보 > 경비 계정]에서 구분을 '인비례'로 추가하세요.")}
         ${mmRows ? `<tr class="total"><td colspan="3" class="l">인비례 합계</td>${months.map(m => `<td class="num">${won(num(d.internal_overhead_monthly[m]) + num(d.external_overhead_monthly[m]))}</td>`).join("")}<td class="num">${won(b.internal_overhead + b.external_overhead)}</td></tr>` : ""}</tbody></table></div></section>
@@ -265,6 +276,7 @@
       { id: "grades", label: "직급 · 기술등급", count: st => (st.internal_grades || []).length + (st.external_grades || []).length },
       { id: "proposal", label: "제안 직무 · 등급", count: st => (st.proposal_roles || []).length },
       { id: "areas", label: "영역", count: st => (st.areas || []).length },
+      { id: "sites", label: "근무지", count: st => (st.work_sites || []).length },
       { id: "accounts", label: "경비 계정", count: st => (st.expense_accounts || []).length },
       { id: "depts", label: "부서", count: st => (st.departments || []).length },
       { id: "approvers", label: "결재자" },
@@ -305,16 +317,18 @@
     }
     else if (sub === "systems") body = narrow(subHead("대표 시스템", "인력마다 대표 시스템 하나 — [투입 현황]에서 시스템별로 봅니다")
       + gridTable({ order: true, list: "settings.systems", rows: st.systems || [], newLabel: "시스템 입력", cols: [text("", "대표 시스템")] }));
-    else if (sub === "forms") body = narrow(`<section class="sub-card">${subHead("보고서 양식", "머리줄 [양식 출력]")}<p class="muted">자료 폴더의 templates 에 있는 엑셀 양식(xlsx)의 {{자리표시}} 칸에 값을 넣어 새 파일로 만듭니다. 양식은 Excel 에서 직접 고치고, 값이 들어갈 칸에 아래 이름을 {{이름}} 으로 적으면 됩니다. 칸에 자리표시 하나만 있으면 숫자는 숫자로 들어가 양식의 통화 · % 서식이 적용됩니다(비율은 0.4667 같은 소수).</p>
+    else if (sub === "forms") body = narrow(`<section class="sub-card">${subHead("보고서 양식", "머리줄 [사업검토서]")}<p class="muted">자료 폴더의 templates 에 있는 엑셀 양식(xlsx)의 {{자리표시}} 칸에 값을 넣어 새 파일로 만듭니다. 양식은 Excel 에서 직접 고치고, 값이 들어갈 칸에 아래 이름을 {{이름}} 으로 적으면 됩니다. 칸에 자리표시 하나만 있으면 숫자는 숫자로 들어가 양식의 통화 · % 서식이 적용됩니다(비율은 0.4667 같은 소수).</p>
         <div class="tbl-wrap flat"><table class="keys fit"><thead><tr><th class="l">자리표시</th><th class="l">값</th><th class="l">이 프로젝트에서</th></tr></thead><tbody>${(() => { const v = PC.Template.values(p, c, {}); return PC.Template.KEYS.map(([k, t]) => `<tr><td class="l"><code>{{${esc(k)}}}</code></td><td class="l">${esc(t)}</td><td class="l">${esc(typeof v[k] === "number" ? (Math.abs(v[k]) < 1 && v[k] !== 0 ? `${(v[k] * 100).toFixed(2)}%` : won(v[k])) : v[k])}</td></tr>`).join(""); })()}</tbody></table></div></section>
       <section class="sub-card">${subHead("데모")}<p class="muted">화면을 익히거나 시연할 때 — 지금 프로젝트의 내용을 예시 자료로 바꿉니다.</p>${btn("데모 채우기", "loadDemo", [], "", "예시 자료로 채우기")}</section>`);
     // ---- 마스터 (전사 공통 목록) ----
     else if (sub === "grades") body = `<div class="split-2 even"><div>${subHead("내부 직급", "단가는 [프로젝트 설정 > 인건비 단가]")}${gridTable({ order: true, list: "settings.internal_grades", rows: st.internal_grades || [], newLabel: "직급 입력", cols: [text("grade", "직급", "w-md")] })}</div>
-      <div>${subHead("외주 기술등급", "업체별 단가는 [프로젝트 설정 > 외주업체 단가]")}${gridTable({ order: true, list: "settings.external_grades", rows: st.external_grades || [], newLabel: "기술등급 입력", cols: [text("", "기술등급", "w-md")] })}</div></div>`;
+      <div>${subHead("기술등급", "내부 · 외주 인력이 같이 씀 — 외주 업체별 단가는 [프로젝트 설정 > 외주업체 단가]")}${gridTable({ order: true, list: "settings.external_grades", rows: st.external_grades || [], newLabel: "기술등급 입력", cols: [text("", "기술등급", "w-md")] })}</div></div>`;
     else if (sub === "proposal") body = `<div class="split-2 even"><div>${subHead("고객 제안 직무", "단가는 [프로젝트 설정 > 제안 단가]")}${gridTable({ order: true, list: "settings.proposal_roles", rows: st.proposal_roles || [], newLabel: "직무 입력", cols: [text("role", "제안 직무", "w-md")] })}</div>
       <div>${subHead("제안 등급", "모든 직무가 같은 등급 체계")}${gridTable({ order: true, list: "settings.proposal_levels", rows: st.proposal_levels || [], newLabel: "등급 입력", cols: [text("", "제안 등급", "w-md")] })}</div></div>`;
     else if (sub === "areas") body = narrow(subHead("영역", "인력마다 고르는 영역 (컨설팅 · 개발 …) — [투입 현황]에서 영역별로 MM · 금액을 봅니다")
       + gridTable({ order: true, list: "settings.areas", rows: st.areas || [], newLabel: "영역 입력", cols: [text("", "영역")] }));
+    else if (sub === "sites") body = narrow(subHead("근무지", "인력마다 고르는 근무지 (본사 · 고객사 · 원격 …)")
+      + gridTable({ order: true, list: "settings.work_sites", rows: st.work_sites || [], newLabel: "근무지 입력", cols: [text("", "근무지")] }));
     else if (sub === "accounts") body = subHead("경비 계정", "인비례 계정은 인력 MM × 기준금액(원/MM)으로 자동 계산 — 기준금액은 프로젝트마다 [경비] 탭에서 넣습니다")
       + gridTable({ order: true, list: "settings.expense_accounts", rows: st.expense_accounts || [], newLabel: "계정 입력", cols: [text("account", "계정"),
         { b: "category", t: "cat", l: "구분", th: `<th>구분</th>`, cell: (r, base) => `<td>${sel(`${base}.category`, r.category || "general", M.CATEGORIES, { label: "구분", cls: "s-md" })}</td>` },
@@ -325,7 +339,7 @@
     else {
       const mv = (ctx.master && ctx.master.master_version) || {}, pv = st.master_version || {};
       const mvText = v => (v && (v.name || v.date) ? `${v.name || "이름 없음"}${v.date ? ` (${v.date})` : ""}` : "이름 없음");
-      body = narrow(`<section class="sub-card">${subHead("마스터 파일 (master/master_rates.xlsx)", "직급 · 기술등급 · 제안 직무/등급 · 영역 · 경비 계정 · 부서 · 결재자 — 금액은 넣지 않음")}
+      body = narrow(`<section class="sub-card">${subHead("마스터 파일 (master/master_rates.xlsx)", "직급 · 기술등급 · 제안 직무/등급 · 영역 · 근무지 · 경비 계정 · 부서 · 결재자 — 금액은 넣지 않음")}
         <p class="muted">마스터는 전사가 같이 쓰는 목록을 배포하는 기본값입니다. 새 프로젝트는 마스터의 목록으로 시작하고, 프로젝트에서 항목을 더 넣을 수 있습니다. 단가 · 금액 · 외주업체 · 대표 시스템은 프로젝트마다 [프로젝트 설정]에서 넣습니다.</p>
         <div class="mini-kpis"><div class="mini-kpi"><span>폴더의 마스터</span><b>${esc(mvText(mv))}</b></div><div class="mini-kpi"><span>이 프로젝트가 쓴 마스터</span><b>${esc(mvText(pv))}</b></div></div>
         <div class="bar-group">${btn("마스터를 이 프로젝트에 반영", "applyMaster", [], "primary", "마스터에만 있는 항목을 이 프로젝트에 더함 (이미 있는 항목 · 금액은 그대로)", "download")}

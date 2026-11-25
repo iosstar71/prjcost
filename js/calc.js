@@ -179,16 +179,28 @@
     });
     const customMonthly = zero();
     const customDetails = expenseRows(project.custom_costs, customMonthly);
+    // OT비용: 프로젝트 전체 금액 하나 — 내부 인건비(노무비)에 넣고 달에는 고르게
+    const otMonthly = distributeMonthly({ dist_mode: "equal_total", total_input: num(project.ot_cost) }, months);
+    months.forEach(m => { internalMonthly[m] = pyRound(internalMonthly[m] + otMonthly[m], 2); });
+    const tOt = pyRound(sumValues(otMonthly), 2);
+    // 재료비: 구분 · 내용 · 금액 — 총 원가에 넣고 달에는 고르게
+    const materialMonthly = zero();
+    const materialDetails = (project.materials || []).map(x => {
+      const mMap = distributeMonthly({ dist_mode: "equal_total", total_input: num(x.amount) }, months);
+      months.forEach(m => { materialMonthly[m] = pyRound(materialMonthly[m] + mMap[m], 2); });
+      return Object.assign({}, x, { calc_monthly: mMap, total_cost: pyRound(sumValues(mMap), 2) });
+    });
+    const tMaterial = pyRound(sumValues(materialMonthly), 2);
 
     const tInternal = pyRound(sumValues(internalMonthly), 2), tExternal = pyRound(sumValues(externalMonthly), 2);
     const tGeneral = pyRound(sumValues(generalMonthly), 2), tIntOvh = pyRound(sumValues(intOvh), 2);
     const tExtOvh = pyRound(sumValues(extOvh), 2), tCustom = pyRound(sumValues(customMonthly), 2);
-    const totalCost = pyRound(tInternal + tExternal + tGeneral + tIntOvh + tExtOvh + tCustom, 2);
+    const totalCost = pyRound(tInternal + tExternal + tMaterial + tGeneral + tIntOvh + tExtOvh + tCustom, 2);
     const revenue = pyRound(num(project.contract_revenue), 2);
     const profit = pyRound(revenue - totalCost, 2);
     const margin = revenue > 0 ? pyRound((profit / revenue) * 100.0, 2) : 0;
     const hurdle = pyRound(num(project.target_hurdle_rate), 2);
-    const monthCost = m => (internalMonthly[m] || 0) + (externalMonthly[m] || 0) + (generalMonthly[m] || 0) + (intOvh[m] || 0) + (extOvh[m] || 0) + (customMonthly[m] || 0);
+    const monthCost = m => (internalMonthly[m] || 0) + (externalMonthly[m] || 0) + (materialMonthly[m] || 0) + (generalMonthly[m] || 0) + (intOvh[m] || 0) + (extOvh[m] || 0) + (customMonthly[m] || 0);
 
     // 원가 구성: 항목별 금액 · 총 원가 대비 비중(%) — 경비는 같은 이름끼리 합침
     const share = v => (totalCost > 0 ? pyRound((v / totalCost) * 100.0, 2) : 0);
@@ -201,8 +213,13 @@
     // 경비 = 일반경비 + 인비례 경비 (항목은 일반경비 이름별 · 인비례 계정별), 기타경비는 따로
     const expTotal = pyRound(tGeneral + tIntOvh + tExtOvh, 2);
     const composition = [
-      { key: "internal_labor", label: "내부 인건비", amount: tInternal, share: share(tInternal), items: [] },
+      { key: "internal_labor", label: "내부 인건비", amount: tInternal, share: share(tInternal), items: tOt ? [{ name: "OT비용", amount: tOt, share: share(tOt) }] : [] },
       { key: "external_labor", label: "외주 인건비", amount: tExternal, share: share(tExternal), items: [] },
+      ...(materialDetails.length ? [{ key: "material", label: "재료비", amount: tMaterial, share: share(tMaterial), items: (() => {
+        const acc = new Map();
+        materialDetails.forEach(x => { const n = String(x.category || x.content || "").trim() || "(구분 없음)"; acc.set(n, pyRound((acc.get(n) || 0) + x.total_cost, 2)); });
+        return [...acc].map(([name, amount]) => ({ name, amount, share: share(amount) }));
+      })() }] : []),
       { key: "expense", label: "경비", amount: expTotal, share: share(expTotal), items: byName(generalDetails.concat(mmOverheads.map(o => ({ name: o.account, total_cost: o.total_cost }))), "name") },
       { key: "custom_cost", label: "기타경비", amount: tCustom, share: share(tCustom), items: byName(customDetails, "name") }
     ];
@@ -216,7 +233,7 @@
       const rev = pyRound(num(ph.revenue), 2);
       const sumOf = f => pyRound(phMonths.reduce((a, m) => a + f(m), 0), 2);
       const pInt = sumOf(m => internalMonthly[m] || 0), pExt = sumOf(m => externalMonthly[m] || 0);
-      const pExp = sumOf(m => (generalMonthly[m] || 0) + (intOvh[m] || 0) + (extOvh[m] || 0) + (customMonthly[m] || 0));
+      const pExp = sumOf(m => (materialMonthly[m] || 0) + (generalMonthly[m] || 0) + (intOvh[m] || 0) + (extOvh[m] || 0) + (customMonthly[m] || 0));   // 경비 열 = 재료비 + 경비
       const calcCost = sumOf(monthCost), overridden = !isBlank(ph.override_cost);
       const cost = overridden ? pyRound(num(ph.override_cost), 2) : calcCost;
       cumRev = pyRound(cumRev + rev, 2);
@@ -233,11 +250,12 @@
       summary: {
         revenue, total_cost: totalCost, profit, margin_rate: margin, hurdle_rate: hurdle,
         hurdle_gap: pyRound(margin - hurdle, 2), hurdle_met: margin >= hurdle, composition,
-        breakdown: { internal_labor: tInternal, external_labor: tExternal, general_expense: tGeneral, internal_overhead: tIntOvh, external_overhead: tExtOvh, custom_cost: tCustom }
+        breakdown: { internal_labor: tInternal, ot_cost: tOt, external_labor: tExternal, material: tMaterial, general_expense: tGeneral, internal_overhead: tIntOvh, external_overhead: tExtOvh, custom_cost: tCustom }
       },
       details: {
         internal_labor: internalDetails, external_labor: externalDetails, general_expenses: generalDetails,
-        internal_overhead_monthly: intOvh, external_overhead_monthly: extOvh, mm_overheads: mmOverheads, custom_costs: customDetails
+        internal_overhead_monthly: intOvh, external_overhead_monthly: extOvh, mm_overheads: mmOverheads, custom_costs: customDetails,
+        ot_monthly: otMonthly, materials: materialDetails, material_monthly: materialMonthly
       },
       phases,
       estimate: calculateEstimate(project.estimate || {}, settings),
@@ -332,7 +350,7 @@
     [["internal_labor", calc.details.internal_labor], ["external_labor", calc.details.external_labor]].forEach(([f, list]) => list.forEach(r => {
       const g = get(keyOf(r.dept));
       let mm = 0;
-      months.forEach(m => { const c = r.calc[m] || {}; add(g, f, num(c.cost)); dm(g, m, num(c.cost)); dm(g, m, num(c.mm), "mmM"); mm += num(c.mm); });
+      months.forEach(m => { const c = r.calc[m] || {}; add(g, f, num(c.cost)); dm(g, m, num(c.cost)); dm(g, m, num(c.mm), "mmM"); if (f === "internal_labor") dm(g, m, num(c.cost), "im"); mm += num(c.mm); });
       add(g, "mm", pyRound(mm, 2));
       if (mm) g.people += 1;
     }));
@@ -344,7 +362,17 @@
         parts.forEach(([g, v]) => dm(g, m, v));
       });
     });
+    // OT비용(내부 인건비): 그 달 부서별 내부 인건비 비율로 (없으면 등록된 부서에 똑같이)
+    months.forEach(m => {
+      const ot = num((calc.details.ot_monthly || {})[m]);
+      if (!ot) return;
+      const base = depts.map(d => rows.get(d)), w = g => num((g.im || {})[m]);
+      const ws = base.reduce((a, g) => a + w(g), 0);
+      settle(base.map(g => [g, pyRound(ws > 0 ? (ot * w(g)) / ws : ot / Math.max(1, base.length), 2)]), ot, "internal_labor");
+      base.forEach(g => dm(g, m, ws > 0 ? (ot * w(g)) / ws : ot / Math.max(1, base.length)));
+    });
     const commonM = {};
+    months.forEach(m => { const v = num((calc.details.material_monthly || {})[m]); if (v) commonM[m] = pyRound((commonM[m] || 0) + v, 2); });   // 재료비는 공통
     calc.details.general_expenses.concat(calc.details.custom_costs).forEach(e => {
       const d = String(e.dept || "").trim();
       months.forEach(m => {
@@ -363,7 +391,7 @@
       wsum = wsum > 0 ? wsum : real.length;
       settle(real.map(g => [g, pyRound((cm * w(g)) / wsum, 2)]), cm, "common");
     });
-    rows.forEach(g => { delete g.d; delete g.mmM; });
+    rows.forEach(g => { delete g.d; delete g.mmM; delete g.im; });
     const out = [...rows.values()].filter(g => g.dept !== UNK || g.internal_labor || g.external_labor || g.overhead || g.expense);
     const PARTS = ["internal_labor", "external_labor", "overhead", "expense", "common"];
     const costOf = g => pyRound(PARTS.reduce((a, f) => a + g[f], 0), 2);
@@ -406,6 +434,7 @@
       row("revenue", "계약 매출", sa.revenue, sb.revenue),
       row("internal_labor", "내부 인건비", comp(sa, "internal_labor"), comp(sb, "internal_labor")),
       row("external_labor", "외주 인건비", comp(sa, "external_labor"), comp(sb, "external_labor")),
+      row("material", "재료비", comp(sa, "material"), comp(sb, "material")),
       row("expense", "경비", comp(sa, "expense"), comp(sb, "expense")),
       row("custom_cost", "기타경비", comp(sa, "custom_cost"), comp(sb, "custom_cost")),
       row("total_cost", "총 원가", sa.total_cost, sb.total_cost),

@@ -169,7 +169,7 @@
           const v = parse(col.t, raw);
           this.h.setCell(list, row, col.b, v);
           cells++;
-          if (col.b === "grade" || col.b === "vendor" || col.b === "area" || col.b === "dept") unknown += this.h.known(list, col.b, v) ? 0 : 1;
+          if (["grade", "vendor", "area", "dept", "site", "tech_grade"].includes(col.b)) unknown += this.h.known(list, col.b, v) ? 0 : 1;
         });
       });
       const fb = cols[colIdx ? Math.max(0, colIdx.find(x => x >= 0)) : c].b;

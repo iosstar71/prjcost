@@ -23,6 +23,7 @@
       approvers: ["", "", "", "", ""],   // 보고서 결재자 (기안(PM) · 검토 · 사업팀장 · 영업팀장 · 본부장) — 인사이동이 있을 때만 바꿈
       areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 영역 (마스터)
       systems: [],                // 대표 시스템 (프로젝트마다) — 인력마다 하나
+      work_sites: ["본사", "고객사", "원격"],   // 근무지 (마스터) — 인력마다 고름
       // 고객 제안 직무 × 등급 → 제안 단가 (견적서). 등급 체계는 모든 직무가 같음
       proposal_levels: ["Lvl1", "Lvl2", "Lvl3", "Lvl4", "Lvl5"],
       proposal_roles: [
@@ -66,7 +67,7 @@
     ["proposal_roles", "role", "제안 직무", []],
     ["expense_accounts", "account", "경비 계정", ["category", "desc"]]
   ];
-  const NAME_LISTS = [["external_grades", "외주 기술등급"], ["proposal_levels", "제안 등급"], ["areas", "영역"], ["departments", "부서"]];
+  const NAME_LISTS = [["external_grades", "기술등급"], ["proposal_levels", "제안 등급"], ["areas", "영역"], ["departments", "부서"], ["work_sites", "근무지"]];
   const same = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
   const show = v => (v && typeof v === "object" ? Object.entries(v).map(([k, x]) => `${k} ${num(x).toLocaleString("ko-KR")}`).join(", ") : typeof v === "number" ? v.toLocaleString("ko-KR") : String(v === undefined || v === "" ? "-" : v));
   // 마스터 b 를 a 에 맞춰 넣었을 때 바뀌는 것 (목록은 더하고 · 같은 이름은 값을 바꿈 — a 에만 있는 것은 그대로 둠, removed: b 에 없는 것)
@@ -127,7 +128,7 @@
       date_mode: "month", start_date: `${y}-01`, end_date: `${y}-06`, contract_revenue: 0, target_hurdle_rate: 18.0,
       settings: st,
       internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate(), versions: [], dept_revenue: {},
-      project_type: ""
+      project_type: "", ot_cost: 0, materials: []
     };
   }
 
@@ -146,12 +147,12 @@
       description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행",
       start_date: "2026-01", end_date: "2026-06", contract_revenue: 240000000, target_hurdle_rate: 18.0,
       internal_labor: [
-        { name: "김철수", role: "PM", area: "PMO", system: "원가관리", prop_role: "프로젝트관리", prop_level: "Lvl1", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6,
+        { name: "김철수", role: "PM", area: "PMO", system: "원가관리", prop_role: "프로젝트관리", prop_level: "Lvl1", site: "본사", tech_grade: "특급", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6,
           mm: { "2026-01": 1, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 1 } },
-        { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", system: "공정관리", prop_role: "컨설팅", prop_level: "Lvl2", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5,
+        { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", system: "공정관리", prop_role: "컨설팅", prop_level: "Lvl2", site: "고객사", tech_grade: "고급", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5,
           mm: { "2026-01": 0.5, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 } }
       ],
-      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", system: "공정관리", prop_role: "개발", prop_level: "Lvl3", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
+      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", system: "공정관리", prop_role: "개발", prop_level: "Lvl3", site: "고객사", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
       general_expenses: [{ name: "출장비", dist_mode: "equal_total", total_input: 9000000, unit_input: 0, monthly: {}, memo: "지방 사업장 방문" }],
       custom_costs: [{ name: "사전심의·인증비", dist_mode: "fill_all", total_input: 0, unit_input: 400000, monthly: {}, memo: "보안 점검" }],
       phases: [
@@ -192,7 +193,11 @@
     ["systems", "proposal_levels", "proposal_roles"].forEach(k => { if (!Array.isArray(out.settings[k])) out.settings[k] = k === "systems" ? [] : clone(defaultSettings()[k]); });
     out.settings.proposal_roles.forEach(r => { if (!r.rates || typeof r.rates !== "object") r.rates = {}; });
     if (!out.settings.master_version) out.settings.master_version = { name: "", date: "" };
-    out.internal_labor.concat(out.external_labor).forEach(r => { ["system", "prop_role", "prop_level"].forEach(f => { if (r[f] === undefined) r[f] = ""; }); });
+    out.internal_labor.concat(out.external_labor).forEach(r => { ["system", "prop_role", "prop_level", "site"].forEach(f => { if (r[f] === undefined) r[f] = ""; }); });
+    out.internal_labor.forEach(r => { if (r.tech_grade === undefined) r.tech_grade = ""; });   // 내부 인력의 기술등급 (외주와 같은 목록)
+    if (!Array.isArray(out.settings.work_sites)) out.settings.work_sites = clone(defaultSettings().work_sites);
+    if (!Array.isArray(out.materials)) out.materials = [];   // 재료비 [{category, content, amount}]
+    out.ot_cost = num(out.ot_cost);                           // OT비용 (프로젝트 전체, 내부 인건비)
     if (!Array.isArray(out.estimate.labor)) out.estimate.labor = [];   // 견적 인건비 (제안 직무 · 등급 · 견적 MM)
     // 결재자는 기준정보(settings.approvers). v0.9.7 에서 프로젝트에 넣었던 이름은 기준정보가 비어 있으면 옮김
     const ap = i => String(((Array.isArray(out.settings.approvers) ? out.settings.approvers : [])[i]) || "");

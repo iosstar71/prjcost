@@ -172,11 +172,12 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("template fill: numbers stay numbers, mixed text replaced, approvers, empty value cleared", [at("D8"), at("I8"), at("D9"), at("F4"), at("G4"), at("D13"), PC.pyRound(at("F13"), 4), at("E38"), String(at("D7")).split("\n")[0], filled.unknown.length],
     [240000000, "SI-AD", "2026.01.01 ~ 2026.06.30 (6개월)", "김철수", "", 79800000, 0.6234, 230000000, "1. 과제명 : 차세대 원가·공정 시스템 구축", 0]);
   eq("template fill: empty values reported", filled.empty.includes("결재2"), true);
-  // 원가상세 시트: 반복 줄(사람 · 경비 항목 수만큼), 합계 열은 달 앞, 달 머리글 · 기간 밖 달은 빈칸
-  const dsh = fwb.sheet("원가상세").rows, cellAt = (r, c) => (dsh[r - 1] || [])[c - 1];
-  const nInt = tp.internal_labor.length, extRow = 7 + nInt + 4;   // 외주 머리글 줄 (내부 줄 다음 MM 합계 · 월 인건비 · 빈 줄 · 소제목)
-  eq("detail sheet: one row per person, totals in front, month headers", [cellAt(7, 2), cellAt(8, 2), cellAt(7 + nInt, 2), cellAt(7, 9), cellAt(7, 10), cellAt(6, 11), cellAt(6, 16), cellAt(6, 17), cellAt(extRow + 1, 2)],
-    ["김철수", "이민지", "MM 합계", 6, 52200000, "26.01", "26.06", "", "외주개발1"]);
+  // 원가상세: 사람마다 한 줄(반복), OT비용은 프로젝트 전체 한 줄, 소계 · 인원수 · 근무지 · 내부 기술등급
+  const dsh = fwb.sheet("원가상세").rows, cellAt = (sh, r, c) => (sh[r - 1] || [])[c - 1];
+  eq("detail sheet: one row per person, project OT row, subtotals with head count, external row shifted", [cellAt(dsh, 5, 8), cellAt(dsh, 6, 8), cellAt(dsh, 5, 16), cellAt(dsh, 5, 10), cellAt(dsh, 7, 5), cellAt(dsh, 8, 8), cellAt(dsh, 8, 13), cellAt(dsh, 11, 8), cellAt(dsh, 11, 11), cellAt(dsh, 13, 8)],
+    ["김철수", "이민지", "본사", "특급", "OT비용", 2, 10.5, "외주개발1", "개발", 3]);
+  const t5 = fwb.sheet("인력투입계획 점검(5Tier)").rows;
+  eq("5Tier sheet: 자사 ○ for internal rows, BP ○ for external, totals by month", [cellAt(t5, 5, 23), cellAt(t5, 6, 23), cellAt(t5, 7, 24), cellAt(t5, 7, 23), cellAt(t5, 8, 7), cellAt(t5, 8, 9)], ["○", "○", "○", "", 14.5, 3]);
   const odd = await X.read(Buffer.from(await (await T.fill(X.build([{ name: "S", rows: [["{{없는값}}", "합계 {{매출액}}원"]] }]), tv)).blob.arrayBuffer()));
   eq("template fill: our own xlsx (inline strings) and unknown keys", odd.sheet("S").rows[0], ["", "합계 240,000,000원"]);
   eq("output name: 양식_ID_이름_최종작성일", T.outName("Offline사업검토서.xlsx", { project_id: "PRJ-1", project_name: "A/B 구축" }, new Date(2026, 10, 25)), "Offline사업검토서_PRJ-1_A_B 구축_20261125.xlsx");
@@ -205,6 +206,16 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("master changes listed (names added, account description)", [ch.includes("영역 추가: 컨설팅"), ch.includes("직급 추가: 전문위원"), ch.some(x => x.startsWith("경비 계정 출장비:")), ch.some(x => x.includes("8,500,000"))], [true, true, true, false]);
   eq("merge master: names added, project amounts and extras kept", [merged.internal_grades.find(g => g.grade === "수석").rate, merged.internal_grades.some(g => g.grade === "인턴"), merged.internal_grades.some(g => g.grade === "전문위원"), merged.areas.includes("컨설팅") && merged.areas.includes("PMO"), merged.vendor_rates.length, merged.proposal_roles[2].rates.Lvl3], [8500000, true, true, true, 6, 8000000]);
   eq("new project from a master starts with empty amounts and project-only lists", (() => { const np = M.newProject(mst); return [np.settings.internal_grades[0].rate, np.settings.vendor_rates.length, np.settings.systems.length]; })(), [undefined, 0, 0]);
+
+  // OT비용(프로젝트 전체 · 내부 인건비) · 재료비(총 원가): 합계 · 원가 구성 · 부서 합계 = 통합
+  const op = M.demoProject(M.defaultSettings()), oc0 = PC.Calc.calculateProjectCost(op, op.settings);
+  op.ot_cost = 6000000; op.materials = [{ category: "HW", content: "서버", amount: 12000000 }];
+  const oc = PC.Calc.calculateProjectCost(op, op.settings), ob = oc.summary.breakdown;
+  eq("OT is internal labor, materials add to total cost; month and composition follow", [ob.internal_labor - oc0.summary.breakdown.internal_labor, ob.ot_cost, ob.material, oc.summary.total_cost - oc0.summary.total_cost, oc.summary.composition.map(g => g.key).join(), oc.summary.composition[0].items.map(x => x.name).join()],
+    [6000000, 6000000, 12000000, 18000000, "internal_labor,external_labor,material,expense,custom_cost", "OT비용"]);
+  op.settings.departments = ["SI", "AI"]; op.internal_labor[0].dept = "SI"; op.internal_labor[1].dept = "AI"; op.external_labor[0].dept = "AI";
+  const od = PC.Calc.deptSummary(op, PC.Calc.calculateProjectCost(op, op.settings));
+  eq("departments: OT split by internal labor, materials as common — totals reconcile", [od.total.cost, od.total.internal_labor], [oc.summary.total_cost, ob.internal_labor]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

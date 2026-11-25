@@ -1,5 +1,5 @@
 // =============================================================================
-// 원가 분석 보고서 (머리줄 [보고서]) — 회사 사업검토서와 같은 꼴: 맑은 고딕 · 회색 제목 칸(D9D9D9) · 가는 테두리 · 로마자 소제목
+// 종합보고서 (머리줄 [종합보고서]) — 회사 사업검토서와 같은 꼴: 맑은 고딕 · 회색 제목 칸(D9D9D9) · 가는 테두리 · 로마자 소제목
 //  01_통합보고   프로젝트 개요 · 수익성 요약 · 원가 구성(세부 항목) · 분할계약 · 인력 투입 · 부서별 손익 (A4 세로 한 장 너비)
 //  02_항목별상세  내부 · 외주 인력의 달별 MM · 인건비, 경비의 달별 금액, 달별 원가 합계 (A4 가로)
 //  03_투입현황   부서 · 담당 영역 · 등급 · 업체별 달별 MM · 인건비
@@ -128,7 +128,7 @@
     header(C, r++, [[2, 3], [4, 6], [7, 8], [9, 9], [10, 10]], ["구분", "세부 항목", "금액", "원가 비중", "매출 대비"]);
     const byGroup = (scope, by) => PC.Calc.staffStats(c, { by, scope, settings: st }).rows.map(g => ({ name: `${g.key}  (${g.people}명 · ${g.total_mm} MM)`, amount: g.cost }));
     s.composition.forEach(g => {
-      const items = g.key === "internal_labor" ? byGroup("internal", "grade") : g.key === "external_labor" ? byGroup("external", "vendor") : g.items;
+      const items = g.key === "internal_labor" ? byGroup("internal", "grade").concat(b.ot_cost ? [{ name: "OT비용 (프로젝트 전체)", amount: b.ot_cost }] : []) : g.key === "external_labor" ? byGroup("external", "vendor") : g.items;
       const r0 = r;
       line(C, r++, [[4, 6], [7, 8], [9, 9], [10, 10]], [["소계", sub(S.center)], [g.amount, sub(S.won)], [ratio(g.amount, cost), sub(S.pct)], [ratio(g.amount, rev), sub(S.pct)]]);
       items.forEach(it => line(C, r++, [[4, 6], [7, 8], [9, 9], [10, 10]], [[it.name, S.text], [it.amount, S.won], [ratio(it.amount, cost), S.pct], [ratio(it.amount, rev), S.pct]]));
@@ -215,31 +215,35 @@
       const sumM = (f, m) => pyRound(rows.reduce((a, x) => a + num(x.calc[m][f]), 0), 2);
       const total = pyRound(rows.reduce((a, x) => a + num(x.total_cost), 0), 2), tmm = pyRound(rows.reduce((a, x) => a + num(x.total_mm), 0), 2);
       line(C, r++, [[2, 8], [9, 9], [10, 10], ...monthSpans], [["MM 합계", sub(S.center)], [tmm, sub(S.mm)], ["", sub(S.won)], ...months.map(m => [sumM("mm", m), sub(S.mm)])]);
-      line(C, r++, [[2, 8], [9, 9], [10, 10], ...monthSpans], [["월 인건비", tot(S.center)], ["", tot(S.won)], [total, tot(S.won)], ...months.map(m => [sumM("cost", m), tot(S.won)])]);
+      const ot = kind === "internal" && b.ot_cost ? d.ot_monthly || {} : null;   // OT비용 (프로젝트 전체 · 내부 인건비)
+      if (ot) line(C, r++, [[2, 8], [9, 9], [10, 10], ...monthSpans], [["OT비용 (프로젝트 전체)", S.center], ["", S.won], [b.ot_cost, sub(S.won)], ...months.map(m => [num(ot[m]), S.won])]);
+      line(C, r++, [[2, 8], [9, 9], [10, 10], ...monthSpans], [["월 인건비", tot(S.center)], ["", tot(S.won)], [pyRound(total + (ot ? b.ot_cost : 0), 2), tot(S.won)], ...months.map(m => [pyRound(sumM("cost", m) + (ot ? num(ot[m]) : 0), 2), tot(S.won)])]);
       r++;
     };
     labor("내부 인력 투입 · 인건비", d.internal_labor, "internal");
     labor("외주 인력 투입 · 인건비", d.external_labor, "external");
 
-    sec(C, r++, k++, "경비 (일반 · 인비례 · 기타)");
+    sec(C, r++, k++, "재료비 · 경비 (일반 · 인비례 · 기타)");
     const ES = [[2, 2], [3, 5], [6, 7], [8, 8], [9, 9], [10, 10], ...monthSpans];
     header(C, r++, ES, ["구분", "계정 · 항목", "분배 방식", "기준 금액", "", "금액", ...mHead]);
     const exp = [
+      ...(d.materials || []).map(x => ["재료비", `${x.category || ""} ${x.content || ""}`.trim(), "총액 균등", num(x.amount), x.calc_monthly, x.total_cost]),
       ...d.general_expenses.map(e => ["일반경비", e.name, MODE[e.dist_mode] || "", e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), e.calc_monthly, e.total_cost]),
       ...(d.mm_overheads || []).map(o => [o.category === "mm_internal" ? "인비례 (내부)" : "인비례 (외주)", o.account, "MM × 기준금액", o.unit_amount, o.calc_monthly, o.total_cost]),
       ...d.custom_costs.map(e => ["기타경비", e.name, MODE[e.dist_mode] || "", e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), e.calc_monthly, e.total_cost])
     ];
     exp.forEach(([g, name, mode, basev, monthly, total]) => line(C, r++, ES, [[g, S.center], [name || "", S.text], [mode, S.center], [basev, S.won], ["", S.center], [total, sub(S.won)], ...months.map(m => [monthly[m], S.won])]));
-    const expTotal = pyRound(b.general_expense + b.internal_overhead + b.external_overhead + b.custom_cost, 2);
+    const expTotal = pyRound((b.material || 0) + b.general_expense + b.internal_overhead + b.external_overhead + b.custom_cost, 2);   // 재료비 + 경비
     const expM = m => pyRound(exp.reduce((a, x) => a + num(x[4][m]), 0), 2);
-    line(C, r++, [[2, 9], [10, 10], ...monthSpans], [["경비 합계", tot(S.center)], [expTotal, tot(S.won)], ...months.map(m => [expM(m), tot(S.won)])]);
+    line(C, r++, [[2, 9], [10, 10], ...monthSpans], [["재료비 · 경비 합계", tot(S.center)], [expTotal, tot(S.won)], ...months.map(m => [expM(m), tot(S.won)])]);
     r++;
 
     sec(C, r++, k++, "달별 원가 합계");
     header(C, r++, [[2, 9], [10, 10], ...monthSpans], ["구분", "합계", ...mHead]);
     const lab = (list, m) => pyRound(list.reduce((a, x) => a + num(x.calc[m].cost), 0), 2);
-    const monthTotal = m => pyRound(lab(d.internal_labor, m) + lab(d.external_labor, m) + expM(m), 2);
-    [["내부 인건비", m => lab(d.internal_labor, m), b.internal_labor], ["외주 인건비", m => lab(d.external_labor, m), b.external_labor], ["경비", expM, expTotal]]
+    const otM = m => num((d.ot_monthly || {})[m]);
+    const monthTotal = m => pyRound(lab(d.internal_labor, m) + otM(m) + lab(d.external_labor, m) + expM(m), 2);
+    [["내부 인건비 (OT 포함)", m => pyRound(lab(d.internal_labor, m) + otM(m), 2), b.internal_labor], ["외주 인건비", m => lab(d.external_labor, m), b.external_labor], ["재료비 · 경비", expM, expTotal]]
       .forEach(([name, f, t]) => line(C, r++, [[2, 9], [10, 10], ...monthSpans], [[name, S.center], [t, sub(S.won)], ...months.map(m => [f(m), S.won])]));
     line(C, r++, [[2, 9], [10, 10], ...monthSpans], [["월 원가 합계", tot(S.center)], [c.summary.total_cost, tot(S.won)], ...months.map(m => [monthTotal(m), tot(S.won)])]);
     let cum = 0;

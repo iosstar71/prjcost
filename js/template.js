@@ -18,7 +18,7 @@
     ["프로젝트ID", "프로젝트 ID"], ["과제명", "프로젝트명"], ["과제내용", "프로젝트 설명"], ["고객사", "고객사"], ["PM", "프로젝트 PM"], ["영업대표", "영업대표"],
     ["프로젝트Type", "프로젝트 Type (프로젝트 개요)"], ["결재1", "결재자 1 (기안 · PM)"], ["결재2", "결재자 2 (검토)"], ["결재3", "결재자 3 (사업팀장)"], ["결재4", "결재자 4 (영업팀장)"], ["결재5", "결재자 5 (본부장)"],
     ["매출액", "계약 매출 (원)"], ["시작일", "시작일 YYYY.MM.DD"], ["종료일", "종료일 YYYY.MM.DD"], ["개월수", "기간 개월 수"], ["귀속부서", "매출 귀속부서 (첫 부서)"],
-    ["노무비", "내부 인건비"], ["외주비", "외주 인건비"], ["경비", "일반 · 인비례 · 기타경비 (AI예비비 제외)"], ["AI예비비", "경비 중 이름이 AI예비비인 항목"], ["총원가", "총 원가"],
+    ["노무비", "내부 인건비 (OT비용 포함)"], ["OT비용", "OT비용 (프로젝트 전체)"], ["재료비", "재료비 합계"], ["재료비율", "재료비 ÷ 총 원가"], ["외주비", "외주 인건비"], ["경비", "일반 · 인비례 · 기타경비 (AI예비비 제외)"], ["AI예비비", "경비 중 이름이 AI예비비인 항목"], ["총원가", "총 원가"],
     ["노무비율", "노무비 ÷ 총 원가 (소수)"], ["외주비율", "외주비 ÷ 총 원가"], ["경비율", "경비 ÷ 총 원가"], ["AI예비비율", "AI예비비 ÷ 총 원가"], ["총원가율", "1 (100%)"],
     ["매출마진", "매출 − 총 원가"], ["수주마진율", "매출마진 ÷ 매출 (소수)"], ["허들", "목표 허들 이익률 (소수)"], ["Gap", "수주마진율 − 허들 (소수)"],
     ["최근버전이름", "가장 최근 저장한 버전 이름"], ["최근버전매출", "그 버전의 계약 매출"], ["최근버전마진율", "그 버전의 수주마진율 (소수)"],
@@ -28,7 +28,9 @@
     ["내부인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 직급 · 제안직무 · 제안등급 · 단가 · 총MM · 금액 · M1 … M12(MM)"],
     ["외주인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 업체 · 기술등급 · 제안직무 · 제안등급 · 단가 · 총MM · 금액 · M1 … M12(MM)"],
     ["경비항목.이름", "반복 줄: 구분 · 항목 · 방식 · 기준금액 · 금액 · M1 … M12(금액)"],
-    ["내부합계.이름 · 외주합계.이름", "총MM · 금액 · M1 … M12(MM) · C1 … C12(인건비)"],
+    ["내부합계.이름 · 외주합계.이름 · 인건비합계.이름", "인원수 · 총MM · 금액 · M1 … M12(MM) · C1 … C12(인건비) — 내부 · 전체 금액은 OT비용 포함"],
+    ["재료비항목.이름", "반복 줄: 구분 · 내용 · 금액"],
+    ["재료비합계.이름", "금액 · M1 … M12"],
     ["경비합계.이름 · 월원가.이름 · 누적원가.이름", "금액 · M1 … M12 (원가: 내부 · 외주 인건비 + 경비)"]
   ];
   const MAX_MONTHS = 12;   // 양식은 1년까지 (월1 … 월12)
@@ -63,7 +65,7 @@
       프로젝트Type: project.project_type || "", 결재1: ap[0] || "", 결재2: ap[1] || "", 결재3: ap[2] || "", 결재4: ap[3] || "", 결재5: ap[4] || "",
       매출액: s.revenue, 시작일: dot(start.length === 7 ? `${start}-01` : start), 종료일: dot(end.length === 7 ? lastDay(end) : end), 개월수: months.length,
       귀속부서: ((project.settings || {}).departments || []).filter(x => String(x).trim())[0] || "",
-      노무비: b.internal_labor, 외주비: b.external_labor, 경비: expense, AI예비비: ai || "", 총원가: total,
+      노무비: b.internal_labor, OT비용: b.ot_cost || "", 재료비: b.material || "", 재료비율: b.material ? ratio(b.material) : "", 외주비: b.external_labor, 경비: expense, AI예비비: ai || "", 총원가: total,
       노무비율: ratio(b.internal_labor), 외주비율: ratio(b.external_labor), 경비율: ratio(expense), AI예비비율: ai ? ratio(ai) : "", 총원가율: total > 0 ? 1 : 0,
       매출마진: margin, 수주마진율: mRate, 허들: hurdle, Gap: mRate - hurdle,
       최근버전이름: last ? last.name || "" : "", 최근버전매출: lastRev, 최근버전마진율: lastRate,
@@ -79,14 +81,20 @@
     const perMonth = (f, prefix) => Object.fromEntries(Array.from({ length: MAX_MONTHS }, (_, i) => [`${prefix || "M"}${i + 1}`, months[i] ? f(months[i]) : ""]));
     const person = (r, kind) => Object.assign({
       성명: r.name || "", 역할: r.role || "", 영역: r.area || "", 시스템: r.system || "", 부서: r.dept || "", 제안직무: r.prop_role || "", 제안등급: r.prop_level || "",
-      단가: months.length ? r.calc[months[0]].rate : "", 총MM: r.total_mm, 금액: r.total_cost
-    }, kind === "internal" ? { 직급: r.grade || "" } : { 업체: r.vendor || "", 기술등급: r.grade || "" }, perMonth(m => r.calc[m].mm || ""));
+      단가: months.length ? r.calc[months[0]].rate : "", 총MM: r.total_mm, 금액: r.total_cost, 근무지: r.site || ""
+    }, kind === "internal" ? { 직급: r.grade || "", 기술등급: r.tech_grade || "" } : { 업체: r.vendor || "", 기술등급: r.grade || "" }, perMonth(m => r.calc[m].mm || ""));
     out.내부인력 = d.internal_labor.map(r => person(r, "internal"));
     out.외주인력 = d.external_labor.map(r => person(r, "external"));
     const sum = (rows, f) => pyRound(rows.reduce((a, r) => a + num(f(r)), 0), 2);
     const laborTotal = rows => Object.assign({ 총MM: sum(rows, r => r.total_mm), 금액: sum(rows, r => r.total_cost) }, perMonth(m => sum(rows, r => r.calc[m].mm)), perMonth(m => sum(rows, r => r.calc[m].cost), "C"));
-    out.내부합계 = laborTotal(d.internal_labor);
-    out.외주합계 = laborTotal(d.external_labor);
+    const people = rows => rows.filter(r => num(r.total_mm)).length;
+    const ot = d.ot_monthly || {};
+    out.내부합계 = Object.assign(laborTotal(d.internal_labor), { 인원수: people(d.internal_labor), 금액: calc.summary.breakdown.internal_labor }, perMonth(m => pyRound(sum(d.internal_labor, r => r.calc[m].cost) + num(ot[m]), 2), "C"));   // 금액 · 월 인건비는 OT비용 포함
+    out.외주합계 = Object.assign(laborTotal(d.external_labor), { 인원수: people(d.external_labor) });
+    const all = d.internal_labor.concat(d.external_labor);
+    out.인건비합계 = Object.assign({ 인원수: people(all), 총MM: sum(all, r => r.total_mm), 금액: pyRound(calc.summary.breakdown.internal_labor + calc.summary.breakdown.external_labor, 2) }, perMonth(m => sum(all, r => r.calc[m].mm)), perMonth(m => pyRound(sum(all, r => r.calc[m].cost) + num(ot[m]), 2), "C"));
+    out.재료비항목 = (d.materials || []).map(x => ({ 구분: x.category || "", 내용: x.content || "", 금액: x.total_cost }));
+    out.재료비합계 = Object.assign({ 금액: calc.summary.breakdown.material || 0 }, perMonth(m => num((d.material_monthly || {})[m])));
     const exp = [
       ...d.general_expenses.map(e => ({ 구분: "일반경비", 항목: e.name || "", 방식: MODE[e.dist_mode] || "", 기준금액: e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), 금액: e.total_cost, m: e.calc_monthly })),
       ...(d.mm_overheads || []).map(o => ({ 구분: o.category === "mm_internal" ? "인비례(내부)" : "인비례(외주)", 항목: o.account, 방식: "MM × 기준금액", 기준금액: o.unit_amount, 금액: o.total_cost, m: o.calc_monthly })),
@@ -95,7 +103,7 @@
     out.경비항목 = exp.map(e => Object.assign({ 구분: e.구분, 항목: e.항목, 방식: e.방식, 기준금액: e.기준금액, 금액: e.금액 }, perMonth(m => num(e.m[m]))));
     const expM = m => sum(exp, e => e.m[m]);
     out.경비합계 = Object.assign({ 금액: sum(exp, e => e.금액) }, perMonth(expM));
-    const monthCost = m => pyRound(sum(d.internal_labor, r => r.calc[m].cost) + sum(d.external_labor, r => r.calc[m].cost) + expM(m), 2);
+    const monthCost = m => pyRound(sum(d.internal_labor, r => r.calc[m].cost) + num(ot[m]) + sum(d.external_labor, r => r.calc[m].cost) + num((d.material_monthly || {})[m]) + expM(m), 2);
     out.월원가 = Object.assign({ 금액: calc.summary.total_cost }, perMonth(monthCost));
     let cum = 0;
     out.누적원가 = Object.assign({ 금액: "" }, perMonth(m => (cum = pyRound(cum + monthCost(m), 2))));

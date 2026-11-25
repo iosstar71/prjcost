@@ -11,10 +11,12 @@
 | start_date · end_date | 기간 (예전 자료의 start_ym · end_ym 도 읽음) |
 | contract_revenue · target_hurdle_rate | 계약 매출(원) · 목표 이익률(%) |
 | settings | 이 프로젝트 전용 기준정보 (아래) — 비어 있으면 폴더의 기준정보 |
-| internal_labor[] | name · role(직접 입력) · area(영역, 마스터) · system(대표 시스템) · dept(부서) · prop_role · prop_level(고객 제안 직무 · 등급 — 견적용 부가정보) · grade(직급) · base_rate(비우면 등급 단가) · overhead_eligible · target_mm(총 MM — 달별 MM 을 고치면 그 합) · mm{YYYY-MM: MM} |
-| external_labor[] | name · role · area · system · dept · prop_role · prop_level · vendor · grade · custom_rate(적용단가, 비우면 업체 · 등급 단가) · base_rate(단가표에 없을 때) · target_mm · mm{} |
+| internal_labor[] | name · role(직접 입력) · area(영역, 마스터) · system(대표 시스템) · dept(부서) · prop_role · prop_level(고객 제안 직무 · 등급 — 견적용 부가정보) · site(근무지, 마스터 목록) · tech_grade(기술등급 — 외주와 같은 목록) · grade(직급) · base_rate(비우면 등급 단가) · overhead_eligible · target_mm(총 MM — 달별 MM 을 고치면 그 합) · mm{YYYY-MM: MM} |
+| external_labor[] | name · role · area · system · dept · prop_role · prop_level · site · vendor · grade · custom_rate(적용단가, 비우면 업체 · 등급 단가) · base_rate(단가표에 없을 때) · target_mm · mm{} |
 | dept_revenue | 부서별 매출 {부서 이름: 원} — 부서 2개 이상일 때 [부서별] 탭에서 입력 |
 | project_type | 보고서 양식용 프로젝트 Type |
+| ot_cost | OT비용 (프로젝트 전체, 원) — 내부 인건비에 포함, 달에는 고르게 |
+| materials[] | 재료비 {category(구분), content(내용), amount(원)} — 총 원가에 포함, 달에는 고르게 |
 | versions[] | 버전(기준선): no · name(초기 계획 · 실계약 …) · memo · saved_at · data(그때의 프로젝트 자료 — versions 는 빼고) |
 | general_expenses[] · custom_costs[] | name · dept(비우면 공통) · dist_mode(`equal_total` 총액 균등 / `fill_all` 매달 같은 금액 / `manual` 달마다) · total_input · unit_input · monthly{} · memo |
 | phases[] (최대 5) | title · start_ym · end_ym · revenue · override_cost(비우면 기간 원가 합) · dept_revenue{부서: 원}(회차 × 부서 매출) |
@@ -22,7 +24,7 @@
 
 ## settings
 raise_month("03" — 연봉 인상월, 비우면 인상 없음) · internal_grades[{grade, rate, raise_rate(인상단가)}] · external_grades["특급", …] · vendor_rates[{vendor, grade, rate, raise_ym(인상월 YYYY-MM), raise_rate(인상단가)}] · external_rates{"업체|등급": 단가}(예전 형식) ·
-areas["PMO", …](영역) · systems[](대표 시스템, 프로젝트 전용) · proposal_levels["Lvl1", …] · proposal_roles[{role, rates{등급: 원/MM}}](고객 제안 직무 × 등급 단가) · master_version{name, date} · approvers[5](보고서 결재자 이름: 기안(PM) · 검토 · 사업팀장 · 영업팀장 · 본부장) · departments["SI사업부", …](부서 — 2개 이상이면 부서 화면, 이름에 '.' 대신 '·') · dept_common_basis(`cost` 직접 원가 비율 / `mm` / `revenue` / `equal` — 공통경비 나누는 기준) ·
+areas["PMO", …](영역) · work_sites["본사", …](근무지) · systems[](대표 시스템, 프로젝트 전용) · proposal_levels["Lvl1", …] · proposal_roles[{role, rates{등급: 원/MM}}](고객 제안 직무 × 등급 단가) · master_version{name, date} · approvers[5](보고서 결재자 이름: 기안(PM) · 검토 · 사업팀장 · 영업팀장 · 본부장) · departments["SI사업부", …](부서 — 2개 이상이면 부서 화면, 이름에 '.' 대신 '·') · dept_common_basis(`cost` 직접 원가 비율 / `mm` / `revenue` / `equal` — 공통경비 나누는 기준) ·
 expense_accounts[{account, category, unit_amount, desc}] — category: `general` 일반경비 · `custom` 기타경비 · `mm_internal` 인비례(내부) · `mm_external` 인비례(외주), unit_amount = 인비례 기준금액(원/MM)
 - 예전 internal_overhead_ratio · external_overhead_ratio(인건비의 %)는 더 쓰지 않음 — 열 때 알리고, 저장할 때 지움
 
