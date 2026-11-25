@@ -51,13 +51,20 @@
   }
 
   // ---------- 마스터 (전사에서 같이 쓰는 기준정보 — master/master_rates.xlsx 로 배포) ----------
-  //  프로젝트마다 다른 것은 마스터에 넣지 않음: 외주업체 단가 · 대표 시스템 · 공통경비 나누는 기준
-  const PROJECT_ONLY = ["vendor_rates", "external_rates", "systems", "dept_common_basis"];
-  function masterOf(settings) { const m = clone(settings || {}); PROJECT_ONLY.forEach(k => { delete m[k]; }); return m; }
+  //  마스터 = 전사 공통 목록(이름)뿐 — 금액(직급 단가 · 인상단가 · 제안 단가 · 인비례 기준금액)과 프로젝트마다 다른 것(외주업체 단가 · 대표 시스템 · 연봉 인상월 · 공통경비 기준)은 넣지 않음
+  const PROJECT_ONLY = ["vendor_rates", "external_rates", "systems", "dept_common_basis", "raise_month"];
+  function masterOf(settings) {
+    const m = clone(settings || {});
+    PROJECT_ONLY.forEach(k => { delete m[k]; });
+    m.internal_grades = (m.internal_grades || []).map(g => ({ grade: g.grade }));
+    m.proposal_roles = (m.proposal_roles || []).map(r => ({ role: r.role }));
+    m.expense_accounts = (m.expense_accounts || []).map(a => ({ account: a.account, category: a.category, desc: a.desc || "" }));
+    return m;
+  }
   const RATE_LISTS = [
-    ["internal_grades", "grade", "직급", ["rate", "raise_rate"]],
-    ["proposal_roles", "role", "제안 직무", ["rates"]],
-    ["expense_accounts", "account", "경비 계정", ["category", "unit_amount"]]
+    ["internal_grades", "grade", "직급", []],
+    ["proposal_roles", "role", "제안 직무", []],
+    ["expense_accounts", "account", "경비 계정", ["category", "desc"]]
   ];
   const NAME_LISTS = [["external_grades", "외주 기술등급"], ["proposal_levels", "제안 등급"], ["areas", "영역"], ["departments", "부서"]];
   const same = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
@@ -80,23 +87,21 @@
       al.filter(x => !bl.includes(x)).forEach(x => out.push(`(마스터에 없음) ${label}: ${x}`));
     });
     if ((b.approvers || []).some(Boolean) && !same(a.approvers, b.approvers)) out.push(`결재자: ${(a.approvers || []).filter(Boolean).join(" · ") || "-"} → ${(b.approvers || []).filter(Boolean).join(" · ")}`);
-    if (b.raise_month !== undefined && !same(a.raise_month || "", b.raise_month || "")) out.push(`연봉 인상월: ${a.raise_month || "-"} → ${b.raise_month || "-"}`);
     return out;
   }
-  // 프로젝트 기준정보에 마스터를 반영: 마스터의 항목은 더하거나 값을 바꾸고, 프로젝트에서 더한 항목 · 프로젝트 전용 정보는 그대로
+  // 프로젝트 기준정보에 마스터를 반영: 마스터에만 있는 항목을 더하고 (경비 계정은 구분 · 설명도 마스터대로), 프로젝트의 항목 · 금액 · 프로젝트 전용 정보는 그대로
   function mergeMaster(settings, master) {
     const out = clone(settings || {}), m = master || {};
     RATE_LISTS.forEach(([k, key, , fields]) => {
       const list = out[k] = Array.isArray(out[k]) ? out[k] : [];
       (m[k] || []).forEach(x => {
         const y = list.find(z => z[key] === x[key]);
-        if (!y) list.push(clone(x));
-        else fields.forEach(f => { if (x[f] !== undefined) y[f] = f === "rates" ? Object.assign({}, y.rates, x.rates) : clone(x[f]); });
+        if (!y) list.push(Object.assign(k === "proposal_roles" ? { rates: {} } : {}, clone(x)));
+        else fields.forEach(f => { if (x[f] !== undefined) y[f] = clone(x[f]); });
       });
     });
     NAME_LISTS.forEach(([k]) => { const list = out[k] = Array.isArray(out[k]) ? out[k] : []; (m[k] || []).forEach(x => { if (!list.includes(x)) list.push(x); }); });
     if ((m.approvers || []).some(Boolean)) out.approvers = clone(m.approvers);
-    if (m.raise_month !== undefined) out.raise_month = m.raise_month;
     if (m.master_version) out.master_version = clone(m.master_version);
     return out;
   }
@@ -114,10 +119,13 @@
 
   function newProject(settings, id) {
     const y = new Date().getFullYear();
+    const st = ensureMmAccounts(clone(settings || defaultSettings()));
+    ["vendor_rates", "systems"].forEach(k => { if (!Array.isArray(st[k])) st[k] = []; });
+    if (st.raise_month === undefined) st.raise_month = "";
     return {
       project_id: id || `PRJ-${y}-NEW`, project_name: "신규 프로젝트", client_name: "", pm_name: "", sales_rep: "", description: "",
       date_mode: "month", start_date: `${y}-01`, end_date: `${y}-06`, contract_revenue: 0, target_hurdle_rate: 18.0,
-      settings: ensureMmAccounts(clone(settings || defaultSettings())),
+      settings: st,
       internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate(), versions: [], dept_revenue: {},
       project_type: ""
     };

@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.9";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.10";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -19,7 +19,7 @@
     list: [],
     past: [], future: [],
     noted: new Set(),
-    settingsTab: "grades",         // 기준정보 안의 작은 탭
+    settingsTab: "rates",          // 기준정보 안의 작은 탭
     stats: { by: "area", scope: "all", phase: 0 },
     deptPhase: 0,                   // 부서별 탭의 기간 (0 = 전체, n = n 회차)
     cmp: { a: null, b: 0 }          // 버전 비교: 기준 버전 번호 · 비교 대상 (0 = 지금 화면)   // 투입 현황 보기 조건 (phase: 분할계약 회차, 0 = 전체 기간)               // 이번에 이미 알린 '예전 비율 방식' 파일           // 되돌리기 · 다시 하기 (자료 JSON, 최근 UNDO_KEEP 개)
@@ -359,7 +359,7 @@
     async applyMaster() {
       const changes = M.masterChanges(S.proj.settings, S.master).filter(x => !x.startsWith("(마스터에 없음)"));
       if (!changes.length) return UI.toast("이 프로젝트의 기준정보가 이미 마스터와 같습니다.");
-      if (!(await UI.confirm("마스터 반영", `${changes.length}가지가 바뀝니다 (프로젝트에서 더한 항목 · 외주업체 단가 · 대표 시스템은 그대로):\n\n${changes.slice(0, 15).join("\n")}${changes.length > 15 ? `\n… 외 ${changes.length - 15}가지` : ""}`, "반영"))) return;
+      if (!(await UI.confirm("마스터 반영", `${changes.length}가지가 바뀝니다 (이미 있는 항목의 금액 · 프로젝트에서 더한 항목 · 외주업체 단가 · 대표 시스템은 그대로):\n\n${changes.slice(0, 15).join("\n")}${changes.length > 15 ? `\n… 외 ${changes.length - 15}가지` : ""}`, "반영"))) return;
       pushUndo();
       S.proj.settings = M.mergeMaster(S.proj.settings, S.master);
       render();
@@ -369,7 +369,7 @@
     async saveDefaults() {
       if (!(await needFolder())) return;
       const today = new Date().toISOString().slice(0, 10);
-      const f = await UI.form("마스터로 저장", "이 프로젝트의 기준정보를 폴더의 마스터(master_rates.xlsx)로 저장합니다. 외주업체 단가 · 대표 시스템은 넣지 않습니다. 이전 마스터는 backups 폴더에 남습니다.",
+      const f = await UI.form("마스터로 저장", "이 프로젝트의 마스터 목록(직급 · 기술등급 · 제안 직무/등급 · 영역 · 경비 계정 · 부서 · 결재자)을 폴더의 마스터(master_rates.xlsx)로 저장합니다. 금액 · 외주업체 · 대표 시스템은 넣지 않습니다. 이전 마스터는 backups 폴더에 남습니다.",
         [{ key: "name", label: "마스터 이름 (배포 구분용)", value: ((S.master || {}).master_version || {}).name || `${today.slice(0, 7)} 전사 기준정보` }], "저장");
       if (!f) return;
       const st = M.masterOf(S.proj.settings);

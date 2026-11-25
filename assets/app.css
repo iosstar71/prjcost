@@ -288,7 +288,16 @@ table.keys code { font-size: var(--fs-xs); background: var(--chip); padding: 1px
 /* 제안 직무 · 등급 (인력 표의 부가정보 — 옅은 바탕으로 구분) · 견적 줄 확인 · 기준정보 작은 탭(프로젝트 전용 표시) */
 table.grid td.prop, table.grid th.prop { background: var(--sub); }
 tr.bad-row td { background: var(--bad-bg); }
-.seg-btn.proj::after { content: "P"; margin-left: 4px; padding: 0 4px; border-radius: 4px; font-size: 10px; color: var(--primary); background: var(--primary-tint); }
 .split-2 { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 1100px) { .split-2 { grid-template-columns: minmax(0, 1fr); } }
 table.est td > select, table.est td > input.mm { width: 100%; }
+
+/* 기준정보: 프로젝트 설정 / 마스터 두 묶음 */
+.set-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.set-group { display: grid; gap: 2px; text-align: left; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text-sub); cursor: pointer; }
+.set-group b { font-size: var(--fs); color: var(--text); }
+.set-group small { font-size: var(--fs-xs); color: var(--muted); }
+.set-group.active { border-color: var(--primary); background: var(--primary-tint); }
+.set-group.active b { color: var(--primary); }
+.split-2.even { grid-template-columns: repeat(2, minmax(0, 420px)); }
+table.grid td.ro { padding: 0 10px; color: var(--text); font-weight: 600; }

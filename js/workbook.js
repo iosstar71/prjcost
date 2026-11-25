@@ -96,17 +96,19 @@
   // 저장한 파일의 이전 이력 (머리 줄 제외)
   const auditRowsOf = wb => { const sh = wb && wb.sheet("99_Audit_Log"); return sh ? sh.rows.slice(1).filter(r => r && r.length && r[0] !== "") : []; };
 
+  // 마스터 파일: 전사 공통 목록만 (금액 없음) — 사람이 보는 시트 + Master_JSON(숨김)
   function masterSheets(settings) {
-    const st = settings || {};
+    const st = PC.Model.masterOf(settings || {}), v = st.master_version || {};
+    const list = (title, items) => ({ name: title, cols: [24], rows: [head([title]), ...items.map(x => ({ cells: [String(x)] }))] });
     return [
-      { name: "Overhead_Config", cols: [28, 14, 24], rows: [head(["config_key", "value", "description"]),
-        { cells: ["raise_month", String(st.raise_month || ""), "연봉 인상월(MM) — 등급의 인상단가가 이 달부터"] }] },
-      { name: "Internal_Grades", cols: [16, 16, 16], rows: [head(["grade", "monthly_rate", "raise_rate"]), ...(st.internal_grades || []).map(g => ({ cells: [g.grade || "", num(g.rate), g.raise_rate === undefined || g.raise_rate === "" ? "" : num(g.raise_rate)] }))] },
-      { name: "External_Grades", cols: [16], rows: [head(["grade"]), ...(st.external_grades || []).map(g => ({ cells: [String(g)] }))] },
-      { name: "External_Rates", cols: [16, 12, 16, 12, 16], rows: [head(["vendor", "grade", "monthly_rate", "raise_ym", "raise_rate"]), ...(st.vendor_rates || []).map(r => ({ cells: [r.vendor || "", r.grade || "", num(r.rate), r.raise_ym || "", r.raise_rate === undefined || r.raise_rate === "" ? "" : num(r.raise_rate)] }))] },
-      { name: "Proposal_Rates", cols: [16, 10, 16], rows: [head(["role", "level", "monthly_rate"]), ...(st.proposal_roles || []).flatMap(r => (st.proposal_levels || []).map(l => ({ cells: [r.role || "", l, num((r.rates || {})[l])] })))] },
-      { name: "Areas", cols: [20], rows: [head(["area"]), ...(st.areas || []).map(a => ({ cells: [String(a)] }))] },
-      { name: "Expense_Accounts", cols: [18, 14, 16, 32], rows: [head(["account", "category", "unit_amount(원/MM)", "desc"]), ...(st.expense_accounts || []).map(a => ({ cells: [a.account || "", a.category || "general", PC.Model.isMmCategory(a.category) ? num(a.unit_amount) : "", a.desc || ""] }))] },
+      { name: "Master_Info", cols: [20, 40], rows: [head(["항목", "값"]), { cells: ["마스터 이름", v.name || ""] }, { cells: ["작성일", v.date || ""] }, { cells: ["결재자", (st.approvers || []).filter(Boolean).join(" · ")] }] },
+      list("Internal_Grades", (st.internal_grades || []).map(g => g.grade)),
+      list("External_Grades", st.external_grades || []),
+      list("Proposal_Roles", (st.proposal_roles || []).map(r => r.role)),
+      list("Proposal_Levels", st.proposal_levels || []),
+      list("Areas", st.areas || []),
+      list("Departments", st.departments || []),
+      { name: "Expense_Accounts", cols: [18, 14, 32], rows: [head(["account", "category", "desc"]), ...(st.expense_accounts || []).map(a => ({ cells: [a.account || "", a.category || "general", a.desc || ""] }))] },
       { name: "Master_JSON", hidden: true, rows: X.jsonRows(st) }
     ];
   }

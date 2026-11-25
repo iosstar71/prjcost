@@ -162,6 +162,7 @@
           const ci = colIdx ? colIdx[j] : c + j;
           const col = cols[ci];
           if (ci === undefined || ci < 0 || !col) return;
+          if (col.t === "skip") return;   // 읽기만 하는 칸 (마스터에서 정한 이름 등)
           const v = parse(col.t, raw);
           this.h.setCell(list, row, col.b, v);
           cells++;

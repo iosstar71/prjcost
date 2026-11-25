@@ -89,7 +89,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     await page.click('[data-act="newProject"]');
     // 데모 채우기는 기준정보 > 기본값 · 데모
     await page.click('[data-act="showTab"][data-args*="settings"]');
-    await page.click('[data-act="showSettings"][data-args*="basics"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "forms");
     await page.click('[data-act="loadDemo"]'); await page.click('.dialog button[data-id="ok"]');
     await page.click('[data-act="showTab"][data-args*="info"]');
     const demo = await page.evaluate(() => PC.App.S.calc.summary);
@@ -169,17 +169,17 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("No promotion columns any more", promoCols === 0);
 
     await page.click('[data-act="showTab"][data-args*="settings"]');
-    await page.click('[data-act="showSettings"][data-args*="grades"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "rates");
     await page.fill(B("settings.raise_month"), "04"); await page.keyboard.press("Tab");
     await page.waitForFunction(() => PC.App.S.calc.details.internal_labor[1].calc["2026-03"].rate === 6000000, null, { timeout: 3000 }).catch(() => {});
     const rm = await page.evaluate(() => ["2026-03", "2026-04"].map(m => PC.App.S.calc.details.internal_labor[1].calc[m].rate));
-    await page.click('[data-act="showSettings"][data-args*="vendors"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "vendors");
     const vr = await page.evaluate(() => ({ ym: [...document.querySelectorAll('[data-bind$=".raise_ym"]')].map(e => e.value).filter(Boolean).join(), rates: ["2026-03", "2026-04"].map(m => PC.App.S.calc.details.external_labor[0].calc[m].rate) }));
     check("Settings: changing the raise month moves the internal raise; vendor rate has its own raise month and rate", rm.join() === "6000000,6200000" && vr.ym === "2026-04" && vr.rates.join() === "7800000,8000000", JSON.stringify({ rm, vr }));
     await page.evaluate(() => document.activeElement.blur());
     await page.keyboard.press("Control+z");
     // 기준정보 목록의 순서 바꾸기 (▲ ▼) → 투입 현황도 그 순서
-    await page.click('[data-act="showSettings"][data-args*="areas"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "areas");
     await page.locator('[data-act="moveRow"][data-args*="settings.areas"]').nth(4).click();   // 셋째 줄의 ▲
     const areasNow = await page.evaluate(() => PC.App.S.proj.settings.areas.slice(0, 3).join());
     await page.click('[data-act="showTab"][data-args*="stats"]');
@@ -187,7 +187,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Settings lists can be reordered; stats follow that order", areasNow === "PMO,개발,분석 · 설계" && statOrder === "PMO,개발,분석 · 설계", JSON.stringify({ areasNow, statOrder }));
     await page.keyboard.press("Control+z");
     await page.click('[data-act="showTab"][data-args*="settings"]');
-    await page.click('[data-act="showSettings"][data-args*="grades"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "rates");
 
     // 투입 현황: 영역별 · 등급별, 분할계약을 고르면 그 기간만
     await page.click('[data-act="showTab"][data-args*="stats"]');
@@ -203,7 +203,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
 
     // 기준정보: 작은 탭 · 담당 영역 목록도 엑셀처럼 (새 줄에 이름)
     await page.click('[data-act="showTab"][data-args*="settings"]');
-    await page.click('[data-act="showSettings"][data-args*="areas"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "areas");
     await page.fill('input[data-new="settings.areas"]', "데이터"); await page.keyboard.press("Enter");
     await page.waitForFunction(() => PC.App.S.proj.settings.areas.includes("데이터"), null, { timeout: 3000 }).catch(() => {});
     check("Settings has sub-tabs; the area list takes a new entry like a grid", (await page.evaluate(() => PC.App.S.proj.settings.areas.slice(-1)[0])) === "데이터" && (await page.$$(".seg-btn")).length >= 6);
@@ -211,7 +211,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     await page.keyboard.press("Control+z");
 
     // 고객 제안 직무 × 등급 단가(기준정보) → 인력의 제안 직무 · 등급(부가정보) → 견적 인건비 = 견적 MM × 제안 단가
-    await page.click('[data-act="showSettings"][data-args*="proposal"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "proposal_rates");
     const pHeads = await page.$$eval('table.grid[data-list="settings.proposal_roles"] thead th', t => t.map(x => x.innerText.trim()).filter(Boolean));
     await page.fill(B("settings.proposal_roles.2.rates.Lvl3"), "8,500,000"); await page.keyboard.press("Tab");
     await page.waitForFunction(() => PC.App.S.proj.settings.proposal_roles[2].rates.Lvl3 === 8500000, null, { timeout: 3000 }).catch(() => {});
@@ -225,25 +225,25 @@ const b64 = f => fs.readFileSync(f).toString("base64");
 
     // 마스터: 이름을 붙여 저장 → 본사에서 받은 마스터 파일 올리기(바뀌는 것 먼저 보여 줌) → 이 프로젝트에 반영(외주업체 단가는 그대로)
     await page.click('[data-act="showTab"][data-args*="settings"]');
-    await page.click('[data-act="showSettings"][data-args*="basics"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "masterfile");
     await page.click('[data-act="saveDefaults"]');
     await page.waitForSelector(".dialog-form"); await page.fill('.dialog [data-key="name"]', "2026-11 전사 기준정보"); await page.click('.dialog button[data-id="ok"]');
     await page.waitForFunction(() => (PC.App.S.master.master_version || {}).name === "2026-11 전사 기준정보", null, { timeout: 5000 }).catch(() => {});
     const savedMaster = await page.evaluate(() => [PC.App.S.master.master_version.name, PC.App.S.master.vendor_rates === undefined]);
     const PCm = require("../js/util.js"); require("../js/xlsx.js"); require("../js/model.js"); require("../js/workbook.js");
     const hq = PCm.Model.masterOf(PCm.Model.defaultSettings());
-    hq.internal_grades[0].rate = 9100000; hq.areas = ["컨설팅", "개발"]; hq.master_version = { name: "본사 2027 단가", date: "2026-12-01" };
+    hq.internal_grades.push({ grade: "전문위원" }); hq.areas = ["컨설팅", "개발"]; hq.master_version = { name: "본사 2027 목록", date: "2026-12-01" };
     const hqBuf = Buffer.from(await PCm.Xlsx.build(PCm.Workbook.masterSheets(hq)).arrayBuffer());
     await page.setInputFiles("#masterInput", { name: "master_rates.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: hqBuf });
     await page.waitForSelector(".dialog");
     const upMsg = await page.textContent(".dialog");
     await page.click('.dialog button[data-id="ok"]');
-    await page.waitForFunction(() => PC.App.S.master.internal_grades[0].rate === 9100000, null, { timeout: 5000 }).catch(() => {});
+    await page.waitForFunction(() => PC.App.S.master.areas.includes("컨설팅"), null, { timeout: 5000 }).catch(() => {});
     const rateBefore = await page.evaluate(() => PC.App.S.proj.settings.internal_grades[0].rate);
     await page.click('[data-act="applyMaster"]'); await page.click('.dialog button[data-id="ok"]');
-    const applied = await page.evaluate(() => ({ rate: PC.App.S.proj.settings.internal_grades[0].rate, vendors: PC.App.S.proj.settings.vendor_rates.length, areas: PC.App.S.proj.settings.areas.join(), ver: PC.App.S.proj.settings.master_version.name }));
-    check("Master: saved with a name (no project-only data), uploaded file shows changes first, then applied to the project keeping vendor rates and project extras",
-      savedMaster[0] === "2026-11 전사 기준정보" && savedMaster[1] && upMsg.includes("직급 수석: 8,500,000 → 9,100,000") && upMsg.includes("본사 2027 단가") && rateBefore === 8500000 && applied.rate === 9100000 && applied.vendors === 6 && applied.areas.includes("PMO") && applied.areas.includes("컨설팅") && applied.ver === "본사 2027 단가",
+    const applied = await page.evaluate(() => ({ rate: PC.App.S.proj.settings.internal_grades[0].rate, added: PC.App.S.proj.settings.internal_grades.some(g => g.grade === "전문위원"), vendors: PC.App.S.proj.settings.vendor_rates.length, areas: PC.App.S.proj.settings.areas.join(), ver: PC.App.S.proj.settings.master_version.name, masterRate: PC.App.S.master.internal_grades[0].rate }));
+    check("Master holds lists only (no amounts): saved with a name, uploaded file shows changes first, applied to the project adding names while keeping its amounts, vendor rates and extras",
+      savedMaster[0] === "2026-11 전사 기준정보" && savedMaster[1] && upMsg.includes("영역 추가: 컨설팅") && upMsg.includes("직급 추가: 전문위원") && upMsg.includes("본사 2027 목록") && rateBefore === 8500000 && applied.rate === 8500000 && applied.added && applied.masterRate === undefined && applied.vendors === 6 && applied.areas.includes("PMO") && applied.areas.includes("컨설팅") && applied.ver === "본사 2027 목록",
       JSON.stringify({ savedMaster, upMsg: upMsg.slice(0, 200), rateBefore, applied }));
     for (let k = 0; k < 2; k++) await page.keyboard.press("Control+z");
     await page.click('[data-act="showTab"][data-args*="internal"]');
@@ -272,7 +272,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     // 부서: 하나 이하면 지금 화면 그대로, 2개 이상이면 부서 칸 · [부서별] 탭 (외주 인력도 부서, 매출은 입력)
     const noDept = await page.evaluate(() => ({ tab: !!document.querySelector('[data-act="showTab"][data-args*="dept"]'), col: document.querySelectorAll('[data-bind$=".dept"]').length }));
     await page.click('[data-act="showTab"][data-args*="settings"]');
-    await page.click('[data-act="showSettings"][data-args*="depts"]');
+    await page.evaluate(id => PC.App.A.showSettings(id), "depts");
     await page.fill('input[data-new="settings.departments"]', "SI사업부"); await page.keyboard.press("Enter");
     await page.evaluate(() => document.activeElement.blur());
     const oneDept = await page.evaluate(() => !!document.querySelector('[data-act="showTab"][data-args*="dept"]'));
@@ -340,7 +340,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     // 양식 출력: templates 의 기본 양식(처음 연결할 때 넣어 줌)에 값을 채워 새 이름으로 — 양식의 서식은 그대로
     await page.click('[data-act="showTab"][data-args*="info"]');
     await page.fill(B("project_type"), "SI-AD"); await page.keyboard.press("Tab");
-    await page.click('[data-act="showTab"][data-args*="settings"]'); await page.click('[data-act="showSettings"][data-args*="basics"]');
+    await page.click('[data-act="showTab"][data-args*="settings"]'); await page.evaluate(id => PC.App.A.showSettings(id), "approvers");
     await page.fill(B("settings.approvers.0"), "김철수"); await page.keyboard.press("Tab");
     await page.click('[data-act="showTab"][data-args*="info"]');
     const tplList = await page.evaluate(() => PC.Store.listTemplates());
@@ -358,8 +358,8 @@ const b64 = f => fs.readFileSync(f).toString("base64");
       fs.mkdirSync(shotDir, { recursive: true });
       await page.screenshot({ path: path.join(shotDir, "light_info.png") });
       for (const tab of ["internal", "external", "stats", "expense", "phase", "settings"]) { await page.click(`[data-act="showTab"][data-args*="${tab}"]`); await page.screenshot({ path: path.join(shotDir, `light_${tab}.png`), fullPage: true }); }
-      for (const sub of ["vendors", "accounts", "basics"]) { await page.click(`[data-act="showSettings"][data-args*="${sub}"]`); await page.screenshot({ path: path.join(shotDir, `light_settings_${sub}.png`), fullPage: true }); }
-      await page.click('[data-act="showSettings"][data-args*="grades"]');
+      for (const sub of ["vendors", "proposal_rates", "grades", "accounts", "masterfile"]) { await page.evaluate(id => PC.App.A.showSettings(id), sub); await page.screenshot({ path: path.join(shotDir, `light_settings_${sub}.png`), fullPage: true }); }
+      await page.evaluate(id => PC.App.A.showSettings(id), "grades");
       for (let k = 0; k < 4; k++) { await page.fill('input[data-new="settings.internal_grades"]', `등급${k}`); await page.keyboard.press("Enter"); await page.evaluate(() => document.activeElement.blur()); }
       await page.screenshot({ path: path.join(shotDir, "light_settings_more.png"), fullPage: true });
       for (let k = 0; k < 4; k++) await page.keyboard.press("Control+z");

@@ -26,7 +26,7 @@ areas["PMO", …](영역) · systems[](대표 시스템, 프로젝트 전용) ·
 expense_accounts[{account, category, unit_amount, desc}] — category: `general` 일반경비 · `custom` 기타경비 · `mm_internal` 인비례(내부) · `mm_external` 인비례(외주), unit_amount = 인비례 기준금액(원/MM)
 - 예전 internal_overhead_ratio · external_overhead_ratio(인건비의 %)는 더 쓰지 않음 — 열 때 알리고, 저장할 때 지움
 
-- 마스터(master_rates.xlsx) = settings 에서 프로젝트 전용(vendor_rates · external_rates · systems · dept_common_basis)을 뺀 것 (Model.masterOf). 프로젝트에 반영 = Model.mergeMaster (항목 더하기 · 같은 이름은 마스터 값 · 프로젝트에서 더한 것은 그대로)
+- 마스터(master_rates.xlsx) = settings 의 목록만 (Model.masterOf): 금액(internal_grades.rate · raise_rate, proposal_roles.rates, expense_accounts.unit_amount)과 프로젝트 전용(vendor_rates · external_rates · systems · dept_common_basis · raise_month)은 뺌. 프로젝트에 반영 = Model.mergeMaster (마스터에만 있는 항목을 더함, 경비 계정의 구분 · 설명은 마스터대로, 금액은 그대로)
 
 ## 계산 (js/calc.js)
 - 내부 인건비 = MM × 그 달 단가 (연봉 인상월이 지나면 등급의 인상단가)

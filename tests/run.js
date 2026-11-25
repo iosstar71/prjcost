@@ -193,11 +193,13 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("estimate from plan: MM grouped by proposal role · level", fp.labor.map(l => [l.role, l.level, l.mm]), [["프로젝트관리", "Lvl1", 6], ["컨설팅", "Lvl2", 4.5], ["개발", "Lvl3", 4]]);
   eq("master leaves out project-only settings (vendor rates, systems)", Object.keys(M.masterOf(ep.settings)).filter(k => ["vendor_rates", "systems", "dept_common_basis"].includes(k)), []);
   const mst = M.masterOf(M.defaultSettings());
-  mst.internal_grades[0].rate = 9000000; mst.areas = ["컨설팅", "개발"]; mst.proposal_roles[2].rates.Lvl3 = 8500000;
+  eq("master has no amounts (grade rates, proposal rates, overhead base amounts, raise month)", [mst.internal_grades[0], mst.proposal_roles[0], "unit_amount" in mst.expense_accounts[5], "raise_month" in mst], [{ grade: "수석" }, { role: "프로젝트관리" }, false, false]);
+  mst.areas = ["컨설팅", "개발"]; mst.internal_grades.push({ grade: "전문위원" }); mst.expense_accounts[0].desc = "출장 (전사)";
   const prj = ep.settings; prj.internal_grades.push({ grade: "인턴", rate: 3000000 });
   const ch = M.masterChanges(prj, mst), merged = M.mergeMaster(prj, mst);
-  eq("master changes listed (rate, area added, proposal rate)", [ch.includes("직급 수석: 8,500,000 → 9,000,000"), ch.includes("영역 추가: 컨설팅"), ch.some(x => x.startsWith("제안 직무 개발:"))], [true, true, true]);
-  eq("merge master: values updated, project extras and vendor rates kept", [merged.internal_grades.find(g => g.grade === "수석").rate, merged.internal_grades.some(g => g.grade === "인턴"), merged.areas.includes("컨설팅") && merged.areas.includes("PMO"), merged.vendor_rates.length, merged.proposal_roles[2].rates.Lvl3], [9000000, true, true, 6, 8500000]);
+  eq("master changes listed (names added, account description)", [ch.includes("영역 추가: 컨설팅"), ch.includes("직급 추가: 전문위원"), ch.some(x => x.startsWith("경비 계정 출장비:")), ch.some(x => x.includes("8,500,000"))], [true, true, true, false]);
+  eq("merge master: names added, project amounts and extras kept", [merged.internal_grades.find(g => g.grade === "수석").rate, merged.internal_grades.some(g => g.grade === "인턴"), merged.internal_grades.some(g => g.grade === "전문위원"), merged.areas.includes("컨설팅") && merged.areas.includes("PMO"), merged.vendor_rates.length, merged.proposal_roles[2].rates.Lvl3], [8500000, true, true, true, 6, 8000000]);
+  eq("new project from a master starts with empty amounts and project-only lists", (() => { const np = M.newProject(mst); return [np.settings.internal_grades[0].rate, np.settings.vendor_rates.length, np.settings.systems.length]; })(), [undefined, 0, 0]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
