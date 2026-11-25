@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.7";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.8";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -397,7 +397,7 @@
     // 보고서: 통합보고 · 항목별 상세 2시트 엑셀 — 내려받고, 폴더가 연결돼 있으면 reports 폴더에도 남김
     async exportReport() {
       const calc = Calc.calculateProjectCost(S.proj, S.master);
-      const blob = X.build(W.reportSheets(S.proj, calc));
+      const blob = X.build(PC.Report.sheets(S.proj, calc));
       const name = `${safeId(S.proj.project_id)}_원가보고서_${PC.stamp()}.xlsx`;
       UI.download(blob, name);
       if (Store.dir) { try { await Store.saveReport(blob, name); } catch (e) { console.warn("[App] report copy", e); } }

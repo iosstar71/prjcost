@@ -69,37 +69,74 @@
   const colName = i => { let s = ""; i += 1; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
   const colIndex = ref => { const L = /^[A-Z]+/.exec(ref)[0]; let n = 0; for (const ch of L) n = n * 26 + (ch.charCodeAt(0) - 64); return n - 1; };
 
-  // 꾸밈 번호 (styles.xml 의 cellXfs 순서)
-  const STYLE = { plain: 0, head: 1, label: 2, body: 3, money: 4, dec: 5, total: 6, wrap: 7, ok: 8, warn: 9, title: 10 };
-  const STYLES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<fonts count="4"><font><sz val="10"/><name val="맑은 고딕"/></font><font><b/><sz val="10"/><name val="맑은 고딕"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="맑은 고딕"/></font><font><b/><sz val="13"/><color rgb="FF0F172A"/><name val="맑은 고딕"/></font></fonts>
-<fills count="7"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FF334155"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/></patternFill></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FFE2E8F0"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDCFCE7"/></patternFill></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FFFEE2E2"/></patternFill></fill></fills>
-<borders count="2"><border/><border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom></border></borders>
+  // ---------- 꾸밈 ----------
+  //  칸 꾸밈 = 이름(아래 NAMED) 또는 객체 { font: { b, i, sz, color }, fill: "D9D9D9", border: "thin" | "medium" | "light" | { l, r, t, b },
+  //            fmt: 기본 번호 | "#,##0" 같은 서식 글, h: left|center|right, v: top|center|bottom, wrap, indent }
+  //  build 할 때 쓴 꾸밈만 모아 styles.xml 을 만듦
+  const NAMED = {
+    plain: {},
+    head: { font: { b: 1, color: "FFFFFF" }, fill: "334155", border: "light", h: "center", v: "center" },
+    label: { font: { b: 1 }, fill: "F1F5F9", border: "light" },
+    body: { border: "light" },
+    money: { fmt: 3, border: "light" },
+    dec: { fmt: 4, border: "light" },
+    total: { fmt: 3, font: { b: 1 }, fill: "E2E8F0", border: "light" },
+    wrap: { border: "light", wrap: 1, v: "top" },
+    ok: { fmt: 4, font: { b: 1 }, fill: "DCFCE7", border: "light" },
+    warn: { fmt: 4, font: { b: 1 }, fill: "FEE2E2", border: "light" },
+    title: { font: { b: 1, sz: 13, color: "0F172A" } }
+  };
+  const FONT_NAME = "맑은 고딕";
+  const argb = c => (String(c).length === 6 ? `FF${c}` : String(c));
+  const LINE = { thin: ["thin", "FF808080"], medium: ["medium", "FF000000"], light: ["thin", "FFCBD5E1"], black: ["thin", "FF000000"] };
+  function Styles() {
+    const fonts = [JSON.stringify({})], fills = ["none", "gray125"], borders = [JSON.stringify({})], fmts = [], xfs = [JSON.stringify({})], ids = new Map();
+    const idx = (list, key) => { let i = list.indexOf(key); if (i < 0) { list.push(key); i = list.length - 1; } return i; };
+    return {
+      id(st) {
+        const o = typeof st === "string" ? NAMED[st] || {} : st || {};
+        const key = JSON.stringify(o);
+        if (ids.has(key)) return ids.get(key);
+        const x = {
+          font: o.font ? idx(fonts, JSON.stringify(o.font)) : 0,
+          fill: o.fill ? idx(fills, argb(o.fill)) : 0,
+          border: o.border ? idx(borders, JSON.stringify(typeof o.border === "string" ? { l: o.border, r: o.border, t: o.border, b: o.border } : o.border)) : 0,
+          fmt: o.fmt === undefined ? 0 : typeof o.fmt === "number" ? o.fmt : 164 + idx(fmts, o.fmt),
+          al: o.h || o.v || o.wrap || o.indent ? { h: o.h, v: o.v, wrap: o.wrap, indent: o.indent } : null
+        };
+        const i = xfs.length;
+        xfs.push(x); ids.set(key, i);
+        return i;
+      },
+      xml() {
+        const fontXml = f => { const o = JSON.parse(f); return `<font>${o.b ? "<b/>" : ""}${o.i ? "<i/>" : ""}<sz val="${o.sz || 10}"/>${o.color ? `<color rgb="${argb(o.color)}"/>` : ""}<name val="${FONT_NAME}"/></font>`; };
+        const fillXml = f => (f === "none" || f === "gray125" ? `<fill><patternFill patternType="${f}"/></fill>` : `<fill><patternFill patternType="solid"><fgColor rgb="${f}"/></patternFill></fill>`);
+        const side = (tag, k) => { const L = LINE[k]; return L ? `<${tag} style="${L[0]}"><color rgb="${L[1]}"/></${tag}>` : `<${tag}/>`; };
+        const borderXml = bd => { const o = JSON.parse(bd); return `<border>${side("left", o.l)}${side("right", o.r)}${side("top", o.t)}${side("bottom", o.b)}<diagonal/></border>`; };
+        const xfXml = x => {
+          if (typeof x === "string") return "<xf/>";
+          const al = x.al ? `<alignment${x.al.h ? ` horizontal="${x.al.h}"` : ""}${x.al.v ? ` vertical="${x.al.v}"` : ""}${x.al.wrap ? ' wrapText="1"' : ""}${x.al.indent ? ` indent="${x.al.indent}"` : ""}/>` : "";
+          return `<xf numFmtId="${x.fmt}" fontId="${x.font}" fillId="${x.fill}" borderId="${x.border}" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"${al ? ` applyAlignment="1">${al}</xf>` : "/>"}`;
+        };
+        return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${fmts.length ? `<numFmts count="${fmts.length}">${fmts.map((f, i) => `<numFmt numFmtId="${164 + i}" formatCode="${xmlEsc(f)}"/>`).join("")}</numFmts>` : ""}
+<fonts count="${fonts.length}">${fonts.map(fontXml).join("")}</fonts>
+<fills count="${fills.length}">${fills.map(fillXml).join("")}</fills>
+<borders count="${borders.length}">${borders.map(borderXml).join("")}</borders>
 <cellStyleXfs count="1"><xf/></cellStyleXfs>
-<cellXfs count="11">
-<xf/>
-<xf fontId="2" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-<xf fontId="1" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>
-<xf fontId="0" borderId="1" applyBorder="1"/>
-<xf numFmtId="3" borderId="1" applyNumberFormat="1" applyBorder="1"/>
-<xf numFmtId="4" borderId="1" applyNumberFormat="1" applyBorder="1"/>
-<xf numFmtId="3" fontId="1" fillId="4" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
-<xf borderId="1" applyBorder="1" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf>
-<xf numFmtId="4" fontId="1" fillId="5" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
-<xf numFmtId="4" fontId="1" fillId="6" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
-<xf fontId="3" applyFont="1"/>
-</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+<cellXfs count="${xfs.length}">${xfs.map(xfXml).join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+      }
+    };
+  }
 
-  // 시트: { name, rows: [{ cells:[값 | {v, s}], style, merge: [첫 열, 끝 열](0부터, 그 줄 안에서 합침), ht: 줄 높이 }], cols: [너비…], hidden, freeze }
-  //  숫자 칸은 줄 꾸밈이 없으면 금액(#,##0), 글자 칸은 테두리만
-  function sheetXml(sh) {
-    const merges = [];
+  // 시트: { name, rows: [{ cells:[값 | {v, s}], style, merge: [첫 열, 끝 열](0부터, 그 줄 안에서 합침), ht: 줄 높이 }], cols: [너비 | { w, hidden }],
+  //        hidden, freeze(false | 없으면 첫 줄 고정 | { x: 고정할 열 수, y: 고정할 줄 수 }), merges: ["B2:D2" …], gridLines(false 면 눈금선 숨김),
+  //        page: { landscape, fitWidth(한 장 너비에 맞춤) }, rowHeight(기본 줄 높이) }
+  //  숫자 칸은 꾸밈이 없으면 금액(#,##0), 글자 칸은 테두리만
+  function sheetXml(sh, styles) {
+    const merges = (sh.merges || []).slice();
     const rows = (sh.rows || []).map((row, ri) => {
-      const r = Array.isArray(row) ? { cells: row } : row;
+      const r = Array.isArray(row) ? { cells: row } : row || { cells: [] };
       const raw = (r.cells || []).slice();
       if (r.merge) {   // 합친 칸의 나머지도 같은 꾸밈 (테두리가 끊기지 않게)
         const sty = (raw[r.merge[0]] && raw[r.merge[0]].s) || r.style || "body";
@@ -109,19 +146,28 @@
       const cells = raw.map((c, ci) => {
         const cell = c !== null && typeof c === "object" && "v" in c ? c : { v: c };
         const v = cell.v;
-        if (v === null || v === undefined || v === "") return r.style || cell.s ? `<c r="${colName(ci)}${ri + 1}" s="${STYLE[cell.s || r.style] || 0}"/>` : "";
+        if (v === null || v === undefined || v === "") return r.style || cell.s ? `<c r="${colName(ci)}${ri + 1}" s="${styles.id(cell.s || r.style)}"/>` : "";
         const isNum = typeof v === "number" && Number.isFinite(v);
-        const s = STYLE[cell.s || r.style || (isNum ? "money" : "body")] || 0;
+        const s = styles.id(cell.s || r.style || (isNum ? "money" : "body"));
         return isNum ? `<c r="${colName(ci)}${ri + 1}" s="${s}"><v>${v}</v></c>`
           : `<c r="${colName(ci)}${ri + 1}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
       }).join("");
       return `<row r="${ri + 1}"${r.ht ? ` ht="${r.ht}" customHeight="1"` : ""}>${cells}</row>`;
     }).join("");
-    const cols = (sh.cols || []).length ? `<cols>${sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>` : "";
-    const view = sh.freeze === false || sh.hidden ? `<sheetViews><sheetView workbookViewId="0"/></sheetViews>`
-      : `<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`;
+    const cols = (sh.cols || []).length ? `<cols>${sh.cols.map((w, i) => { const o = typeof w === "object" ? w : { w }; return `<col min="${i + 1}" max="${i + 1}" width="${o.w || 10}" customWidth="1"${o.hidden ? ' hidden="1"' : ""}/>`; }).join("")}</cols>` : "";
+    const grid = sh.gridLines === false ? ' showGridLines="0"' : "";
+    let pane = "";
+    if (sh.freeze && typeof sh.freeze === "object") {
+      const x = sh.freeze.x || 0, y = sh.freeze.y || 0;
+      if (x || y) pane = `<pane${x ? ` xSplit="${x}"` : ""}${y ? ` ySplit="${y}"` : ""} topLeftCell="${colName(x)}${y + 1}" activePane="${x && y ? "bottomRight" : x ? "topRight" : "bottomLeft"}" state="frozen"/>`;
+    } else if (sh.freeze !== false && !sh.hidden) pane = `<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>`;
+    const view = `<sheetViews><sheetView workbookViewId="0"${grid}>${pane}</sheetView></sheetViews>`;
+    const pg = sh.page || null;
+    const pr = pg && pg.fitWidth ? `<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>` : "";
+    const fmt = sh.rowHeight ? `<sheetFormatPr defaultRowHeight="${sh.rowHeight}" customHeight="1"/>` : "";
+    const setup = pg ? `<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="${pg.landscape ? "landscape" : "portrait"}"${pg.fitWidth ? ' fitToWidth="1" fitToHeight="0"' : ""}/>` : "";
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${view}${cols}<sheetData>${rows}</sheetData>${merges.length ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join("")}</mergeCells>` : ""}</worksheet>`;
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${pr}${view}${fmt}${cols}<sheetData>${rows}</sheetData>${merges.length ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join("")}</mergeCells>` : ""}${setup}</worksheet>`;
   }
 
   function build(sheets) {
@@ -135,9 +181,10 @@
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s, i) => `<sheet name="${xmlEsc(String(s.name).slice(0, 31))}" sheetId="${i + 1}"${s.hidden ? ' state="hidden"' : ""} r:id="rId${i + 1}"/>`).join("")}</sheets></workbook>` },
       { name: "xl/_rels/workbook.xml.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("")}<Relationship Id="rId${n + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
-      { name: "xl/styles.xml", data: STYLES_XML }
     ];
-    sheets.forEach((s, i) => files.push({ name: `xl/worksheets/sheet${i + 1}.xml`, data: sheetXml(s) }));
+    const styles = Styles();
+    sheets.forEach((s, i) => files.push({ name: `xl/worksheets/sheet${i + 1}.xml`, data: sheetXml(s, styles) }));
+    files.push({ name: "xl/styles.xml", data: styles.xml() });
     return zip(files);
   }
 

@@ -158,7 +158,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
 
   // 보고서 양식: 자리표시 칸에만 값 (숫자는 숫자로 → 양식 서식), 섞인 글은 글자로, 모르는 이름은 알림
   const T = PC.Template, tp = M.demoProject(M.defaultSettings());
-  tp.project_type = "SI-AD"; tp.approvers = ["김철수", "", "", "", "정본부"]; tp.settings.departments = ["SI사업부", "AI사업부"];
+  tp.project_type = "SI-AD"; tp.settings.approvers = ["김철수", "", "", "", "정본부"]; tp.approvers = ["옛이름"]; tp.settings.departments = ["SI사업부", "AI사업부"];
   tp.custom_costs.push({ name: "AI예비비", dist_mode: "equal_total", total_input: 3000000, unit_input: 0, monthly: {}, memo: "" });
   tp.versions = [{ no: 1, name: "수주협 3차", saved_at: "2026-01-02 10:00:00", data: Object.assign(M.snapshot(tp), { contract_revenue: 200000000 }) },
     { no: 2, name: "수주협 4차", saved_at: "2026-02-02 10:00:00", data: Object.assign(M.snapshot(tp), { contract_revenue: 230000000 }) }];
@@ -175,6 +175,13 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   const odd = await X.read(Buffer.from(await (await T.fill(X.build([{ name: "S", rows: [["{{없는값}}", "합계 {{매출액}}원"]] }]), tv)).blob.arrayBuffer()));
   eq("template fill: our own xlsx (inline strings) and unknown keys", odd.sheet("S").rows[0], ["", "합계 240,000,000원"]);
   eq("output name: 양식_ID_이름_최종작성일", T.outName("Offline사업검토서.xlsx", { project_id: "PRJ-1", project_name: "A/B 구축" }, new Date(2026, 10, 25)), "Offline사업검토서_PRJ-1_A_B 구축_20261125.xlsx");
+  const mv = M.normalize({ approvers: ["홍", "", "", "", ""], settings: M.defaultSettings() }, M.defaultSettings());
+  eq("approvers live in settings; old per-project names move there", [mv.settings.approvers[0], mv.approvers], ["홍", undefined]);
+  // 보고서: 4개 시트(부서 2개 이상), 제목 · 회색 이름 칸 · 원가 구성 총 원가 = 계산 결과
+  require("../js/report.js");
+  const rs = PC.Report.sheets(dp, PC.Calc.calculateProjectCost(dp, dp.settings));
+  const flat = rs[0].rows.flatMap(r => r.cells.map(x => (x ? x.v : "")));
+  eq("report: sheets and the total cost shown on the summary", [rs.map(x => x.name).join(), flat.includes("총 원가"), flat.includes(PC.Calc.calculateProjectCost(dp, dp.settings).summary.total_cost)], ["01_통합보고,02_항목별상세,03_투입현황,04_부서별손익", true, true]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

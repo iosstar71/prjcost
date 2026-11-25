@@ -19,7 +19,8 @@
     return {
       raise_month: "",
       departments: [],           // 부서 — 2개 이상이면 부서 칸 · [부서별] 탭이 나타남
-      dept_common_basis: "cost", // 공통경비(부서를 정하지 않은 경비)를 나누는 기준   // 연봉 인상월(MM) — 등급의 인상단가가 이 달부터 (비우면 인상 없음)
+      dept_common_basis: "cost", // 공통경비(부서를 정하지 않은 경비)를 나누는 기준
+      approvers: ["", "", "", "", ""],   // 보고서 결재자 (기안(PM) · 검토 · 사업팀장 · 영업팀장 · 본부장) — 인사이동이 있을 때만 바꿈   // 연봉 인상월(MM) — 등급의 인상단가가 이 달부터 (비우면 인상 없음)
       areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 담당 영역(시스템) — 투입 현황을 영역별로 볼 때 씀
       internal_grades: [{ grade: "수석", rate: 8500000 }, { grade: "책임", rate: 7200000 }, { grade: "선임", rate: 6000000 }, { grade: "전임", rate: 4800000 }],
       external_grades: ["특급", "고급", "중급", "초급"],
@@ -57,7 +58,7 @@
       date_mode: "month", start_date: `${y}-01`, end_date: `${y}-06`, contract_revenue: 0, target_hurdle_rate: 18.0,
       settings: ensureMmAccounts(clone(settings || defaultSettings())),
       internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate(), versions: [], dept_revenue: {},
-      project_type: "", approvers: ["", "", "", "", ""]
+      project_type: ""
     };
   }
 
@@ -117,7 +118,11 @@
     });
     if (out.settings.raise_month === undefined) out.settings.raise_month = "";
     if (!Array.isArray(out.versions)) out.versions = [];
-    out.approvers = [0, 1, 2, 3, 4].map(i => String(((Array.isArray(out.approvers) ? out.approvers : [])[i]) || ""));   // 보고서 결재 칸 (기안 · 검토 · 사업팀장 · 영업팀장 · 본부장)
+    // 결재자는 기준정보(settings.approvers). v0.9.7 에서 프로젝트에 넣었던 이름은 기준정보가 비어 있으면 옮김
+    const ap = i => String(((Array.isArray(out.settings.approvers) ? out.settings.approvers : [])[i]) || "");
+    const old = Array.isArray(out.approvers) ? out.approvers : [];
+    out.settings.approvers = [0, 1, 2, 3, 4].map(i => ap(i) || String(old[i] || ""));
+    delete out.approvers;
     if (typeof out.project_type !== "string") out.project_type = "";
     if (!Array.isArray(out.settings.departments)) out.settings.departments = [];
     if (!out.settings.dept_common_basis) out.settings.dept_common_basis = "cost";

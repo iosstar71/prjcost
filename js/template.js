@@ -47,7 +47,7 @@
       lastRev = vc.revenue;
       lastRate = vc.revenue > 0 ? (vc.revenue - vc.total_cost) / vc.revenue : 0;
     }
-    const ap = project.approvers || [];
+    const ap = (project.settings || {}).approvers || [];
     const today = o.today || new Date(), saved = o.lastSaved || today;
     return {
       프로젝트ID: project.project_id || "", 과제명: project.project_name || "", 과제내용: project.description || "", 고객사: project.client_name || "", PM: project.pm_name || "", 영업대표: project.sales_rep || "",

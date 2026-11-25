@@ -298,12 +298,14 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     const rwb = await PCn.Xlsx.read(fs.readFileSync(rpath));
     check("Report button downloads an Excel report (통합보고 · 항목별상세 · 투입현황)", rwb.sheets.map(x => x.name).join() === "01_통합보고,02_항목별상세,03_투입현황" && /^PRJ-2026-01_원가보고서_\d{8}_\d{6}\.xlsx$/.test(await page.evaluate(() => window.__lastDownload)), await page.evaluate(() => window.__lastDownload));
     let merged = "";
-    try { merged = execFileSync("python3", ["-c", `import openpyxl,sys;ws=openpyxl.load_workbook(sys.argv[1])["01_통합보고"];r=[str(m) for m in ws.merged_cells.ranges];print(",".join(r), ws.row_dimensions[[m for m in ws.merged_cells.ranges][0].min_row].height)`, rpath], { encoding: "utf8" }).trim(); } catch (e) { merged = "openpyxl: " + e.message.split("\n")[0]; }
-    check("Report: project description spans merged cells (B:H) with a taller row", /^B\d+:H\d+ \d/.test(merged) && Number(merged.split(" ")[1]) >= 30, merged);
+    try { merged = execFileSync("python3", ["-c", `import openpyxl,sys;wb=openpyxl.load_workbook(sys.argv[1]);ws=wb["01_통합보고"];r=[k for k in range(1,60) if ws.cell(k,2).value=="프로젝트 설명"][0];m=[str(x) for x in ws.merged_cells.ranges if x.min_row==r][0];print(m, ws.row_dimensions[r].height, ws["B1"].font.b, ws.cell(r,2).fill.fgColor.rgb, ws["A1"].parent.column_dimensions["A"].width, len(wb.sheetnames))`, rpath], { encoding: "utf8" }).trim(); } catch (e) { merged = "openpyxl: " + e.message.split("\n")[0]; }
+    check("Report: styled like the company form (gray labels, merged description C:J with a fitted row height)", /^C\d+:J\d+ \d+(\.\d+)? True (FF|00)D9D9D9 2(\.0)? 3$/.test(merged) && Number(merged.split(" ")[1]) >= 30, merged);
     // 양식 출력: templates 의 기본 양식(처음 연결할 때 넣어 줌)에 값을 채워 새 이름으로 — 양식의 서식은 그대로
     await page.click('[data-act="showTab"][data-args*="info"]');
     await page.fill(B("project_type"), "SI-AD"); await page.keyboard.press("Tab");
-    await page.fill(B("approvers.0"), "김철수"); await page.keyboard.press("Tab");
+    await page.click('[data-act="showTab"][data-args*="settings"]'); await page.click('[data-act="showSettings"][data-args*="basics"]');
+    await page.fill(B("settings.approvers.0"), "김철수"); await page.keyboard.press("Tab");
+    await page.click('[data-act="showTab"][data-args*="info"]');
     const tplList = await page.evaluate(() => PC.Store.listTemplates());
     const [tdl] = await Promise.all([page.waitForEvent("download"), (async () => { await page.click('[data-act="exportTemplate"]'); await page.waitForSelector(".dialog-form"); await page.click('.dialog button[data-id="ok"]'); })()]);
     const tpath = path.join(require("os").tmpdir(), `pmhubcost_tpl_${Date.now()}.xlsx`);

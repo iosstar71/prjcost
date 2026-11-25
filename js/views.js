@@ -80,7 +80,6 @@
       ${field("계약 매출 (원)", inp("contract_revenue", p.contract_revenue, { money: true }))}
       ${field("목표 허들 이익률 (%)", inp("target_hurdle_rate", p.target_hurdle_rate, { type: "number", step: "0.1" }))}
       ${field("프로젝트 Type", inp("project_type", p.project_type, { ph: "예: SI-AD" }), { help: "보고서 양식의 {{프로젝트Type}}" })}
-      <div class="field full"><span>결재자 (보고서 양식의 {{결재1}} … {{결재5}})</span><div class="approvers">${APPROVER_TITLES.map((t, i) => `<label><small>${esc(t)}</small>${inp(`approvers.${i}`, (p.approvers || [])[i], { ph: "이름", label: t })}</label>`).join("")}</div></div>
       ${field("프로젝트 설명", `<textarea rows="4" data-bind="description" data-type="text" placeholder="배경 · 범위 · 특이사항">${esc(p.description)}</textarea>`, { full: true })}
     </div>
     <section class="sub-card comp-card">${subHead("원가 구성", `총 원가 ${won(s.total_cost)}원 대비 비중`)}
@@ -266,6 +265,7 @@
       + gridTable({ order: true, list: "settings.departments", rows: st.departments || [], newLabel: "부서 입력", cols: [text("", "부서")] }));
     else body = narrow(`<section class="sub-card">${subHead("기준정보 가져오기 · 내보내기")}<p class="muted">폴더의 기준정보(master/master_rates.xlsx)는 새 프로젝트를 만들 때의 기본값입니다.</p>
         <div class="bar-group">${btn("폴더 기본값으로 바꾸기", "resetSettings", [], "", "이 프로젝트의 기준정보를 폴더의 기본값으로")}${btn("이 기준정보를 새 프로젝트 기본값으로 저장", "saveDefaults", [], "", "master_rates.xlsx 에 저장")}</div></section>
+      <section class="sub-card">${subHead("결재자", "보고서 양식의 {{결재1}} … {{결재5}} — 인사이동이 있을 때만 바꾸고 [새 프로젝트 기본값으로 저장]")}<div class="approvers">${APPROVER_TITLES.map((t, i) => `<label><small>${esc(t)}</small>${inp(`settings.approvers.${i}`, (st.approvers || [])[i], { ph: "이름", label: t })}</label>`).join("")}</div></section>
       <section class="sub-card">${subHead("보고서 양식", "머리줄 [양식 출력]")}<p class="muted">자료 폴더의 templates 에 있는 엑셀 양식(xlsx)의 {{자리표시}} 칸에 값을 넣어 새 파일로 만듭니다. 양식은 Excel 에서 직접 고치고, 값이 들어갈 칸에 아래 이름을 {{이름}} 으로 적으면 됩니다. 칸에 자리표시 하나만 있으면 숫자는 숫자로 들어가 양식의 통화 · % 서식이 적용됩니다(비율은 0.4667 같은 소수).</p>
         <div class="tbl-wrap flat"><table class="keys fit"><thead><tr><th class="l">자리표시</th><th class="l">값</th><th class="l">이 프로젝트에서</th></tr></thead><tbody>${(() => { const v = PC.Template.values(p, c, {}); return PC.Template.KEYS.map(([k, t]) => `<tr><td class="l"><code>{{${esc(k)}}}</code></td><td class="l">${esc(t)}</td><td class="l">${esc(typeof v[k] === "number" ? (Math.abs(v[k]) < 1 && v[k] !== 0 ? `${(v[k] * 100).toFixed(2)}%` : won(v[k])) : v[k])}</td></tr>`).join(""); })()}</tbody></table></div></section>
       <section class="sub-card">${subHead("데모")}<p class="muted">화면을 익히거나 시연할 때 — 지금 프로젝트의 내용을 예시 자료로 바꿉니다.</p>${btn("데모 채우기", "loadDemo", [], "", "예시 자료로 채우기")}</section>`);
