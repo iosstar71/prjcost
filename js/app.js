@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.8";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.9";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -44,7 +44,7 @@
     renderKpis();
     renderTabs();
     const tab = shownTabs().find(t => t.id === S.tab) || Views.TABS[0];
-    $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file, sub: S.settingsTab, stats: S.stats, cmp: S.cmp, deptPhase: S.deptPhase });
+    $("panel").innerHTML = tab.view(S.proj, S.calc, { file: S.file, sub: S.settingsTab, stats: S.stats, cmp: S.cmp, deptPhase: S.deptPhase, master: S.master });
     renderSaveState();
     renderUndo();
     restoreFocus(focus);
@@ -142,6 +142,7 @@
     const p = S.proj;
     let m;
     // 부서 이름은 자료 경로(dept_revenue.<부서>)에 쓰여서 '.' 대신 '·'
+    if (/^settings\.proposal_levels\.\d+$/.test(path) && /\./.test(value)) { const v2 = String(value).replace(/\./g, "·"); setPath(p, path, v2); renameRefs(path, value, v2); }   // 등급 이름도 자료 경로(rates.<등급>)에 쓰임
     if (/^settings\.departments\.\d+$/.test(path) && /\./.test(value)) { const v2 = String(value).replace(/\./g, "·"); setPath(p, path, v2); renameRefs(path, value, v2); }
     // 부서가 2개가 되는 순간: 부서가 비어 있는 인력은 첫 부서로 (그전까지 모두 한 부서였으므로). 경비의 빈 부서는 '공통' 그대로
     if (/^settings\.departments\.\d+$/.test(path) && M.multiDept(p)) p.internal_labor.concat(p.external_labor).forEach(r => { if (!r.dept) r.dept = p.settings.departments[0]; });
@@ -161,8 +162,21 @@
   }
   // 기준정보의 담당 영역 · 부서 이름을 바꾸면 그 이름을 쓰던 인력 · 경비 · 부서 매출도 함께
   function renameRefs(path, oldV, newV) {
-    const m = /^settings\.(areas|departments)\.\d+$/.exec(path), p = S.proj;
-    if (!m || !oldV || oldV === newV) return;
+    const p = S.proj;
+    if (!oldV || oldV === newV) return;
+    const people = p.internal_labor.concat(p.external_labor);
+    if (/^settings\.systems\.\d+$/.test(path)) return people.forEach(r => { if (r.system === oldV) r.system = newV; });
+    if (/^settings\.proposal_levels\.\d+$/.test(path)) {
+      (p.settings.proposal_roles || []).forEach(r => { if (r.rates && oldV in r.rates) { r.rates[newV] = r.rates[oldV]; delete r.rates[oldV]; } });
+      people.forEach(r => { if (r.prop_level === oldV) r.prop_level = newV; });
+      return (p.estimate.labor || []).forEach(l => { if (l.level === oldV) l.level = newV; });
+    }
+    if (/^settings\.proposal_roles\.\d+\.role$/.test(path)) {
+      people.forEach(r => { if (r.prop_role === oldV) r.prop_role = newV; });
+      return (p.estimate.labor || []).forEach(l => { if (l.role === oldV) l.role = newV; });
+    }
+    const m = /^settings\.(areas|departments)\.\d+$/.exec(path);
+    if (!m) return;
     const f = m[1] === "areas" ? "area" : "dept";
     const lists = f === "area" ? [p.internal_labor, p.external_labor] : [p.internal_labor, p.external_labor, p.general_expenses, p.custom_costs];
     lists.forEach(l => l.forEach(r => { if (r[f] === oldV) r[f] = newV; }));
@@ -198,17 +212,21 @@
   const ROW = {
     internal_labor: p => {
       const g0 = (p.settings.internal_grades || [])[0] || { grade: "선임", rate: 6000000 };
-      return { name: "신규인력", role: "개발", area: "", dept: firstDept(p), grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
+      return { name: "신규인력", role: "개발", area: "", system: "", prop_role: "", prop_level: "", dept: firstDept(p), grade: g0.grade, base_rate: num(g0.rate), overhead_eligible: true, target_mm: 0,
         mm: {} };
     },
     external_labor: p => {
       const v0 = (p.settings.vendor_rates || [])[0] || { vendor: "파트너A", grade: "고급" };
-      return { name: "외주인력", role: "개발", area: "", dept: firstDept(p), vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, mm: {} };
+      return { name: "외주인력", role: "개발", area: "", system: "", prop_role: "", prop_level: "", dept: firstDept(p), vendor: v0.vendor, grade: v0.grade, custom_rate: "", target_mm: 0, mm: {} };
     },
     general_expenses: p => expenseRow(p, "general", "일반경비"),
     custom_costs: p => expenseRow(p, "custom", "기타비용"),
     phases: p => ({ title: `${p.phases.length + 1}차 계약`, start_ym: String(p.start_date || "").slice(0, 7), end_ym: String(p.end_date || "").slice(0, 7), revenue: 0, override_cost: "" }),
     "estimate.items": () => ({ item_name: "신규 품목", spec: "", qty: 1, unit_price: 0, memo: "" }),
+    "estimate.labor": () => ({ role: "", level: "", mm: 0, unit_price: "", memo: "" }),
+    "settings.proposal_levels": () => "새 등급",
+    "settings.proposal_roles": () => ({ role: "새 직무", rates: {} }),
+    "settings.systems": () => "새 시스템",
     "settings.internal_grades": () => ({ grade: "신규등급", rate: 5000000 }),
     "settings.external_grades": () => "신규등급",
     "settings.vendor_rates": p => ({ vendor: "신규업체", grade: (p.settings.external_grades || [])[0] || "고급", rate: 7500000 }),
@@ -232,16 +250,30 @@
     // 버전 저장: 이름 · 메모를 받아 지금 자료를 버전으로 남기고 파일에 저장 (저장을 못 하면 버전도 되돌림)
     async saveVersion() {
       const p = S.proj;
-      const f = await UI.form("버전 저장", "지금 자료를 이 이름으로 남기고 저장합니다. 나중에 [버전] 탭에서 비교하거나 불러올 수 있습니다.",
-        [{ key: "name", label: "버전 이름", value: M.nextVersionName(p), options: M.VERSION_NAMES }, { key: "memo", label: "메모", ph: "예: 고객 요청으로 2차 범위 축소, 외주 1명 감축", multiline: true }], "버전 저장");
+      const names = (p.versions || []).map(v => v.name);
+      const f = await UI.form("버전 저장", "지금 자료를 이 이름으로 남기고 저장합니다. 이미 있는 버전 이름을 고르면 그 버전을 지금 자료로 덮어씁니다.",
+        [{ key: "name", label: "버전 이름", value: M.nextVersionName(p), options: [...new Set(names.concat(M.VERSION_NAMES))] }, { key: "memo", label: "메모", ph: "예: 고객 요청으로 2차 범위 축소, 외주 1명 감축 (덮어쓸 때 비우면 원래 메모)", multiline: true }], "버전 저장");
       if (!f) return;
       if (!f.name) return UI.toast("버전 이름을 넣으세요.", "error");
+      const i = (p.versions || []).findIndex(v => v.name === f.name);
+      if (i >= 0) return A.overwriteVersion(i, f.memo);
       pushUndo();
       const no = (p.versions || []).reduce((m, v) => Math.max(m, v.no || 0), 0) + 1;
       p.versions = (p.versions || []).concat([{ no, name: f.name, memo: f.memo, saved_at: PC.nowText(), data: M.snapshot(p) }]);
       S.cmp = { a: no, b: 0 };
       if (await save(false)) UI.toast(`버전 ${no}. ${f.name} 을(를) 남기고 저장했습니다.`, "ok");
       else { p.versions = p.versions.filter(v => v.no !== no); S.past.pop(); render(); }
+    },
+    // 버전 덮어쓰기: 번호 · 이름은 그대로, 자료 · 저장 일시(· 메모)를 지금 것으로 바꾸고 파일에 저장
+    async overwriteVersion(i, memo) {
+      const p = S.proj, v = p.versions[i];
+      if (!(await UI.confirm("버전 덮어쓰기", `${v.no}. ${v.name} (${v.saved_at}) 을(를) 지금 자료로 덮어쓰고 저장합니다.\n예전 자료는 backups 폴더의 이전 파일에 남습니다.`, "덮어쓰기", true))) return;
+      pushUndo();
+      const before = PC.clone(v);
+      Object.assign(v, { saved_at: PC.nowText(), data: M.snapshot(p) }, memo ? { memo } : {});
+      S.cmp = { a: v.no, b: 0 };
+      if (await save(false)) UI.toast(`버전 ${v.no}. ${v.name} 을(를) 지금 자료로 덮어썼습니다.`, "ok");
+      else { p.versions[i] = before; S.past.pop(); render(); }
     },
     async restoreVersion(i) {
       const v = S.proj.versions[i];
@@ -323,17 +355,60 @@
       S.file = keepFile;
       render();
     },
-    async resetSettings() {
-      if (!(await UI.confirm("기준정보 바꾸기", "이 프로젝트의 기준정보를 폴더의 기본값(master_rates.xlsx)으로 바꿉니다.", "바꾸기"))) return;
+    // 마스터를 이 프로젝트에 반영: 무엇이 바뀌는지 보여 주고 (항목 더하기 · 같은 이름은 마스터 값으로)
+    async applyMaster() {
+      const changes = M.masterChanges(S.proj.settings, S.master).filter(x => !x.startsWith("(마스터에 없음)"));
+      if (!changes.length) return UI.toast("이 프로젝트의 기준정보가 이미 마스터와 같습니다.");
+      if (!(await UI.confirm("마스터 반영", `${changes.length}가지가 바뀝니다 (프로젝트에서 더한 항목 · 외주업체 단가 · 대표 시스템은 그대로):\n\n${changes.slice(0, 15).join("\n")}${changes.length > 15 ? `\n… 외 ${changes.length - 15}가지` : ""}`, "반영"))) return;
       pushUndo();
-      S.proj.settings = clone(S.master);
+      S.proj.settings = M.mergeMaster(S.proj.settings, S.master);
       render();
+      UI.toast("마스터를 반영했습니다. Ctrl+Z 로 되돌릴 수 있습니다.", "ok");
     },
+    // 이 프로젝트의 기준정보(프로젝트 전용 제외)를 폴더의 마스터로 — 이름 · 날짜를 붙여 (이전 마스터는 backups 에)
     async saveDefaults() {
       if (!(await needFolder())) return;
-      await Store.saveMaster(S.proj.settings);
-      S.master = clone(S.proj.settings);
-      UI.toast("새 프로젝트 기본값(master/master_rates.xlsx)으로 저장했습니다.", "ok");
+      const today = new Date().toISOString().slice(0, 10);
+      const f = await UI.form("마스터로 저장", "이 프로젝트의 기준정보를 폴더의 마스터(master_rates.xlsx)로 저장합니다. 외주업체 단가 · 대표 시스템은 넣지 않습니다. 이전 마스터는 backups 폴더에 남습니다.",
+        [{ key: "name", label: "마스터 이름 (배포 구분용)", value: ((S.master || {}).master_version || {}).name || `${today.slice(0, 7)} 전사 기준정보` }], "저장");
+      if (!f) return;
+      const st = M.masterOf(S.proj.settings);
+      st.master_version = { name: f.name, date: today };
+      await Store.saveMaster(st);
+      S.master = clone(st);
+      pushUndo();
+      S.proj.settings.master_version = clone(st.master_version);
+      render();
+      UI.toast(`마스터로 저장했습니다 — ${f.name} (master/master_rates.xlsx)`, "ok");
+    },
+    // 배포용 마스터 파일 내려받기
+    exportMaster() {
+      const m = S.master || M.masterOf(S.proj.settings);
+      UI.download(X.build(W.masterSheets(M.masterOf(m))), `master_rates_${(m.master_version && m.master_version.date) || new Date().toISOString().slice(0, 10)}.xlsx`);
+    },
+    // 본사에서 받은 마스터 파일로 폴더의 마스터를 바꿈 (바뀌는 것을 먼저 보여 줌)
+    async uploadMaster(fileObj) {
+      if (!(await needFolder())) return;
+      let next;
+      try { next = W.settingsFrom(await X.read(fileObj), M.defaultSettings()); } catch (e) { return UI.toast(`마스터 파일을 읽지 못했습니다: ${e.message}`, "error"); }
+      next = M.masterOf(next);
+      const changes = M.masterChanges(M.masterOf(S.master || {}), next);
+      const v = next.master_version || {};
+      if (!(await UI.confirm("마스터 파일 올리기", `${fileObj.name}${v.name ? ` — ${v.name}${v.date ? ` (${v.date})` : ""}` : ""}\n폴더의 마스터를 이 파일로 바꿉니다 (지금 마스터는 backups 에 남음).\n\n${changes.length ? changes.slice(0, 15).join("\n") + (changes.length > 15 ? `\n… 외 ${changes.length - 15}가지` : "") : "바뀌는 것이 없습니다."}\n\n이미 만든 프로젝트는 그대로이고, 필요하면 [마스터를 이 프로젝트에 반영]을 누르세요.`, "바꾸기"))) return;
+      await Store.saveMaster(next);
+      S.master = clone(next);
+      render();
+      UI.toast("폴더의 마스터를 바꿨습니다.", "ok");
+    },
+    // 인력 계획의 제안 직무 · 등급별 MM 으로 견적 인건비 줄 만들기 (견적 MM 은 뒤에 고쳐도 됨)
+    async estimateFromPlan() {
+      const r = Calc.estimateFromPlan(S.calc);
+      if (!r.labor.length) return UI.toast("제안 직무 · 등급을 넣은 인력이 없습니다. 내부 · 외주 인력 표의 [제안 직무] · [제안 등급]을 먼저 고르세요.", "error");
+      if ((S.proj.estimate.labor || []).length && !(await UI.confirm("인력 계획에서 가져오기", "지금 인건비 줄을 인력 계획으로 바꿉니다.", "바꾸기"))) return;
+      pushUndo();
+      S.proj.estimate.labor = r.labor;
+      render();
+      UI.toast(`${r.labor.length}줄을 만들었습니다${r.missing.length ? ` — 제안 직무 · 등급이 없는 인력 ${r.missing.length}명(${r.missing.slice(0, 3).join(", ")}${r.missing.length > 3 ? " …" : ""})은 빠짐` : ""}.`, r.missing.length ? "error" : "ok");
     },
     toggleTheme() {
       const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -505,6 +580,7 @@
       if (e.target.id === "uploadInput") { upload(e.target.files[0]); e.target.value = ""; return; }
       if (e.target.dataset.act === "openSelected") return A.openSelected();
       if (e.target.dataset.changeAct) return A[e.target.dataset.changeAct](e.target.dataset.key, e.target.value);
+      if (e.target.id === "masterInput") { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) A.uploadMaster(f); return; }
       onInput(e);
     });
     document.addEventListener("click", e => {

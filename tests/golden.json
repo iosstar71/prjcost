@@ -677,6 +677,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "컨설팅",
@@ -691,6 +693,7 @@
       "amount": 154999999.5
      }
     ],
+    "items_total": 249999999.5,
     "supply_total": 249999999.5,
     "vat": 24999999.95,
     "grand_total": 274999999.45
@@ -1359,6 +1362,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -1379,6 +1384,7 @@
       "amount": 1000000
      }
     ],
+    "items_total": 143833333.33,
     "supply_total": 143833333.33,
     "vat": 14383333.33,
     "grand_total": 158216666.66
@@ -2596,6 +2602,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -2610,6 +2618,7 @@
       "amount": 190000000
      }
     ],
+    "items_total": 190166666.67,
     "supply_total": 190166666.67,
     "vat": 19016666.67,
     "grand_total": 209183333.34
@@ -3505,6 +3514,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -3531,6 +3542,7 @@
       "amount": 2000000
      }
     ],
+    "items_total": 204541666.66,
     "supply_total": 204541666.66,
     "vat": 20454166.67,
     "grand_total": 224995833.33
@@ -4794,6 +4806,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -4820,6 +4834,7 @@
       "amount": 190000000
      }
     ],
+    "items_total": 665000000,
     "supply_total": 665000000,
     "vat": 66500000,
     "grand_total": 731500000
@@ -6516,7 +6531,10 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [],
+    "items_total": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -8206,6 +8224,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -8214,6 +8234,7 @@
       "amount": 125000
      }
     ],
+    "items_total": 125000,
     "supply_total": 125000,
     "vat": 12500,
     "grand_total": 137500
@@ -9539,6 +9560,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -9565,6 +9588,7 @@
       "amount": 666666.66
      }
     ],
+    "items_total": 97499999.99,
     "supply_total": 97499999.99,
     "vat": 9750000,
     "grand_total": 107249999.99
@@ -10678,6 +10702,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -10698,6 +10724,7 @@
       "amount": 95000000
      }
     ],
+    "items_total": 237541666.67,
     "supply_total": 237541666.67,
     "vat": 23754166.67,
     "grand_total": 261295833.34
@@ -12482,7 +12509,10 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [],
+    "items_total": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -13508,6 +13538,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -13534,6 +13566,7 @@
       "amount": 333333.33
      }
     ],
+    "items_total": 238333333.33,
     "supply_total": 238333333.33,
     "vat": 23833333.33,
     "grand_total": 262166666.66
@@ -14362,6 +14395,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -14370,6 +14405,7 @@
       "amount": 166666.67
      }
     ],
+    "items_total": 166666.67,
     "supply_total": 166666.67,
     "vat": 16666.67,
     "grand_total": 183333.34
@@ -16778,6 +16814,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -16786,6 +16824,7 @@
       "amount": 125000
      }
     ],
+    "items_total": 125000,
     "supply_total": 125000,
     "vat": 12500,
     "grand_total": 137500
@@ -17372,6 +17411,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -17386,6 +17427,7 @@
       "amount": 142500000
      }
     ],
+    "items_total": 237500000,
     "supply_total": 237500000,
     "vat": 23750000,
     "grand_total": 261250000
@@ -18364,6 +18406,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -18390,6 +18434,7 @@
       "amount": 47500000
      }
     ],
+    "items_total": 59916666.67,
     "supply_total": 59916666.67,
     "vat": 5991666.67,
     "grand_total": 65908333.34
@@ -19170,6 +19215,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -19196,6 +19243,7 @@
       "amount": 500000
      }
     ],
+    "items_total": 50500000,
     "supply_total": 50500000,
     "vat": 5050000,
     "grand_total": 55550000
@@ -20076,7 +20124,10 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [],
+    "items_total": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -20646,6 +20697,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -20654,6 +20707,7 @@
       "amount": 2000000
      }
     ],
+    "items_total": 2000000,
     "supply_total": 2000000,
     "vat": 200000,
     "grand_total": 2200000
@@ -21680,6 +21734,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -21694,6 +21750,7 @@
       "amount": 11875000
      }
     ],
+    "items_total": 12541666.66,
     "supply_total": 12541666.66,
     "vat": 1254166.67,
     "grand_total": 13795833.33
@@ -22414,6 +22471,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -22440,6 +22499,7 @@
       "amount": 500000
      }
     ],
+    "items_total": 1833333.32,
     "supply_total": 1833333.32,
     "vat": 183333.33,
     "grand_total": 2016666.65
@@ -23390,6 +23450,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -23398,6 +23460,7 @@
       "amount": 499999.99
      }
     ],
+    "items_total": 499999.99,
     "supply_total": 499999.99,
     "vat": 50000,
     "grand_total": 549999.99
@@ -24729,6 +24792,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -24743,6 +24808,7 @@
       "amount": 41666.67
      }
     ],
+    "items_total": 47541666.67,
     "supply_total": 47541666.67,
     "vat": 4754166.67,
     "grand_total": 52295833.34
@@ -25439,6 +25505,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -25453,6 +25521,7 @@
       "amount": 125000
      }
     ],
+    "items_total": 142625000,
     "supply_total": 142625000,
     "vat": 14262500,
     "grand_total": 156887500
@@ -26311,7 +26380,10 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [],
+    "items_total": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -28056,6 +28128,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -28070,6 +28144,7 @@
       "amount": 666666.66
      }
     ],
+    "items_total": 1166666.66,
     "supply_total": 1166666.66,
     "vat": 116666.67,
     "grand_total": 1283333.33
@@ -29109,6 +29184,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -29135,6 +29212,7 @@
       "amount": 95000000
      }
     ],
+    "items_total": 97666666.67,
     "supply_total": 97666666.67,
     "vat": 9766666.67,
     "grand_total": 107433333.34
@@ -30281,6 +30359,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -30307,6 +30387,7 @@
       "amount": 125000
      }
     ],
+    "items_total": 2958333.33,
     "supply_total": 2958333.33,
     "vat": 295833.33,
     "grand_total": 3254166.66
@@ -31930,6 +32011,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -31938,6 +32021,7 @@
       "amount": 166666.67
      }
     ],
+    "items_total": 166666.67,
     "supply_total": 166666.67,
     "vat": 16666.67,
     "grand_total": 183333.34
@@ -33815,6 +33899,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -33835,6 +33921,7 @@
       "amount": 41666.67
      }
     ],
+    "items_total": 95166666.67,
     "supply_total": 95166666.67,
     "vat": 9516666.67,
     "grand_total": 104683333.34
@@ -35148,6 +35235,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -35168,6 +35257,7 @@
       "amount": 41666.67
      }
     ],
+    "items_total": 125000.01,
     "supply_total": 125000.01,
     "vat": 12500,
     "grand_total": 137500.01
@@ -35878,6 +35968,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -35898,6 +35990,7 @@
       "amount": 166666.67
      }
     ],
+    "items_total": 190666666.67,
     "supply_total": 190666666.67,
     "vat": 19066666.67,
     "grand_total": 209733333.34
@@ -37092,6 +37185,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -37118,6 +37213,7 @@
       "amount": 1500000
      }
     ],
+    "items_total": 2958333.33,
     "supply_total": 2958333.33,
     "vat": 295833.33,
     "grand_total": 3254166.66
@@ -39828,7 +39924,10 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [],
+    "items_total": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -40957,6 +41056,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -40971,6 +41072,7 @@
       "amount": 2000000
      }
     ],
+    "items_total": 2166666.67,
     "supply_total": 2166666.67,
     "vat": 216666.67,
     "grand_total": 2383333.34
@@ -42343,6 +42445,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -42357,6 +42461,7 @@
       "amount": 666666.66
      }
     ],
+    "items_total": 12541666.66,
     "supply_total": 12541666.66,
     "vat": 1254166.67,
     "grand_total": 13795833.33
@@ -43409,6 +43514,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -43417,6 +43524,7 @@
       "amount": 1000000
      }
     ],
+    "items_total": 1000000,
     "supply_total": 1000000,
     "vat": 100000,
     "grand_total": 1100000
@@ -44450,7 +44558,10 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [],
+    "items_total": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -45513,6 +45624,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -45521,6 +45634,7 @@
       "amount": 47500000
      }
     ],
+    "items_total": 47500000,
     "supply_total": 47500000,
     "vat": 4750000,
     "grand_total": 52250000
@@ -46482,7 +46596,10 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [],
+    "items_total": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -47818,7 +47935,10 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": true,
+    "labor": [],
+    "labor_total": 0,
     "items": [],
+    "items_total": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -48389,6 +48509,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "품목0",
@@ -48397,6 +48519,7 @@
       "amount": 95000000
      }
     ],
+    "items_total": 95000000,
     "supply_total": 95000000,
     "vat": 9500000,
     "grand_total": 104500000
@@ -49000,6 +49123,8 @@
     "estimate_date": "",
     "note": "",
     "applied_to_revenue": false,
+    "labor": [],
+    "labor_total": 0,
     "items": [
      {
       "item_name": "컨설팅",
@@ -49014,6 +49139,7 @@
       "amount": 154999999.5
      }
     ],
+    "items_total": 249999999.5,
     "supply_total": 249999999.5,
     "vat": 24999999.95,
     "grand_total": 274999999.45

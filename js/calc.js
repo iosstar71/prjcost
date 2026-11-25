@@ -68,8 +68,22 @@
 
   const sumValues = obj => Object.values(obj).reduce((a, b) => a + b, 0);
 
-  function calculateEstimate(estimate) {
+  // 제안 단가: 기준정보의 제안 직무 × 등급 표
+  const proposalRate = (settings, role, level) => {
+    const r = ((settings || {}).proposal_roles || []).find(x => x && x.role === role);
+    return r && r.rates ? num(r.rates[level]) : 0;
+  };
+  // 견적: 인건비(제안 직무 · 등급 · 견적 MM × 제안 단가 — 단가를 직접 넣으면 그 값) + 기타 항목(수량 × 단가)
+  function calculateEstimate(estimate, settings) {
     let supply = 0;
+    const labor = (estimate.labor || []).map(l => {
+      const mm = num(l.mm), master = proposalRate(settings, l.role, l.level);
+      const unit = isBlank(l.unit_price) ? master : num(l.unit_price);
+      const amount = pyRound(mm * unit, 2);
+      supply = pyRound(supply + amount, 2);
+      return Object.assign({}, l, { mm, master_rate: master, applied_rate: unit, amount, missing: !l.role || !l.level });
+    });
+    const laborTotal = supply;
     const items = (estimate.items || []).map(it => {
       const qty = num(it.qty), unit = num(it.unit_price);
       const amount = pyRound(qty * unit, 2);
@@ -82,7 +96,7 @@
       estimate_date: String(estimate.estimate_date || ""),
       note: String(estimate.note || ""),
       applied_to_revenue: !!estimate.applied_to_revenue,
-      items, supply_total: supply, vat, grand_total: pyRound(supply + vat, 2)
+      labor, labor_total: laborTotal, items, items_total: pyRound(supply - laborTotal, 2), supply_total: supply, vat, grand_total: pyRound(supply + vat, 2)
     };
   }
 
@@ -226,7 +240,7 @@
         internal_overhead_monthly: intOvh, external_overhead_monthly: extOvh, mm_overheads: mmOverheads, custom_costs: customDetails
       },
       phases,
-      estimate: calculateEstimate(project.estimate || {}),
+      estimate: calculateEstimate(project.estimate || {}, settings),
       computed_at: nowText()
     };
   }
@@ -240,8 +254,23 @@
     role: r => String(r.role || "").trim() || "(미지정)",
     vendor: r => (r.__kind === "internal" ? "내부" : String(r.vendor || "").trim() || "(미지정)"),
     kind: r => (r.__kind === "internal" ? "내부" : "외주"),
-    dept: r => String(r.dept || "").trim() || "(미지정)"
+    dept: r => String(r.dept || "").trim() || "(미지정)",
+    system: r => String(r.system || "").trim() || "(미지정)",
+    proposal: r => (r.prop_role ? `${r.prop_role} ${r.prop_level || ""}`.trim() : "(미지정)")
   };
+  // 인력 계획 → 견적 인건비 줄: 제안 직무 · 등급별 MM 합 (missing: 제안 직무 · 등급이 없는 인력)
+  function estimateFromPlan(calc) {
+    const groups = new Map(), missing = [];
+    calc.details.internal_labor.concat(calc.details.external_labor).forEach(r => {
+      if (!num(r.total_mm)) return;
+      if (!r.prop_role || !r.prop_level) { missing.push(r.name || "?"); return; }
+      const k = `${r.prop_role}|${r.prop_level}`;
+      const g = groups.get(k) || { role: r.prop_role, level: r.prop_level, mm: 0, unit_price: "", memo: "" };
+      g.mm = pyRound(g.mm + num(r.total_mm), 2);
+      groups.set(k, g);
+    });
+    return { labor: [...groups.values()], missing };
+  }
   function staffStats(calc, o = {}) {   // o.settings 가 있으면 기준정보 순서로
     const months = o.months && o.months.length ? calc.months.filter(m => o.months.includes(m)) : calc.months;
     const scope = o.scope || "all", keyOf = BY[o.by] || BY.area;
@@ -265,7 +294,7 @@
     const totalCost = rows.reduce((a, g) => pyRound(a + g.cost, 2), 0), totalMm = rows.reduce((a, g) => pyRound(a + g.total_mm, 2), 0);
     rows.forEach(g => { g.share = totalCost > 0 ? pyRound((g.cost / totalCost) * 100, 2) : 0; g.mm_share = totalMm > 0 ? pyRound((g.total_mm / totalMm) * 100, 2) : 0; });
     const st = o.settings || {};
-    const order = { dept: st.departments, area: st.areas, grade: gradeNames(st).concat(st.external_grades || []), vendor: ["내부"].concat(vendorNames(st)), kind: ["내부", "외주"] }[o.by];
+    const order = { dept: st.departments, area: st.areas, system: st.systems, proposal: (st.proposal_roles || []).flatMap(r => (st.proposal_levels || []).map(l => `${r.role} ${l}`)), grade: gradeNames(st).concat(st.external_grades || []), vendor: ["내부"].concat(vendorNames(st)), kind: ["내부", "외주"] }[o.by];
     const rank = rankOf(order || []);
     const sorted = sortByRanks(rows, [g => rank(g.key)]);   // 기준정보에 없는 값(역할 등)은 나온 순서
     rows.length = 0; rows.push(...sorted);
@@ -398,6 +427,6 @@
     return { summary, staff };
   }
 
-  PC.Calc = { DEPT_BASIS, deptSummary, phaseDeptSummary, orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
+  PC.Calc = { proposalRate, estimateFromPlan, DEPT_BASIS, deptSummary, phaseDeptSummary, orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Calc;
 })(typeof window !== "undefined" ? window : globalThis);

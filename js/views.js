@@ -90,6 +90,13 @@
   }
 
   // ---------------- 인력 표 (내부 · 외주 공통) ----------------
+  // 대표 시스템(프로젝트 기준정보) · 고객 제안 직무 · 등급(마스터 — 견적서에 씀, 인력 표에서는 부가정보)
+  const systemCol = p => ({ b: "system", t: "text", l: "대표 시스템", th: `<th>대표 시스템</th>`, cell: (r, base) => `<td>${sel(`${base}.system`, r.system || "", [{ v: "", t: "-" }].concat(p.settings.systems || []), { label: "대표 시스템", cls: "s-md" })}</td>` });
+  const propCols = p => [
+    { b: "prop_role", t: "text", l: "제안직무", th: `<th class="prop" title="고객 제안 직무 — 견적서의 인건비를 만들 때 씀">제안 직무</th>`, cell: (r, base) => `<td class="prop">${sel(`${base}.prop_role`, r.prop_role || "", [{ v: "", t: "-" }].concat((p.settings.proposal_roles || []).map(x => x.role)), { label: "제안 직무", cls: "s-md" })}</td>` },
+    { b: "prop_level", t: "text", l: "제안등급", th: `<th class="prop" title="고객 제안 등급">제안 등급</th>`, cell: (r, base) => `<td class="prop">${sel(`${base}.prop_level`, r.prop_level || "", [{ v: "", t: "-" }].concat(p.settings.proposal_levels || []), { label: "제안 등급", cls: "s-sm" })}</td>` }
+  ];
+
   // 부서 칸: 부서가 2개 이상일 때만 (하나 이하면 지금과 같은 화면)
   const deptChoices = p => (p.settings.departments || []).filter(d => String(d).trim());
   const deptColumn = p => (M.multiDept(p) ? [{ b: "dept", t: "text", l: "부서", th: `<th>부서</th>`, cell: (r, base) => `<td>${sel(`${base}.dept`, r.dept || "", [{ v: "", t: "-" }].concat(deptChoices(p)), { label: "부서", cls: "s-md" })}</td>` }] : []);
@@ -113,11 +120,13 @@
     return laborTab("internal_labor", p, c, [
       { b: "name", t: "text", l: "성명", th: `<th class="l">성명</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "PM/개발", label: "역할" })}</td>` },
-      { b: "area", t: "text", l: "담당 영역", th: `<th>담당 영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "담당 영역", cls: "s-md" })}</td>` },
+      { b: "area", t: "text", l: "영역", th: `<th>영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "영역", cls: "s-md" })}</td>` },
+      systemCol(p),
       ...deptColumn(p),
-      { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급", cls: "s-sm" })}</td>` },
+      { b: "grade", t: "text", l: "직급", th: `<th>직급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "직급", cls: "s-sm" })}</td>` },
       { b: "base_rate", t: "blank-num", l: "기준단가", th: `<th>기준단가</th>`, cell: (r, base) => `<td>${inp(`${base}.base_rate`, r.base_rate, { money: true, kind: "blank-num", cls: "w-md", label: "기준단가" })}</td>` },
       { b: "overhead_eligible", t: "bool", l: "인비례", th: `<th title="내부 인비례 경비(MM × 기준금액)를 매길 인력">인비례</th>`, cell: (r, base) => `<td class="c">${chk(`${base}.overhead_eligible`, r.overhead_eligible, "인비례")}</td>` },
+      ...propCols(p),
       { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("internal_labor", r, base, i) }
     ], { icon: "users", title: "내부 인력 투입 계획", addLabel: "내부 인력", total: c.summary.breakdown.internal_labor });
   }
@@ -128,11 +137,13 @@
     return laborTab("external_labor", p, c, [
       { b: "name", t: "text", l: "성명", th: `<th class="l">성명/구분</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.name`, r.name, { cls: "w-sm", label: "성명" })}</td>` },
       { b: "role", t: "text", l: "역할", th: `<th class="l">역할</th>`, cell: (r, base) => `<td class="l">${inp(`${base}.role`, r.role, { cls: "w-sm", ph: "개발/디자인", label: "역할" })}</td>` },
-      { b: "area", t: "text", l: "담당 영역", th: `<th>담당 영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "담당 영역", cls: "s-md" })}</td>` },
+      { b: "area", t: "text", l: "영역", th: `<th>영역</th>`, cell: (r, base) => `<td>${sel(`${base}.area`, r.area || "", [{ v: "", t: "-" }].concat(areas), { label: "영역", cls: "s-md" })}</td>` },
+      systemCol(p),
       ...deptColumn(p),
       { b: "vendor", t: "text", l: "외주업체", th: `<th>외주업체</th>`, cell: (r, base) => `<td>${sel(`${base}.vendor`, r.vendor || "", vendors, { label: "외주업체", cls: "s-md" })}</td>` },
-      { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "등급", cls: "s-sm" })}</td>` },
+      { b: "grade", t: "text", l: "기술등급", th: `<th>기술등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", grades, { label: "기술등급", cls: "s-sm" })}</td>` },
       { b: "custom_rate", t: "blank-num", l: "적용단가", th: `<th title="비워 두면 업체 · 등급 단가표의 단가 (인상월 · 인상단가도 단가표대로)">적용단가</th>`, cell: (r, base) => `<td>${inp(`${base}.custom_rate`, r.custom_rate, { money: true, kind: "blank-num", cls: "w-md", ph: won(r.default_rate), label: "적용단가" })}${r.is_overridden ? `<span class="cell-cost">기준 ${won(r.default_rate)}</span>` : ""}</td>` },
+      ...propCols(p),
       { b: "target_mm", t: "mm", l: "총MM", th: `<th>총 MM</th>`, cell: (r, base, i) => mmTarget("external_labor", r, base, i) }
     ], { icon: "partner", title: "외주 인력 투입 계획", addLabel: "외주 인력", total: c.summary.breakdown.external_labor });
   }
@@ -203,53 +214,82 @@
 
   // ---------------- 견적서 ----------------
   function estimate(p, c) {
-    const est = c.estimate;
-    const body = est.items.map((it, i) => `<tr>
+    const est = c.estimate, st = p.settings;
+    const roles = (st.proposal_roles || []).map(x => x.role), levels = st.proposal_levels || [];
+    const labor = est.labor.map((l, i) => `<tr${l.missing ? ' class="bad-row"' : ""}>
+      <td class="c">${del("estimate.labor", i)}</td>
+      <td>${sel(`estimate.labor.${i}.role`, l.role || "", [{ v: "", t: "고르세요" }].concat(roles), { label: "제안 직무", cls: "s-md" })}</td>
+      <td>${sel(`estimate.labor.${i}.level`, l.level || "", [{ v: "", t: "고르세요" }].concat(levels), { label: "제안 등급", cls: "s-sm" })}</td>
+      <td>${mmInp(`estimate.labor.${i}.mm`, l.mm || "", "견적 MM", "w-xs")}</td>
+      <td>${inp(`estimate.labor.${i}.unit_price`, l.unit_price, { money: true, kind: "blank-num", cls: "w-lg", ph: won(l.master_rate), label: "제안 단가" })}</td>
+      <td class="num"><b>${won(l.amount)}</b></td>
+      <td class="l">${inp(`estimate.labor.${i}.memo`, l.memo, { cls: "w-lg", label: "비고" })}</td></tr>`).join("");
+    const items = est.items.map((it, i) => `<tr>
       <td class="c">${del("estimate.items", i)}</td>
-      <td class="l">${inp(`estimate.items.${i}.item_name`, it.item_name, { cls: "w-xl", label: "항목명" })}</td>
-      <td class="l">${inp(`estimate.items.${i}.spec`, it.spec, { cls: "w-lg", label: "규격/등급" })}</td>
+      <td class="l" colspan="2">${inp(`estimate.items.${i}.item_name`, it.item_name, { cls: "w-xl", label: "항목명" })}</td>
       <td>${inp(`estimate.items.${i}.qty`, it.qty, { type: "number", step: "0.01", cls: "w-xs", label: "수량" })}</td>
       <td>${inp(`estimate.items.${i}.unit_price`, it.unit_price, { money: true, cls: "w-lg", label: "단가" })}</td>
       <td class="num"><b>${won(it.amount)}</b></td>
       <td class="l">${inp(`estimate.items.${i}.memo`, it.memo, { cls: "w-lg", label: "비고" })}</td></tr>`).join("");
-    return head("receipt", "견적서", est.applied_to_revenue ? "공급가액이 계약 매출에 적용됨" : "",
-      btn("품목", "addRow", ["estimate.items"], "sm", "", "plus") + btn("공급가액 → 계약 매출", "applyEstimate", [], "primary sm", "견적 공급가액을 계약 매출로 씁니다"))
+    const planMm = sumBy(c.details.internal_labor.concat(c.details.external_labor), r => r.total_mm), estMm = sumBy(est.labor, l => l.mm);
+    const missing = est.labor.filter(l => l.missing).length;
+    return head("receipt", "견적서", est.applied_to_revenue ? "공급가액이 계약 매출에 적용됨" : "인건비는 고객 제안 직무 · 등급 × 견적 MM × 제안 단가",
+      btn("공급가액 → 계약 매출", "applyEstimate", [], "primary sm", "견적 공급가액을 계약 매출로 씁니다"))
       + `<div class="form-grid compact">${field("견적번호", inp("estimate.estimate_no", p.estimate.estimate_no, { ph: "EST-2026-001" }))}${field("견적일자", inp("estimate.estimate_date", p.estimate.estimate_date, { type: "date" }))}${field("비고", inp("estimate.note", p.estimate.note, { ph: "조건 · 유효기간" }))}</div>
-      <div class="tbl-wrap"><table class="fill"><thead><tr><th class="w-del"></th><th class="l">항목명</th><th class="l">규격/등급</th><th>수량</th><th>단가(원)</th><th>금액(원)</th><th class="l">비고</th></tr></thead><tbody>
-        ${body || empty(7, "등록된 품목이 없습니다.")}
+      <section class="mt">${subHead("인건비 (고객 제안 직무 · 등급)", `견적 MM ${estMm.toFixed(2)} · 인력 계획 MM ${planMm.toFixed(2)}${missing ? ` · 직무 · 등급이 빠진 줄 ${missing}개` : ""}`,
+        btn("인력 계획에서 가져오기", "estimateFromPlan", [], "sm", "인력의 제안 직무 · 등급별로 MM 을 모아 줄을 만듭니다 (견적 MM 은 고쳐도 됨)", "users") + btn("줄", "addRow", ["estimate.labor"], "sm", "", "plus"))}
+      <div class="tbl-wrap"><table class="fill est"><thead><tr><th class="w-del"></th><th>제안 직무</th><th>제안 등급</th><th>견적 MM</th><th title="비우면 기준정보의 제안 단가">제안 단가(원/MM)</th><th>금액(원)</th><th class="l">비고</th></tr></thead><tbody>
+        ${labor || empty(7, "[인력 계획에서 가져오기] 또는 [+ 줄]로 제안 직무 · 등급별 인건비를 넣습니다.")}
+        <tr class="total"><td></td><td colspan="2" class="l">인건비 소계</td><td class="num">${estMm.toFixed(2)}</td><td></td><td class="num">${won(est.labor_total)}</td><td></td></tr></tbody></table></div></section>
+      <section class="mt">${subHead("기타 항목 (SW · HW · 용역 등)", "", btn("품목", "addRow", ["estimate.items"], "sm", "", "plus"))}
+      <div class="tbl-wrap"><table class="fill est"><thead><tr><th class="w-del"></th><th class="l" colspan="2">항목명</th><th>수량</th><th>단가(원)</th><th>금액(원)</th><th class="l">비고</th></tr></thead><tbody>
+        ${items || empty(7, "등록된 품목이 없습니다.")}
+        <tr class="total"><td></td><td colspan="4" class="l">기타 항목 소계</td><td class="num">${won(est.items_total)}</td><td></td></tr>
         <tr class="total"><td></td><td colspan="4" class="l">공급가액</td><td class="num">${won(est.supply_total)}</td><td></td></tr>
         <tr class="auto"><td></td><td colspan="4" class="l">부가세 (10%)</td><td class="num">${won(est.vat)}</td><td></td></tr>
         <tr class="total"><td></td><td colspan="4" class="l">견적 총액 (VAT 포함)</td><td class="num">${won(est.grand_total)}</td><td></td></tr>
-      </tbody></table></div>`;
+      </tbody></table></div></section>`;
   }
 
   // ---------------- 기준정보: 작은 탭으로 한 번에 한 목록 (목록 길이가 달라도 화면이 어긋나지 않게) ----------------
   const SETTING_TABS = [
-    { id: "grades", label: "내부 등급 · 단가", count: st => (st.internal_grades || []).length },
-    { id: "ext", label: "외주 등급", count: st => (st.external_grades || []).length },
-    { id: "vendors", label: "외주업체 단가", count: st => (st.vendor_rates || []).length },
+    { id: "grades", label: "내부 직급 · 단가", count: st => (st.internal_grades || []).length },
+    { id: "ext", label: "외주 기술등급", count: st => (st.external_grades || []).length },
+    { id: "proposal", label: "제안 직무 · 등급", count: st => (st.proposal_roles || []).length },
+    { id: "areas", label: "영역", count: st => (st.areas || []).length },
     { id: "accounts", label: "경비 계정", count: st => (st.expense_accounts || []).length },
-    { id: "areas", label: "담당 영역", count: st => (st.areas || []).length },
     { id: "depts", label: "부서", count: st => (st.departments || []).length },
-    { id: "basics", label: "기본값 · 데모" }
+    { id: "vendors", label: "외주업체 단가", project: true, count: st => (st.vendor_rates || []).length },
+    { id: "systems", label: "대표 시스템", project: true, count: st => (st.systems || []).length },
+    { id: "basics", label: "마스터 · 기본값" }
   ];
   function settings(p, c, ctx) {
     const st = p.settings, sub = SETTING_TABS.some(t => t.id === ctx.sub) ? ctx.sub : "grades";
-    const subTabs = `<div class="seg" role="tablist">${SETTING_TABS.map(t => `<button class="seg-btn${t.id === sub ? " active" : ""}" data-act="showSettings" data-args="${args(t.id)}">${esc(t.label)}${t.count ? `<span class="cnt">${t.count(st)}</span>` : ""}</button>`).join("")}</div>`;
+    const subTabs = `<div class="seg" role="tablist">${SETTING_TABS.map(t => `<button class="seg-btn${t.id === sub ? " active" : ""}${t.project ? " proj" : ""}" data-act="showSettings" data-args="${args(t.id)}"${t.project ? ' title="프로젝트마다 다른 정보 (마스터에 넣지 않음)"' : ""}>${esc(t.label)}${t.count ? `<span class="cnt">${t.count(st)}</span>` : ""}</button>`).join("")}</div>`;
     const narrow = html => `<div class="narrow">${html}</div>`;
     const text = (b, label, cls) => ({ b, t: "text", l: label, th: `<th class="l">${esc(label)}</th>`, cell: (r, base) => `<td class="l">${inp(b ? `${base}.${b}` : base, b ? r[b] : r, { cls: cls || "w-lg", label })}</td>` });
     const moneyCol = (b, label) => ({ b, t: "num", l: label, th: `<th>${esc(label)}</th>`, cell: (r, base) => `<td>${inp(`${base}.${b}`, r[b], { money: true, cls: "w-md", label })}</td>` });
     let body = "";
     const blankMoney = (b, label, ph) => ({ b, t: "blank-num", l: label, th: `<th title="비우면 인상 없음">${esc(label)}</th>`, cell: (r, base) => `<td>${inp(`${base}.${b}`, r[b], { money: true, kind: "blank-num", cls: "w-md", ph: ph || "인상 없음", label })}</td>` });
     const raiseYm = PC.Calc.raiseMonth(st, c.months);
-    if (sub === "grades") body = narrow(subHead("내부 등급 · 월 기준단가", "등급을 고르면 인력의 기준단가가 이 값으로 들어갑니다 · " + GRID_HINT)
+    if (sub === "grades") body = narrow(subHead("내부 직급 · 월 기준단가", "직급을 고르면 인력의 기준단가가 이 값으로 들어갑니다 · " + GRID_HINT)
       + `<div class="form-grid compact raise-bar">${field("연봉 인상월 (MM)", inp("settings.raise_month", st.raise_month, { ph: "예: 03", kind: "month2b" }), { help: raiseYm ? `이 프로젝트에서는 ${raiseYm} 부터 인상단가` : "비우거나 기간 안에 그 달이 없으면 인상 없음" })}</div>`
-      + gridTable({ order: true, list: "settings.internal_grades", rows: st.internal_grades || [], newLabel: "등급 입력", cols: [text("grade", "등급"), moneyCol("rate", "월 기준단가 (원)"), blankMoney("raise_rate", "인상단가 (원)")] }));
-    else if (sub === "ext") body = narrow(subHead("외주 등급", "외주 인력 · 업체 단가에서 고르는 등급 목록")
-      + gridTable({ order: true, list: "settings.external_grades", rows: st.external_grades || [], newLabel: "등급 입력", cols: [text("", "등급")] }));
-    else if (sub === "vendors") body = narrow(subHead("외주업체별 등급 단가", "외주 인력의 적용단가를 비워 두면 이 단가 · 협상으로 바뀌면 인상월 · 인상단가 · " + GRID_HINT)
+      + gridTable({ order: true, list: "settings.internal_grades", rows: st.internal_grades || [], newLabel: "직급 입력", cols: [text("grade", "직급"), moneyCol("rate", "월 기준단가 (원)"), blankMoney("raise_rate", "인상단가 (원)")] }));
+    else if (sub === "ext") body = narrow(subHead("외주 기술등급", "외주 인력 · 업체 단가에서 고르는 기술등급 목록")
+      + gridTable({ order: true, list: "settings.external_grades", rows: st.external_grades || [], newLabel: "기술등급 입력", cols: [text("", "기술등급")] }));
+    else if (sub === "proposal") {
+      const levels = st.proposal_levels || [];
+      body = subHead("고객 제안 직무 · 등급 · 제안 단가 (원/MM)", "견적서의 인건비 = 견적 MM × 이 단가. 등급 체계는 모든 직무가 같음 · " + GRID_HINT)
+        + `<div class="split-2"><div>${gridTable({ order: true, list: "settings.proposal_levels", rows: levels, newLabel: "등급 입력", cols: [text("", "제안 등급", "w-md")] })}</div><div>`
+        + gridTable({ order: true, list: "settings.proposal_roles", rows: st.proposal_roles || [], newLabel: "직무 입력", cols: [text("role", "제안 직무", "w-md"),
+          ...levels.map(l => ({ b: `rates.${l}`, t: "blank-num", l, th: `<th>${esc(l)}</th>`, cell: (r, base) => `<td>${inp(`${base}.rates.${l}`, (r.rates || {})[l], { money: true, kind: "blank-num", cls: "w-md", label: `${r.role} ${l}` })}</td>` }))] })
+        + `</div></div>`;
+    }
+    else if (sub === "systems") body = narrow(subHead("대표 시스템 (이 프로젝트)", "인력마다 대표 시스템 하나 — [투입 현황]에서 시스템별로 봅니다")
+      + gridTable({ order: true, list: "settings.systems", rows: st.systems || [], newLabel: "시스템 입력", cols: [text("", "대표 시스템")] }));
+    else if (sub === "vendors") body = narrow(subHead("외주업체별 기술등급 단가 (이 프로젝트)", "외주 인력의 적용단가를 비워 두면 이 단가 · 협상으로 바뀌면 인상월 · 인상단가 · " + GRID_HINT)
       + gridTable({ order: true, list: "settings.vendor_rates", rows: st.vendor_rates || [], newLabel: "업체 입력", cols: [text("vendor", "업체"),
-        { b: "grade", t: "text", l: "등급", th: `<th>등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", st.external_grades || [], { label: "등급", cls: "s-sm" })}</td>` },
+        { b: "grade", t: "text", l: "기술등급", th: `<th>기술등급</th>`, cell: (r, base) => `<td>${sel(`${base}.grade`, r.grade || "", st.external_grades || [], { label: "기술등급", cls: "s-sm" })}</td>` },
         moneyCol("rate", "월 단가 (원)"),
         { b: "raise_ym", t: "month", l: "인상월", th: `<th title="협상으로 단가가 바뀌는 달">인상월</th>`, cell: (r, base) => `<td>${inp(`${base}.raise_ym`, r.raise_ym, { type: "month", label: "인상월" })}</td>` },
         blankMoney("raise_rate", "인상단가 (원)")] }));
@@ -258,22 +298,30 @@
         { b: "category", t: "cat", l: "구분", th: `<th>구분</th>`, cell: (r, base) => `<td>${sel(`${base}.category`, r.category || "general", M.CATEGORIES, { label: "구분", cls: "s-md" })}</td>` },
         { b: "unit_amount", t: "num", l: "기준금액", th: `<th>기준금액 (원/MM)</th>`, cell: (r, base) => (M.isMmCategory(r.category) ? `<td>${inp(`${base}.unit_amount`, r.unit_amount, { money: true, cls: "w-md", label: "기준금액" })}</td>` : `<td class="c muted">-</td>`) },
         text("desc", "설명", "w-xl")] });
-    else if (sub === "areas") body = narrow(subHead("담당 영역 (시스템)", "인력마다 고르는 담당 영역 — [투입 현황]에서 영역별로 MM · 금액을 봅니다")
-      + gridTable({ order: true, list: "settings.areas", rows: st.areas || [], newLabel: "영역 입력", cols: [text("", "담당 영역")] }));
+    else if (sub === "areas") body = narrow(subHead("영역", "인력마다 고르는 영역 (컨설팅 · 개발 …) — [투입 현황]에서 영역별로 MM · 금액을 봅니다")
+      + gridTable({ order: true, list: "settings.areas", rows: st.areas || [], newLabel: "영역 입력", cols: [text("", "영역")] }));
     else if (sub === "depts") body = narrow(subHead("부서", "부서를 2개 이상 넣으면 인력 · 경비에 부서 칸과 [부서별] 탭이 나타납니다. 하나 이하면 지금 화면 그대로입니다")
       + `<div class="form-grid compact raise-bar">${field("공통경비 나누는 기준", sel("settings.dept_common_basis", st.dept_common_basis || "cost", PC.Calc.DEPT_BASIS), { help: "부서를 '공통'으로 둔 일반 · 기타경비" })}</div>`
       + gridTable({ order: true, list: "settings.departments", rows: st.departments || [], newLabel: "부서 입력", cols: [text("", "부서")] }));
-    else body = narrow(`<section class="sub-card">${subHead("기준정보 가져오기 · 내보내기")}<p class="muted">폴더의 기준정보(master/master_rates.xlsx)는 새 프로젝트를 만들 때의 기본값입니다.</p>
-        <div class="bar-group">${btn("폴더 기본값으로 바꾸기", "resetSettings", [], "", "이 프로젝트의 기준정보를 폴더의 기본값으로")}${btn("이 기준정보를 새 프로젝트 기본값으로 저장", "saveDefaults", [], "", "master_rates.xlsx 에 저장")}</div></section>
+    else {
+      const mv = (ctx.master && ctx.master.master_version) || {}, pv = st.master_version || {};
+      const mvText = v => (v && (v.name || v.date) ? `${v.name || "이름 없음"}${v.date ? ` (${v.date})` : ""}` : "이름 없음");
+      body = narrow(`<section class="sub-card">${subHead("마스터 (전사 기준정보)", "직급 · 기술등급 · 제안 직무/등급/단가 · 영역 · 경비 계정 · 부서 · 결재자 · 연봉 인상")}
+        <p class="muted">마스터는 자주 쓰는 기준정보를 전사에 배포하는 기본값입니다(master/master_rates.xlsx). 새 프로젝트는 마스터로 시작하고, 프로젝트에서 항목을 더 넣을 수 있습니다. 외주업체 단가 · 대표 시스템은 프로젝트마다 따로입니다.</p>
+        <div class="mini-kpis"><div class="mini-kpi"><span>폴더의 마스터</span><b>${esc(mvText(mv))}</b></div><div class="mini-kpi"><span>이 프로젝트가 쓴 마스터</span><b>${esc(mvText(pv))}</b></div></div>
+        <div class="bar-group">${btn("마스터를 이 프로젝트에 반영", "applyMaster", [], "primary", "마스터의 항목을 더하고 같은 이름은 값을 마스터대로 (프로젝트에서 더한 항목은 그대로)", "download")}
+          <label class="btn file-btn" title="본사에서 받은 master_rates.xlsx 로 폴더의 마스터를 바꿉니다">${icon("upload")}마스터 파일 올리기<input type="file" accept=".xlsx" id="masterInput"></label>
+          ${btn("이 기준정보를 마스터로 저장", "saveDefaults", [], "", "이 프로젝트의 기준정보(프로젝트 전용 제외)를 폴더의 마스터로", "save")}${btn("마스터 내보내기", "exportMaster", [], "", "배포용 master_rates.xlsx 내려받기", "report")}</div></section>
       <section class="sub-card">${subHead("결재자", "보고서 양식의 {{결재1}} … {{결재5}} — 인사이동이 있을 때만 바꾸고 [새 프로젝트 기본값으로 저장]")}<div class="approvers">${APPROVER_TITLES.map((t, i) => `<label><small>${esc(t)}</small>${inp(`settings.approvers.${i}`, (st.approvers || [])[i], { ph: "이름", label: t })}</label>`).join("")}</div></section>
       <section class="sub-card">${subHead("보고서 양식", "머리줄 [양식 출력]")}<p class="muted">자료 폴더의 templates 에 있는 엑셀 양식(xlsx)의 {{자리표시}} 칸에 값을 넣어 새 파일로 만듭니다. 양식은 Excel 에서 직접 고치고, 값이 들어갈 칸에 아래 이름을 {{이름}} 으로 적으면 됩니다. 칸에 자리표시 하나만 있으면 숫자는 숫자로 들어가 양식의 통화 · % 서식이 적용됩니다(비율은 0.4667 같은 소수).</p>
         <div class="tbl-wrap flat"><table class="keys fit"><thead><tr><th class="l">자리표시</th><th class="l">값</th><th class="l">이 프로젝트에서</th></tr></thead><tbody>${(() => { const v = PC.Template.values(p, c, {}); return PC.Template.KEYS.map(([k, t]) => `<tr><td class="l"><code>{{${esc(k)}}}</code></td><td class="l">${esc(t)}</td><td class="l">${esc(typeof v[k] === "number" ? (Math.abs(v[k]) < 1 && v[k] !== 0 ? `${(v[k] * 100).toFixed(2)}%` : won(v[k])) : v[k])}</td></tr>`).join(""); })()}</tbody></table></div></section>
       <section class="sub-card">${subHead("데모")}<p class="muted">화면을 익히거나 시연할 때 — 지금 프로젝트의 내용을 예시 자료로 바꿉니다.</p>${btn("데모 채우기", "loadDemo", [], "", "예시 자료로 채우기")}</section>`);
-    return head("settings", "기준정보", "이 프로젝트 전용 — 여기서 고친 값은 이 프로젝트에만 적용됩니다", "") + subTabs + `<div class="stack mt">${body}</div>`;
+    }
+    return head("settings", "기준정보", "이 프로젝트의 기준정보 — 마스터에서 시작하고, 여기서 고치거나 더한 값은 이 프로젝트에만 적용됩니다", "") + subTabs + `<div class="stack mt">${body}</div>`;
   }
 
   // ---------------- 투입 현황: 영역 · 등급 · 역할 · 업체별 MM · 금액 (분할계약 기간만도) ----------------
-  const STAT_BY = [{ v: "area", t: "담당 영역" }, { v: "grade", t: "등급" }, { v: "role", t: "역할" }, { v: "vendor", t: "업체 (내부 / 외주업체)" }, { v: "kind", t: "내부 · 외주" }];
+  const STAT_BY = [{ v: "area", t: "영역" }, { v: "system", t: "대표 시스템" }, { v: "grade", t: "직급 · 기술등급" }, { v: "proposal", t: "제안 직무 · 등급" }, { v: "role", t: "역할" }, { v: "vendor", t: "업체 (내부 / 외주업체)" }, { v: "kind", t: "내부 · 외주" }];
   const STAT_SCOPE = [{ v: "all", t: "전체 인력" }, { v: "internal", t: "내부만" }, { v: "external", t: "외주만" }];
   function stats(p, c, ctx) {
     const o = ctx.stats || {}, by = o.by === "dept" && !M.multiDept(p) ? "area" : o.by || "area", scope = o.scope || "all", ph = c.phases[o.phase - 1];
@@ -287,7 +335,7 @@
     const rows = r.rows.map(g => `<tr><td class="l"><b>${esc(g.key)}</b></td><td class="c">${g.people}</td>${r.months.map(m => `<td class="num${g.mm[m] ? "" : " muted"}">${g.mm[m] ? g.mm[m] : "-"}</td>`).join("")}
       <td class="num"><b>${g.total_mm}</b></td><td class="bar-cell"><span class="bar"><i class="k-internal_labor" style="width:${Math.min(100, g.mm_share)}%"></i></span></td><td class="num">${g.mm_share.toFixed(1)}%</td><td class="num">${won(g.cost)}</td><td class="num">${g.share.toFixed(1)}%</td></tr>`).join("");
     const kpi = (lbl, v) => `<div class="mini-kpi"><span>${esc(lbl)}</span><b>${v}</b></div>`;
-    return head("chart", "투입 현황", "인력 계획을 담당 영역 · 등급 · 역할 · 업체별로 모아 봅니다", "")
+    return head("chart", "투입 현황", "인력 계획을 영역 · 대표 시스템 · 직급 · 제안 직무 · 역할 · 업체별로 모아 봅니다", "")
       + `<div class="stat-bar"><label class="field"><span>모아 볼 기준</span>${seg("by", byList, by)}</label><label class="field"><span>인력</span>${seg("scope", STAT_SCOPE, scope)}</label><label class="field"><span>기간 (분할계약)</span>${phaseSel}</label></div>
       <div class="mini-kpis">${kpi("기간", `${r.months.length}개월${ph ? ` · ${esc(ph.title)}` : ""}`)}${kpi("투입 인원", `${r.total.people}명`)}${kpi("총 MM", r.total.total_mm)}${kpi("인건비", `${won(r.total.cost)}원`)}</div>
       <div class="tbl-wrap"><table><thead><tr><th class="l">${esc(label)}</th><th>인원</th>${mh}<th>총 MM</th><th class="bar-cell">MM 비중</th><th></th><th>인건비(원)</th><th>금액 비중</th></tr></thead>
@@ -344,7 +392,7 @@
       <td class="l">${inp(`versions.${i}.name`, v.name, { cls: "w-md", label: "버전 이름" })}</td><td class="nowrap">${esc(v.saved_at || "")}</td>
       <td class="l">${inp(`versions.${i}.memo`, v.memo, { cls: "w-xl", ph: "메모", label: "메모" })}</td>
       <td class="num">${won(s.revenue)}</td><td class="num">${won(s.total_cost)}</td><td class="num">${s.margin_rate.toFixed(1)}%</td>
-      <td class="nowrap">${btn("불러오기", "restoreVersion", [i], "sm", "이 버전의 자료를 지금 화면으로 (저장해야 파일에 반영)")}${btn("", "removeVersion", [i], "ghost-danger icon-only", "이 버전 지우기", "trash")}</td></tr>`; }).join("");
+      <td class="nowrap">${btn("덮어쓰기", "overwriteVersion", [i], "sm", "이 버전을 지금 자료로 덮어쓰고 저장")}${btn("불러오기", "restoreVersion", [i], "sm", "이 버전의 자료를 지금 화면으로 (저장해야 파일에 반영)")}${btn("", "removeVersion", [i], "ghost-danger icon-only", "이 버전 지우기", "trash")}</td></tr>`; }).join("");
     const listHtml = `<div class="tbl-wrap"><table class="ver-list"><thead><tr><th>번호</th><th class="l">이름</th><th>저장 일시</th><th class="l">메모</th><th>계약 매출</th><th>총 원가</th><th>이익률</th><th></th></tr></thead>
       <tbody>${rows || empty(8, "저장한 버전이 없습니다. 머리줄의 [버전 저장]으로 지금 자료를 이름(초기 계획 · 실계약 · 수정계약 …)과 메모를 붙여 남기세요.")}</tbody></table></div>`;
     let cmpHtml = "";

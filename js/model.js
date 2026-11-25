@@ -20,8 +20,18 @@
       raise_month: "",
       departments: [],           // 부서 — 2개 이상이면 부서 칸 · [부서별] 탭이 나타남
       dept_common_basis: "cost", // 공통경비(부서를 정하지 않은 경비)를 나누는 기준
-      approvers: ["", "", "", "", ""],   // 보고서 결재자 (기안(PM) · 검토 · 사업팀장 · 영업팀장 · 본부장) — 인사이동이 있을 때만 바꿈   // 연봉 인상월(MM) — 등급의 인상단가가 이 달부터 (비우면 인상 없음)
-      areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 담당 영역(시스템) — 투입 현황을 영역별로 볼 때 씀
+      approvers: ["", "", "", "", ""],   // 보고서 결재자 (기안(PM) · 검토 · 사업팀장 · 영업팀장 · 본부장) — 인사이동이 있을 때만 바꿈
+      areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 영역 (마스터)
+      systems: [],                // 대표 시스템 (프로젝트마다) — 인력마다 하나
+      // 고객 제안 직무 × 등급 → 제안 단가 (견적서). 등급 체계는 모든 직무가 같음
+      proposal_levels: ["Lvl1", "Lvl2", "Lvl3", "Lvl4", "Lvl5"],
+      proposal_roles: [
+        { role: "프로젝트관리", rates: { Lvl1: 13000000, Lvl2: 11500000, Lvl3: 10000000, Lvl4: 8500000, Lvl5: 7000000 } },
+        { role: "컨설팅", rates: { Lvl1: 14000000, Lvl2: 12000000, Lvl3: 10500000, Lvl4: 9000000, Lvl5: 7500000 } },
+        { role: "개발", rates: { Lvl1: 11000000, Lvl2: 9500000, Lvl3: 8000000, Lvl4: 6500000, Lvl5: 5500000 } },
+        { role: "테스트", rates: { Lvl1: 9000000, Lvl2: 8000000, Lvl3: 7000000, Lvl4: 6000000, Lvl5: 5000000 } }
+      ],
+      master_version: { name: "", date: "" },   // 마스터를 저장 · 배포할 때 붙이는 이름 · 날짜
       internal_grades: [{ grade: "수석", rate: 8500000 }, { grade: "책임", rate: 7200000 }, { grade: "선임", rate: 6000000 }, { grade: "전임", rate: 4800000 }],
       external_grades: ["특급", "고급", "중급", "초급"],
       vendor_rates: [
@@ -40,6 +50,57 @@
     };
   }
 
+  // ---------- 마스터 (전사에서 같이 쓰는 기준정보 — master/master_rates.xlsx 로 배포) ----------
+  //  프로젝트마다 다른 것은 마스터에 넣지 않음: 외주업체 단가 · 대표 시스템 · 공통경비 나누는 기준
+  const PROJECT_ONLY = ["vendor_rates", "external_rates", "systems", "dept_common_basis"];
+  function masterOf(settings) { const m = clone(settings || {}); PROJECT_ONLY.forEach(k => { delete m[k]; }); return m; }
+  const RATE_LISTS = [
+    ["internal_grades", "grade", "직급", ["rate", "raise_rate"]],
+    ["proposal_roles", "role", "제안 직무", ["rates"]],
+    ["expense_accounts", "account", "경비 계정", ["category", "unit_amount"]]
+  ];
+  const NAME_LISTS = [["external_grades", "외주 기술등급"], ["proposal_levels", "제안 등급"], ["areas", "영역"], ["departments", "부서"]];
+  const same = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
+  const show = v => (v && typeof v === "object" ? Object.entries(v).map(([k, x]) => `${k} ${num(x).toLocaleString("ko-KR")}`).join(", ") : typeof v === "number" ? v.toLocaleString("ko-KR") : String(v === undefined || v === "" ? "-" : v));
+  // 마스터 b 를 a 에 맞춰 넣었을 때 바뀌는 것 (목록은 더하고 · 같은 이름은 값을 바꿈 — a 에만 있는 것은 그대로 둠, removed: b 에 없는 것)
+  function masterChanges(a, b) {
+    const out = [];
+    RATE_LISTS.forEach(([k, key, label, fields]) => {
+      const al = a[k] || [], bl = b[k] || [];
+      bl.forEach(x => {
+        const y = al.find(z => z[key] === x[key]);
+        if (!y) out.push(`${label} 추가: ${x[key]}`);
+        else fields.forEach(f => { if (!same(y[f], x[f]) && !(f === "rates" && same(Object.assign({}, y.rates, x.rates), y.rates))) out.push(`${label} ${x[key]}: ${show(y[f])} → ${show(x[f])}`); });
+      });
+      al.filter(y => !bl.some(x => x[key] === y[key])).forEach(y => out.push(`(마스터에 없음) ${label}: ${y[key]}`));
+    });
+    NAME_LISTS.forEach(([k, label]) => {
+      const al = a[k] || [], bl = b[k] || [];
+      bl.filter(x => !al.includes(x)).forEach(x => out.push(`${label} 추가: ${x}`));
+      al.filter(x => !bl.includes(x)).forEach(x => out.push(`(마스터에 없음) ${label}: ${x}`));
+    });
+    if ((b.approvers || []).some(Boolean) && !same(a.approvers, b.approvers)) out.push(`결재자: ${(a.approvers || []).filter(Boolean).join(" · ") || "-"} → ${(b.approvers || []).filter(Boolean).join(" · ")}`);
+    if (b.raise_month !== undefined && !same(a.raise_month || "", b.raise_month || "")) out.push(`연봉 인상월: ${a.raise_month || "-"} → ${b.raise_month || "-"}`);
+    return out;
+  }
+  // 프로젝트 기준정보에 마스터를 반영: 마스터의 항목은 더하거나 값을 바꾸고, 프로젝트에서 더한 항목 · 프로젝트 전용 정보는 그대로
+  function mergeMaster(settings, master) {
+    const out = clone(settings || {}), m = master || {};
+    RATE_LISTS.forEach(([k, key, , fields]) => {
+      const list = out[k] = Array.isArray(out[k]) ? out[k] : [];
+      (m[k] || []).forEach(x => {
+        const y = list.find(z => z[key] === x[key]);
+        if (!y) list.push(clone(x));
+        else fields.forEach(f => { if (x[f] !== undefined) y[f] = f === "rates" ? Object.assign({}, y.rates, x.rates) : clone(x[f]); });
+      });
+    });
+    NAME_LISTS.forEach(([k]) => { const list = out[k] = Array.isArray(out[k]) ? out[k] : []; (m[k] || []).forEach(x => { if (!list.includes(x)) list.push(x); }); });
+    if ((m.approvers || []).some(Boolean)) out.approvers = clone(m.approvers);
+    if (m.raise_month !== undefined) out.raise_month = m.raise_month;
+    if (m.master_version) out.master_version = clone(m.master_version);
+    return out;
+  }
+
   // 인비례 계정이 없는 기준정보(예전 v4 파일 등)에 기본 인비례 계정(기준금액 0)을 넣음 — 화면에서 바로 채울 수 있게
   function ensureMmAccounts(settings) {
     const accs = settings.expense_accounts = Array.isArray(settings.expense_accounts) ? settings.expense_accounts : [];
@@ -49,7 +110,7 @@
     return settings;
   }
 
-  const emptyEstimate = () => ({ estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, items: [] });
+  const emptyEstimate = () => ({ estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, labor: [], items: [] });
 
   function newProject(settings, id) {
     const y = new Date().getFullYear();
@@ -71,17 +132,18 @@
     p.settings.vendor_rates.forEach(v => { if (v.vendor === "파트너A" && v.grade === "고급") Object.assign(v, { raise_ym: "2026-04", raise_rate: 8000000 }); });
     // 데모는 인비례 기준금액을 채워 자동 계산이 보이게
     p.settings.expense_accounts.forEach(a => { if (a.category === "mm_internal" && !num(a.unit_amount)) a.unit_amount = 300000; if (a.category === "mm_external" && !num(a.unit_amount)) a.unit_amount = 100000; });
+    p.settings.systems = ["원가관리", "공정관리"];
     Object.assign(p, {
       project_name: "차세대 원가·공정 시스템 구축", client_name: "대한정밀(주)", pm_name: "김철수 PM", sales_rep: "박영희 매니저",
       description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행",
       start_date: "2026-01", end_date: "2026-06", contract_revenue: 240000000, target_hurdle_rate: 18.0,
       internal_labor: [
-        { name: "김철수", role: "PM", area: "PMO", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6,
+        { name: "김철수", role: "PM", area: "PMO", system: "원가관리", prop_role: "프로젝트관리", prop_level: "Lvl1", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6,
           mm: { "2026-01": 1, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 1 } },
-        { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5,
+        { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", system: "공정관리", prop_role: "컨설팅", prop_level: "Lvl2", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5,
           mm: { "2026-01": 0.5, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 } }
       ],
-      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
+      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", system: "공정관리", prop_role: "개발", prop_level: "Lvl3", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
       general_expenses: [{ name: "출장비", dist_mode: "equal_total", total_input: 9000000, unit_input: 0, monthly: {}, memo: "지방 사업장 방문" }],
       custom_costs: [{ name: "사전심의·인증비", dist_mode: "fill_all", total_input: 0, unit_input: 400000, monthly: {}, memo: "보안 점검" }],
       phases: [
@@ -89,7 +151,8 @@
         { title: "2차 본계약", start_ym: "2026-04", end_ym: "2026-06", revenue: 130000000, override_cost: "" }
       ],
       estimate: { estimate_no: "EST-2026-0101", estimate_date: "2026-01-05", note: "공급가액 기준", applied_to_revenue: false,
-        items: [{ item_name: "컨설팅 및 설계", spec: "수석/선임", qty: 1, unit_price: 95000000, memo: "1차 범위" }, { item_name: "시스템 개발 및 이행", spec: "구축 일괄", qty: 1, unit_price: 155000000, memo: "2차 범위" }] }
+        labor: [{ role: "프로젝트관리", level: "Lvl1", mm: 6, unit_price: "", memo: "" }, { role: "컨설팅", level: "Lvl2", mm: 5, unit_price: "", memo: "분석 · 설계" }, { role: "개발", level: "Lvl3", mm: 8, unit_price: "", memo: "" }],
+        items: [{ item_name: "원가관리 SW 라이선스", spec: "1식", qty: 1, unit_price: 30000000, memo: "" }] }
     });
     return p;
   }
@@ -118,6 +181,11 @@
     });
     if (out.settings.raise_month === undefined) out.settings.raise_month = "";
     if (!Array.isArray(out.versions)) out.versions = [];
+    ["systems", "proposal_levels", "proposal_roles"].forEach(k => { if (!Array.isArray(out.settings[k])) out.settings[k] = k === "systems" ? [] : clone(defaultSettings()[k]); });
+    out.settings.proposal_roles.forEach(r => { if (!r.rates || typeof r.rates !== "object") r.rates = {}; });
+    if (!out.settings.master_version) out.settings.master_version = { name: "", date: "" };
+    out.internal_labor.concat(out.external_labor).forEach(r => { ["system", "prop_role", "prop_level"].forEach(f => { if (r[f] === undefined) r[f] = ""; }); });
+    if (!Array.isArray(out.estimate.labor)) out.estimate.labor = [];   // 견적 인건비 (제안 직무 · 등급 · 견적 MM)
     // 결재자는 기준정보(settings.approvers). v0.9.7 에서 프로젝트에 넣었던 이름은 기준정보가 비어 있으면 옮김
     const ap = i => String(((Array.isArray(out.settings.approvers) ? out.settings.approvers : [])[i]) || "");
     const old = Array.isArray(out.approvers) ? out.approvers : [];
@@ -178,6 +246,6 @@
     return p;
   }
 
-  PC.Model = { multiDept, VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyNote };
+  PC.Model = { PROJECT_ONLY, masterOf, masterChanges, mergeMaster, multiDept, VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyNote };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Model;
 })(typeof window !== "undefined" ? window : globalThis);

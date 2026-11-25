@@ -182,6 +182,22 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   const rs = PC.Report.sheets(dp, PC.Calc.calculateProjectCost(dp, dp.settings));
   const flat = rs[0].rows.flatMap(r => r.cells.map(x => (x ? x.v : "")));
   eq("report: sheets and the total cost shown on the summary", [rs.map(x => x.name).join(), flat.includes("총 원가"), flat.includes(PC.Calc.calculateProjectCost(dp, dp.settings).summary.total_cost)], ["01_통합보고,02_항목별상세,03_투입현황,04_부서별손익", true, true]);
+
+  // 제안 직무 · 등급 → 견적 인건비, 마스터 (전사 기준정보) 반영 · 비교
+  const ep = M.demoProject(M.defaultSettings()), ec = PC.Calc.calculateProjectCost(ep, ep.settings).estimate;
+  eq("estimate: labor lines = MM x proposal rate (role x level), plus other items", [ec.labor.map(l => l.amount), ec.labor_total, ec.items_total, ec.supply_total], [[78000000, 60000000, 64000000], 202000000, 30000000, 232000000]);
+  ep.estimate.labor[0].unit_price = 12000000; ep.estimate.labor.push({ role: "", level: "Lvl1", mm: 1 });
+  const ec2 = PC.Calc.calculateProjectCost(ep, ep.settings).estimate;
+  eq("estimate: typed unit price wins; a line without role is flagged", [ec2.labor[0].amount, ec2.labor[3].missing], [72000000, true]);
+  const fp = PC.Calc.estimateFromPlan(PC.Calc.calculateProjectCost(ep, ep.settings));
+  eq("estimate from plan: MM grouped by proposal role · level", fp.labor.map(l => [l.role, l.level, l.mm]), [["프로젝트관리", "Lvl1", 6], ["컨설팅", "Lvl2", 4.5], ["개발", "Lvl3", 4]]);
+  eq("master leaves out project-only settings (vendor rates, systems)", Object.keys(M.masterOf(ep.settings)).filter(k => ["vendor_rates", "systems", "dept_common_basis"].includes(k)), []);
+  const mst = M.masterOf(M.defaultSettings());
+  mst.internal_grades[0].rate = 9000000; mst.areas = ["컨설팅", "개발"]; mst.proposal_roles[2].rates.Lvl3 = 8500000;
+  const prj = ep.settings; prj.internal_grades.push({ grade: "인턴", rate: 3000000 });
+  const ch = M.masterChanges(prj, mst), merged = M.mergeMaster(prj, mst);
+  eq("master changes listed (rate, area added, proposal rate)", [ch.includes("직급 수석: 8,500,000 → 9,000,000"), ch.includes("영역 추가: 컨설팅"), ch.some(x => x.startsWith("제안 직무 개발:"))], [true, true, true]);
+  eq("merge master: values updated, project extras and vendor rates kept", [merged.internal_grades.find(g => g.grade === "수석").rate, merged.internal_grades.some(g => g.grade === "인턴"), merged.areas.includes("컨설팅") && merged.areas.includes("PMO"), merged.vendor_rates.length, merged.proposal_roles[2].rates.Lvl3], [9000000, true, true, 6, 8500000]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -38,7 +38,9 @@
       ...(st.external_grades || []).map(g => ["외주등급", String(g), "등급목록", ""]),
       ...(st.vendor_rates || []).map(r => ["외주업체단가", r.vendor || "", r.grade || "", num(r.rate)]),
       ...(st.vendor_rates || []).filter(r => r.raise_rate !== undefined && r.raise_rate !== "").map(r => ["외주업체인상", `${r.vendor || ""} ${r.grade || ""}`, r.raise_ym || "", num(r.raise_rate)]),
-      ...(st.areas || []).map(a => ["담당영역", String(a), "", ""]),
+      ...(st.areas || []).map(a => ["영역", String(a), "", ""]),
+      ...(st.systems || []).map(a => ["대표시스템", String(a), "", ""]),
+      ...(st.proposal_roles || []).flatMap(r => (st.proposal_levels || []).map(l => ["제안단가", r.role || "", l, num((r.rates || {})[l])])),
       ...(st.approvers || []).map((a, i) => ["결재자", ["기안(PM)", "검토", "사업팀장", "영업팀장", "본부장"][i] || `결재${i + 1}`, "", String(a || "")]),
       ...(st.departments || []).map(a => ["부서", String(a), "부서매출", num((project.dept_revenue || {})[a])]),
       ...(project.phases || []).flatMap((ph, i) => (st.departments || []).filter(a => num((ph.dept_revenue || {})[a])).map(a => ["회차부서매출", `${i + 1}차 ${ph.title || ""}`, String(a), num(ph.dept_revenue[a])])),
@@ -47,10 +49,10 @@
 
     const d = calc.details;
     const internal = d.internal_labor.map(m => {
-      return { cells: [m.name || "", m.role || "", m.area || "", m.dept || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", { v: m.total_mm, s: "dec" },
+      return { cells: [m.name || "", m.role || "", m.area || "", m.system || "", m.dept || "", m.prop_role || "", m.prop_level || "", m.grade || "", num(m.base_rate), m.overhead_eligible ? "Y" : "N", { v: m.total_mm, s: "dec" },
         ...months.map(mo => ({ v: m.calc[mo].mm, s: "dec" })), m.total_cost] };
     });
-    const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.area || "", e.dept || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, { v: e.total_mm, s: "dec" },
+    const external = d.external_labor.map(e => ({ cells: [e.name || "", e.role || "", e.area || "", e.system || "", e.dept || "", e.prop_role || "", e.prop_level || "", e.vendor || "", e.grade || "", e.default_rate, e.applied_rate, { v: e.total_mm, s: "dec" },
       ...months.map(mo => ({ v: e.calc[mo].mm, s: "dec" })), e.total_cost] }));
     const expIn = e => (e.dist_mode === "fill_all" ? num(e.unit_input) : num(e.total_input));
     const expenses = [
@@ -62,7 +64,8 @@
     const est = calc.estimate;
     const estimate = [
       { cells: [{ v: "견적번호", s: "label" }, est.estimate_no, { v: "견적일자", s: "label" }, est.estimate_date, { v: "매출적용여부", s: "label" }, est.applied_to_revenue ? "Y" : "N"] },
-      head(["항목명", "규격/등급", "수량", "단가", "금액", "비고"]),
+      head(["항목명", "규격/등급", "수량(MM)", "단가", "금액", "비고"]),
+      ...est.labor.map(l => ({ cells: [`인건비 · ${l.role || "?"}`, l.level || "", { v: l.mm, s: "dec" }, l.applied_rate, l.amount, l.memo || ""] })),
       ...est.items.map(it => ({ cells: [it.item_name || "", it.spec || "", { v: it.qty, s: "dec" }, it.unit_price, it.amount, it.memo || ""] })),
       { cells: ["공급가액 합계", "", "", "", est.supply_total, ""], style: "total" },
       { cells: ["부가세(10%)", "", "", "", est.vat, ""], style: "total" },
@@ -79,8 +82,8 @@
     return [
       { name: "01_Project_Info", cols: [22, 48], rows: [head(["항목", "내용"]), ...info] },
       { name: "02_Project_Settings", cols: widths(4, 22), rows: [head(["구분", "항목1(업체/등급/키)", "항목2(등급/유형)", "값(단가/비율/설명)"]), ...settingsRows] },
-      { name: "03_Internal_Labor", cols: widths(9 + months.length), rows: [head(["성명", "역할", "담당영역", "부서", "등급", "기준단가", "인비례포함", "총MM", ...mHead, "합계금액"]), ...internal] },
-      { name: "04_External_Labor", cols: widths(10 + months.length), rows: [head(["성명/구분", "역할", "담당영역", "부서", "외주업체", "등급", "기준단가", "적용단가", "총MM", ...mHead, "합계금액"]), ...external] },
+      { name: "03_Internal_Labor", cols: widths(12 + months.length), rows: [head(["성명", "역할", "영역", "대표시스템", "부서", "제안직무", "제안등급", "직급", "기준단가", "인비례포함", "총MM", ...mHead, "합계금액"]), ...internal] },
+      { name: "04_External_Labor", cols: widths(13 + months.length), rows: [head(["성명/구분", "역할", "영역", "대표시스템", "부서", "제안직무", "제안등급", "외주업체", "등급", "기준단가", "적용단가", "총MM", ...mHead, "합계금액"]), ...external] },
       { name: "05_Expenses", cols: widths(6 + months.length), rows: [head(["구분", "경비계정/항목", "분배방식", "입력금액", ...mHead, "합계금액", "부서(비우면 공통)"]), ...expenses] },
       { name: "06_Phases", cols: widths(14), rows: [head(["회차", "구분", "시작월", "종료월", "회차매출", "회차원가", "회차이익률(%)", "누적매출", "누적원가", "잔여매출", "잔여원가", "내부인건비", "외주인건비", "경비"]), ...phases] },
       { name: "07_Estimate", cols: widths(6, 18), freeze: false, rows: estimate },
@@ -101,6 +104,8 @@
       { name: "Internal_Grades", cols: [16, 16, 16], rows: [head(["grade", "monthly_rate", "raise_rate"]), ...(st.internal_grades || []).map(g => ({ cells: [g.grade || "", num(g.rate), g.raise_rate === undefined || g.raise_rate === "" ? "" : num(g.raise_rate)] }))] },
       { name: "External_Grades", cols: [16], rows: [head(["grade"]), ...(st.external_grades || []).map(g => ({ cells: [String(g)] }))] },
       { name: "External_Rates", cols: [16, 12, 16, 12, 16], rows: [head(["vendor", "grade", "monthly_rate", "raise_ym", "raise_rate"]), ...(st.vendor_rates || []).map(r => ({ cells: [r.vendor || "", r.grade || "", num(r.rate), r.raise_ym || "", r.raise_rate === undefined || r.raise_rate === "" ? "" : num(r.raise_rate)] }))] },
+      { name: "Proposal_Rates", cols: [16, 10, 16], rows: [head(["role", "level", "monthly_rate"]), ...(st.proposal_roles || []).flatMap(r => (st.proposal_levels || []).map(l => ({ cells: [r.role || "", l, num((r.rates || {})[l])] })))] },
+      { name: "Areas", cols: [20], rows: [head(["area"]), ...(st.areas || []).map(a => ({ cells: [String(a)] }))] },
       { name: "Expense_Accounts", cols: [18, 14, 16, 32], rows: [head(["account", "category", "unit_amount(원/MM)", "desc"]), ...(st.expense_accounts || []).map(a => ({ cells: [a.account || "", a.category || "general", PC.Model.isMmCategory(a.category) ? num(a.unit_amount) : "", a.desc || ""] }))] },
       { name: "Master_JSON", hidden: true, rows: X.jsonRows(st) }
     ];

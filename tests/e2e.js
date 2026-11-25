@@ -120,7 +120,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Arrow keys and Enter move between cells like a spreadsheet (Enter on the last person goes to the blank new row)", f1 === "internal_labor.1.mm.2026-01" && f2 === "internal_labor.1.mm.2026-02" && f3 === "internal_labor", JSON.stringify([f1, f2, f3]));   // 마지막 사람 줄에서 Enter → 새 줄(이름 칸)
     const paste = (sel, text) => page.evaluate(([s2, t]) => { const el = document.querySelector(s2); el.focus(); const dt = new DataTransfer(); dt.setData("text/plain", t); el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, [sel, text]);
     // 엑셀에서 복사한 여러 줄 (성명 · 역할 · 등급) 을 새 줄에 붙여넣기 → 인력 2명 추가, 없는 등급은 빨갛게
-    await paste('input[data-new="internal_labor"]', "박신규\t개발\tPMO\t책임\r\n최추가\tQA\t\t없는등급\r\n");
+    await paste('input[data-new="internal_labor"]', "박신규\t개발\tPMO\t\t책임\r\n최추가\tQA\t\t\t없는등급\r\n");
     await page.waitForFunction(() => PC.App.S.proj.internal_labor.length === 4, null, { timeout: 3000 }).catch(() => {});
     const pv = await page.evaluate(() => ({ rows: PC.App.S.proj.internal_labor.map(r => [r.name, r.role, r.area, r.grade, r.base_rate]), invalid: document.querySelectorAll("select.invalid").length }));
     check("Pasting rows copied from Excel adds people (area · grade; grade sets the rate; unknown grade shown in red)", pv.rows.length === 4 && pv.rows[2].join() === "박신규,개발,PMO,책임,7200000" && pv.rows[3][3] === "없는등급" && pv.invalid === 1, JSON.stringify(pv));
@@ -209,6 +209,43 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Settings has sub-tabs; the area list takes a new entry like a grid", (await page.evaluate(() => PC.App.S.proj.settings.areas.slice(-1)[0])) === "데이터" && (await page.$$(".seg-btn")).length >= 6);
     await page.evaluate(() => document.activeElement.blur());
     await page.keyboard.press("Control+z");
+
+    // 고객 제안 직무 × 등급 단가(기준정보) → 인력의 제안 직무 · 등급(부가정보) → 견적 인건비 = 견적 MM × 제안 단가
+    await page.click('[data-act="showSettings"][data-args*="proposal"]');
+    const pHeads = await page.$$eval('table.grid[data-list="settings.proposal_roles"] thead th', t => t.map(x => x.innerText.trim()).filter(Boolean));
+    await page.fill(B("settings.proposal_roles.2.rates.Lvl3"), "8,500,000"); await page.keyboard.press("Tab");
+    await page.waitForFunction(() => PC.App.S.proj.settings.proposal_roles[2].rates.Lvl3 === 8500000, null, { timeout: 3000 }).catch(() => {});
+    await page.click('[data-act="showTab"][data-args*="estimate"]');
+    await page.click('[data-act="estimateFromPlan"]'); await page.click('.dialog button[data-id="ok"]');
+    await page.waitForFunction(() => PC.App.S.proj.estimate.labor.length === 3 && PC.App.S.proj.estimate.labor[1].mm === 4.5, null, { timeout: 3000 }).catch(() => {});
+    const est = await page.evaluate(() => ({ lines: PC.App.S.calc.estimate.labor.map(l => [l.role, l.level, l.mm, l.amount]), total: PC.App.S.calc.estimate.labor_total, cols: document.querySelectorAll('th.prop').length }));
+    check("Proposal role x level rates in settings; estimate labor built from the plan's proposal role/level (estimate MM editable)",
+      pHeads.join() === "제안 직무,Lvl1,Lvl2,Lvl3,Lvl4,Lvl5" && JSON.stringify(est.lines) === JSON.stringify([["프로젝트관리", "Lvl1", 6, 78000000], ["컨설팅", "Lvl2", 4.5, 54000000], ["개발", "Lvl3", 4, 34000000]]) && est.total === 166000000, JSON.stringify({ pHeads, est }));
+    await page.keyboard.press("Control+z"); await page.keyboard.press("Control+z");
+
+    // 마스터: 이름을 붙여 저장 → 본사에서 받은 마스터 파일 올리기(바뀌는 것 먼저 보여 줌) → 이 프로젝트에 반영(외주업체 단가는 그대로)
+    await page.click('[data-act="showTab"][data-args*="settings"]');
+    await page.click('[data-act="showSettings"][data-args*="basics"]');
+    await page.click('[data-act="saveDefaults"]');
+    await page.waitForSelector(".dialog-form"); await page.fill('.dialog [data-key="name"]', "2026-11 전사 기준정보"); await page.click('.dialog button[data-id="ok"]');
+    await page.waitForFunction(() => (PC.App.S.master.master_version || {}).name === "2026-11 전사 기준정보", null, { timeout: 5000 }).catch(() => {});
+    const savedMaster = await page.evaluate(() => [PC.App.S.master.master_version.name, PC.App.S.master.vendor_rates === undefined]);
+    const PCm = require("../js/util.js"); require("../js/xlsx.js"); require("../js/model.js"); require("../js/workbook.js");
+    const hq = PCm.Model.masterOf(PCm.Model.defaultSettings());
+    hq.internal_grades[0].rate = 9100000; hq.areas = ["컨설팅", "개발"]; hq.master_version = { name: "본사 2027 단가", date: "2026-12-01" };
+    const hqBuf = Buffer.from(await PCm.Xlsx.build(PCm.Workbook.masterSheets(hq)).arrayBuffer());
+    await page.setInputFiles("#masterInput", { name: "master_rates.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: hqBuf });
+    await page.waitForSelector(".dialog");
+    const upMsg = await page.textContent(".dialog");
+    await page.click('.dialog button[data-id="ok"]');
+    await page.waitForFunction(() => PC.App.S.master.internal_grades[0].rate === 9100000, null, { timeout: 5000 }).catch(() => {});
+    const rateBefore = await page.evaluate(() => PC.App.S.proj.settings.internal_grades[0].rate);
+    await page.click('[data-act="applyMaster"]'); await page.click('.dialog button[data-id="ok"]');
+    const applied = await page.evaluate(() => ({ rate: PC.App.S.proj.settings.internal_grades[0].rate, vendors: PC.App.S.proj.settings.vendor_rates.length, areas: PC.App.S.proj.settings.areas.join(), ver: PC.App.S.proj.settings.master_version.name }));
+    check("Master: saved with a name (no project-only data), uploaded file shows changes first, then applied to the project keeping vendor rates and project extras",
+      savedMaster[0] === "2026-11 전사 기준정보" && savedMaster[1] && upMsg.includes("직급 수석: 8,500,000 → 9,100,000") && upMsg.includes("본사 2027 단가") && rateBefore === 8500000 && applied.rate === 9100000 && applied.vendors === 6 && applied.areas.includes("PMO") && applied.areas.includes("컨설팅") && applied.ver === "본사 2027 단가",
+      JSON.stringify({ savedMaster, upMsg: upMsg.slice(0, 200), rateBefore, applied }));
+    for (let k = 0; k < 2; k++) await page.keyboard.press("Control+z");
     await page.click('[data-act="showTab"][data-args*="internal"]');
 
     // MM 은 소수 둘째 자리까지
@@ -345,6 +382,13 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     await page.click('[data-act="restoreVersion"]'); await page.click('.dialog button[data-id="ok"]');
     const rv = await page.evaluate(() => ({ rev: PC.App.S.proj.contract_revenue, ext: PC.App.S.proj.external_labor.length, n: PC.App.S.proj.versions.length }));
     check("Restoring a version brings its data back (versions kept)", rv.rev === 240000000 && rv.ext === 1 && rv.n === 1, JSON.stringify(rv));
+    // 버전 덮어쓰기: 같은 번호 · 이름에 지금 자료
+    await page.evaluate(() => { PC.App.S.proj.contract_revenue = 255000000; PC.App.render(); });
+    await page.click('[data-act="overwriteVersion"]'); await page.click('.dialog button[data-id="ok"]');
+    await page.waitForFunction(() => PC.App.S.proj.versions[0].data.contract_revenue === 255000000 && !document.getElementById("saveState").classList.contains("dirty"), null, { timeout: 5000 }).catch(() => {});
+    const ow = await page.evaluate(() => ({ n: PC.App.S.proj.versions.length, no: PC.App.S.proj.versions[0].no, name: PC.App.S.proj.versions[0].name, rev: PC.App.S.proj.versions[0].data.contract_revenue }));
+    check("A saved version can be overwritten with the current data (same number and name)", ow.n === 1 && ow.no === 1 && ow.name === "초기 계획" && ow.rev === 255000000, JSON.stringify(ow));
+    await page.evaluate(() => { PC.App.S.proj.contract_revenue = 240000000; PC.App.render(); });
     if (shotDir) await page.screenshot({ path: path.join(shotDir, "light_versions.png"), fullPage: true });
     await page.keyboard.press("Control+s");
     await page.waitForFunction(() => PC.App.S.file === "PRJ-2026-01.xlsx");

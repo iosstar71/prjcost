@@ -92,7 +92,12 @@
       await this.saveMaster(defaults);
       return defaults;
     },
-    async saveMaster(settings) { await this._write(await this._sub("master"), "master_rates.xlsx", X.build(W.masterSheets(settings))); },
+    // 마스터 저장: 바꾸기 전 파일은 backups/master_rates_<시각>.xlsx 로
+    async saveMaster(settings) {
+      const dir = await this._sub("master"), cur = await this._file(dir, "master_rates.xlsx");
+      if (cur) { try { await this._write(await this._sub("backups"), `master_rates_${stamp()}.xlsx`, cur); } catch (e) { console.warn("[Store] master backup", e); } }
+      await this._write(dir, "master_rates.xlsx", X.build(W.masterSheets(M.masterOf(settings))));
+    },
 
     // ---- 프로젝트 ----
     async listProjects() {
