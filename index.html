@@ -17,14 +17,15 @@
     <div class="bar-group grow">
       <button class="folder-chip off" id="folderChip" data-act="connectFolder" title="프로젝트 엑셀을 읽고 쓰는 폴더 — 눌러서 바꾸기"><i data-icon="folder"></i><span class="name">폴더 연결</span></button>
       <select id="projectSelect" data-act="openSelected" aria-label="프로젝트 목록"></select>
-      <button class="btn" data-act="newProject"><i data-icon="plus"></i>새 프로젝트</button>
-      <label class="btn file-btn" title="이 프로그램으로 저장한 엑셀 또는 업로드 양식을 엽니다"><i data-icon="upload"></i>엑셀 열기<input type="file" accept=".xlsx" id="uploadInput" /></label>
+      <button class="btn" data-act="newProject" title="새 프로젝트"><i data-icon="plus"></i><span class="lbl">새 프로젝트</span></button>
+      <label class="btn file-btn" title="이 프로그램으로 저장한 엑셀 또는 업로드 양식을 엽니다"><i data-icon="upload"></i><span class="lbl">엑셀 열기</span><input type="file" accept=".xlsx" id="uploadInput" /></label>
     </div>
     <div class="bar-group">
       <button class="btn icon-only" data-act="undo" id="btnUndo" title="되돌리기 (Ctrl+Z)" aria-label="되돌리기"><i data-icon="undo"></i></button>
       <button class="btn icon-only" data-act="redo" id="btnRedo" title="다시 하기 (Ctrl+Y)" aria-label="다시 하기"><i data-icon="redo"></i></button>
       <span class="save-state" id="saveState"></span>
       <button class="btn" data-act="exportReport" title="통합보고 · 항목별 상세 · 투입현황 엑셀"><i data-icon="report"></i>보고서</button>
+      <button class="btn" data-act="exportTemplate" title="회사 보고서 양식(templates 폴더)에 값을 채워 새 파일로"><i data-icon="template"></i>양식 출력</button>
       <button class="btn" data-act="saveVersion" title="지금 자료를 이름(초기 계획 · 실계약 · 수정계약 …)과 메모를 붙여 남기고 저장"><i data-icon="flag"></i>버전 저장</button>
       <button class="btn primary" data-act="save" title="Ctrl+S"><i data-icon="save"></i>저장</button>
       <button class="btn" data-act="toggleTheme" id="btnTheme" title="밝게 / 어둡게"></button>
@@ -53,6 +54,8 @@
   <script src="js/xlsx.js"></script>
   <script src="js/model.js"></script>
   <script src="js/workbook.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/builtin-templates.js"></script>
   <script src="js/store.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/views.js"></script>

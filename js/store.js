@@ -39,6 +39,7 @@
       for (const name of ["master", "projects", "backups", "templates", "reports"]) await dir.getDirectoryHandle(name, { create: true });
       await (await dir.getDirectoryHandle("backups")).getDirectoryHandle("deleted", { create: true });
       this.dir = dir;
+      try { await this.ensureTemplates(); } catch (e) { console.warn("[Store] builtin templates", e); }
       this.label = dir === handle ? handle.name : `${handle.name}/data`;
       return true;
     },
@@ -152,6 +153,24 @@
     },
 
     async saveReport(blob, name) { await this._write(await this._sub("reports"), name, blob); },
+
+    // ---- 보고서 양식 (templates/*.xlsx, 업로드 양식 제외) ----
+    async listTemplates() {
+      const dir = await this._sub("templates"), out = [];
+      for await (const [name, h] of dir.entries()) if (h.kind === "file" && PC.Template.isReportTemplate(name)) out.push(name);
+      return out.sort((a, b) => a.localeCompare(b, "ko"));
+    },
+    async templateFile(name) { return this._file(await this._sub("templates"), name); },
+    // 기본 양식이 폴더에 없으면 넣어 줌 (이미 있으면 사용자가 고친 것이므로 그대로)
+    async ensureTemplates() {
+      const dir = await this._sub("templates"), all = PC.BUILTIN_TEMPLATES || {};
+      for (const [name, b64] of Object.entries(all)) {
+        if (await this._file(dir, name)) continue;
+        const bin = atob(b64), bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        await this._write(dir, name, new Blob([bytes]));
+      }
+    },
 
     // ---- 올리기 (폴더 밖의 엑셀): 이 프로그램이 저장한 파일 또는 업로드 양식 ----
     async readUpload(fileObj, master) {

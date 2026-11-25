@@ -275,3 +275,12 @@ table.grid td > select.s-md { min-width: 124px; }
 table.grid td > select.s-lg { min-width: 140px; }
 table.fill td > input:not([type="checkbox"]):not([type="number"]) { width: 100%; min-width: 0; }
 table.fill td > input[type="month"] { min-width: 150px; }
+
+/* 프로젝트 개요: 결재자 다섯 칸 · 기준정보: 양식 자리표시 목록 */
+.approvers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.approvers label { display: grid; gap: 3px; }
+.approvers small { color: var(--muted); font-size: var(--fs-xs); }
+table.keys code { font-size: var(--fs-xs); background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+
+/* 머리줄이 한 줄에 들어가지 않는 폭: 새 프로젝트 · 엑셀 열기는 아이콘만 (설명은 title) */
+@media (max-width: 1366px) { .topbar .lbl { display: none; } }

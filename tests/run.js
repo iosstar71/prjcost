@@ -10,6 +10,7 @@ const PC = require("../js/util.js");
 require("../js/calc.js");
 require("../js/xlsx.js");
 require("../js/model.js");
+require("../js/template.js");
 
 let pass = 0, fail = 0;
 const eq = (name, got, want) => {
@@ -154,6 +155,26 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   dp.phases[1].override_cost = 50000000;
   const po = PC.Calc.phaseDeptSummary(dp, PC.Calc.calculateProjectCost(dp, dp.settings))[1];
   eq("phase x dept: override cost scaled to the dept ratio", [po.overridden, po.total.cost], [true, 50000000]);
+
+  // 보고서 양식: 자리표시 칸에만 값 (숫자는 숫자로 → 양식 서식), 섞인 글은 글자로, 모르는 이름은 알림
+  const T = PC.Template, tp = M.demoProject(M.defaultSettings());
+  tp.project_type = "SI-AD"; tp.approvers = ["김철수", "", "", "", "정본부"]; tp.settings.departments = ["SI사업부", "AI사업부"];
+  tp.custom_costs.push({ name: "AI예비비", dist_mode: "equal_total", total_input: 3000000, unit_input: 0, monthly: {}, memo: "" });
+  tp.versions = [{ no: 1, name: "수주협 3차", saved_at: "2026-01-02 10:00:00", data: Object.assign(M.snapshot(tp), { contract_revenue: 200000000 }) },
+    { no: 2, name: "수주협 4차", saved_at: "2026-02-02 10:00:00", data: Object.assign(M.snapshot(tp), { contract_revenue: 230000000 }) }];
+  const tc = PC.Calc.calculateProjectCost(tp, tp.settings), tv = T.values(tp, tc, { lastSaved: new Date(2026, 10, 25) });
+  eq("template values: cost split (AI reserve apart), margin, hurdle, gap, latest version", [tv.노무비, tv.외주비, tv.경비, tv.AI예비비, tv.총원가, PC.pyRound(tv.수주마진율, 4), tv.허들, PC.pyRound(tv.Gap, 4), tv.최근버전이름, tv.최근버전매출, tv.시작일, tv.종료일, tv.귀속부서],
+    [79800000, 31600000, 13600000, 3000000, 128000000, 0.4667, 0.18, 0.2867, "수주협 4차", 230000000, "2026.01.01", "2026.06.30", "SI사업부"]);
+  const tf = fs.readFileSync(path.join(__dirname, "..", "data", "templates", "Offline사업검토서.xlsx"));
+  const filled = await T.fill(tf, tv);
+  const fwb = await X.read(Buffer.from(await filled.blob.arrayBuffer())), sh = fwb.sheet("사업개요").rows;
+  const at = ref => { const m = /^([A-Z]+)(\d+)$/.exec(ref); const col = m[1].charCodeAt(0) - 65; return (sh[Number(m[2]) - 1] || [])[col]; };
+  eq("template fill: numbers stay numbers, mixed text replaced, approvers, empty value cleared", [at("D8"), at("I8"), at("D9"), at("F4"), at("G4"), at("D13"), PC.pyRound(at("F13"), 4), at("E38"), String(at("D7")).split("\n")[0], filled.unknown.length],
+    [240000000, "SI-AD", "2026.01.01 ~ 2026.06.30 (6개월)", "김철수", "", 79800000, 0.6234, 230000000, "1. 과제명 : 차세대 원가·공정 시스템 구축", 0]);
+  eq("template fill: empty values reported", filled.empty.includes("결재2"), true);
+  const odd = await X.read(Buffer.from(await (await T.fill(X.build([{ name: "S", rows: [["{{없는값}}", "합계 {{매출액}}원"]] }]), tv)).blob.arrayBuffer()));
+  eq("template fill: our own xlsx (inline strings) and unknown keys", odd.sheet("S").rows[0], ["", "합계 240,000,000원"]);
+  eq("output name: 양식_ID_이름_최종작성일", T.outName("Offline사업검토서.xlsx", { project_id: "PRJ-1", project_name: "A/B 구축" }, new Date(2026, 10, 25)), "Offline사업검토서_PRJ-1_A_B 구축_20261125.xlsx");
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

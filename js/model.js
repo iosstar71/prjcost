@@ -56,7 +56,8 @@
       project_id: id || `PRJ-${y}-NEW`, project_name: "신규 프로젝트", client_name: "", pm_name: "", sales_rep: "", description: "",
       date_mode: "month", start_date: `${y}-01`, end_date: `${y}-06`, contract_revenue: 0, target_hurdle_rate: 18.0,
       settings: ensureMmAccounts(clone(settings || defaultSettings())),
-      internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate(), versions: [], dept_revenue: {}
+      internal_labor: [], external_labor: [], general_expenses: [], custom_costs: [], phases: [], estimate: emptyEstimate(), versions: [], dept_revenue: {},
+      project_type: "", approvers: ["", "", "", "", ""]
     };
   }
 
@@ -116,6 +117,8 @@
     });
     if (out.settings.raise_month === undefined) out.settings.raise_month = "";
     if (!Array.isArray(out.versions)) out.versions = [];
+    out.approvers = [0, 1, 2, 3, 4].map(i => String(((Array.isArray(out.approvers) ? out.approvers : [])[i]) || ""));   // 보고서 결재 칸 (기안 · 검토 · 사업팀장 · 영업팀장 · 본부장)
+    if (typeof out.project_type !== "string") out.project_type = "";
     if (!Array.isArray(out.settings.departments)) out.settings.departments = [];
     if (!out.settings.dept_common_basis) out.settings.dept_common_basis = "cost";
     if (!out.dept_revenue || typeof out.dept_revenue !== "object") out.dept_revenue = {};

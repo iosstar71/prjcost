@@ -18,6 +18,7 @@ PM Hub(저장소 `ioagent2`)의 자매 프로그램이라 화면 색(Slate · Ob
 | 알림 · 확인 창 | `js/ui.js` |
 | 선 아이콘 | `js/icons.js` (`PC.icon(이름)`, HTML 은 `<i data-icon>`) — 이모지 대신 |
 | 보고서 엑셀 | `js/workbook.js` `reportSheets` |
+| 보고서 양식(템플릿) 채우기 · 자리표시 목록 | `js/template.js` (`KEYS` · `values` · `fill`), 문서 `docs/TEMPLATE_KEYS.md`. 기본 양식은 `python3 tools/make_templates.py` → `data/templates/*.xlsx` + `js/builtin-templates.js` |
 | 꾸밈 (색 변수) | `assets/app.css` |
 
 ## 규칙

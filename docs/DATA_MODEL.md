@@ -14,6 +14,7 @@
 | internal_labor[] | name · role · area(담당 영역) · dept(부서) · grade · base_rate(비우면 등급 단가) · overhead_eligible · target_mm(총 MM — 달별 MM 을 고치면 그 합) · mm{YYYY-MM: MM} |
 | external_labor[] | name · role · area · dept · vendor · grade · custom_rate(적용단가, 비우면 업체 · 등급 단가) · base_rate(단가표에 없을 때) · target_mm · mm{} |
 | dept_revenue | 부서별 매출 {부서 이름: 원} — 부서 2개 이상일 때 [부서별] 탭에서 입력 |
+| project_type · approvers[5] | 보고서 양식용: 프로젝트 Type, 결재자 이름 (기안(PM) · 검토 · 사업팀장 · 영업팀장 · 본부장) |
 | versions[] | 버전(기준선): no · name(초기 계획 · 실계약 …) · memo · saved_at · data(그때의 프로젝트 자료 — versions 는 빼고) |
 | general_expenses[] · custom_costs[] | name · dept(비우면 공통) · dist_mode(`equal_total` 총액 균등 / `fill_all` 매달 같은 금액 / `manual` 달마다) · total_input · unit_input · monthly{} · memo |
 | phases[] (최대 5) | title · start_ym · end_ym · revenue · override_cost(비우면 기간 원가 합) · dept_revenue{부서: 원}(회차 × 부서 매출) |

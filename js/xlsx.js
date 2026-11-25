@@ -162,7 +162,7 @@
 
   function parseSheet(xml, shared) {
     const rows = [];
-    (xml.match(/<row\b[\s\S]*?(?:<\/row>|\/>)/g) || []).forEach((rowXml, i) => {
+    (xml.match(/<row\b[^>]*\/>|<row\b[^>]*>[\s\S]*?<\/row>/g) || []).forEach((rowXml, i) => {
       const rTag = /^<row\b[^>]*>/.exec(rowXml)[0];
       const rIdx = Number(attr(rTag, "r") || i + 1) - 1;
       const row = [];
@@ -193,6 +193,6 @@
   const jsonRows = obj => { const s = JSON.stringify(obj); const out = []; for (let i = 0; i < s.length || i === 0; i += JSON_CHUNK) out.push([s.slice(i, i + JSON_CHUNK)]); return out; };
   const readJson = sheet => { if (!sheet) return null; const s = sheet.rows.map(r => (r && r[0] !== undefined ? String(r[0]) : "")).join(""); return s.trim() ? JSON.parse(s) : null; };
 
-  PC.Xlsx = { build, read, jsonRows, readJson, colName };
+  PC.Xlsx = { build, read, jsonRows, readJson, colName, zip, unzip, xmlEsc, xmlUnesc };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Xlsx;
 })(typeof window !== "undefined" ? window : globalThis);

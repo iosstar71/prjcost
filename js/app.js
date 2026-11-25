@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.6";
+  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.7";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -371,6 +371,29 @@
       } catch (e) { UI.toast(e.message, "error"); }
     },
     save: () => save(false),
+    // 양식 출력: templates 폴더의 회사 양식에 값을 채워 새 파일로 (양식 파일은 그대로)
+    async exportTemplate() {
+      let names = [];
+      try { names = Store.dir ? await Store.listTemplates() : Object.keys(PC.BUILTIN_TEMPLATES || {}); } catch (e) { console.warn("[App] templates", e); }
+      if (!names.length) return UI.toast("templates 폴더에 보고서 양식(xlsx)이 없습니다.", "error");
+      const f = await UI.form("양식 출력", `고른 양식의 {{자리표시}} 칸에 이 프로젝트의 값을 넣어 새 파일로 만듭니다. 양식은 ${Store.dir ? `${Store.label}/templates` : "기본 양식"} 에 있습니다.`,
+        [{ key: "name", label: "보고서 양식", choices: names.map(n => ({ v: n, t: n.replace(/\.xlsx$/i, "") })), value: S.lastTemplate && names.includes(S.lastTemplate) ? S.lastTemplate : names[0] }], "출력");
+      if (!f) return;
+      S.lastTemplate = f.name;
+      try {
+        let src = Store.dir ? await Store.templateFile(f.name) : null;
+        if (!src) { const b = atob((PC.BUILTIN_TEMPLATES || {})[f.name] || ""); src = Uint8Array.from(b, ch => ch.charCodeAt(0)); }
+        const lastSaved = S.file && S.mtime && !isDirty() ? new Date(S.mtime) : new Date();
+        const r = await PC.Template.fill(src, PC.Template.values(S.proj, Calc.calculateProjectCost(S.proj, S.master), { lastSaved }));
+        const name = PC.Template.outName(f.name, S.proj, lastSaved);
+        UI.download(r.blob, name);
+        if (Store.dir) { try { await Store.saveReport(r.blob, name); } catch (e) { console.warn("[App] report copy", e); } }
+        const notes = [];
+        if (r.unknown.length) notes.push(`모르는 자리표시 ${r.unknown.map(k => `{{${k}}}`).join(", ")} — 빈칸으로 둠`);
+        if (r.empty.length) notes.push(`값이 없는 칸: ${r.empty.join(", ")}`);
+        UI.toast(`${name} 을(를) 만들었습니다${Store.dir ? " (reports 폴더에도 저장)" : ""}.${notes.length ? " " + notes.join(" · ") : ""}`, r.unknown.length ? "error" : "ok");
+      } catch (e) { console.error(e); UI.toast(`양식을 채우지 못했습니다: ${e.message}`, "error"); }
+    },
     // 보고서: 통합보고 · 항목별 상세 2시트 엑셀 — 내려받고, 폴더가 연결돼 있으면 reports 폴더에도 남김
     async exportReport() {
       const calc = Calc.calculateProjectCost(S.proj, S.master);
