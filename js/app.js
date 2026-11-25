@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v0.9.13";
+  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.0";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -366,19 +366,18 @@
       render();
       UI.toast(`견적 공급가액 ${won(sup)}원을 계약 매출로 넣었습니다.`, "ok");
     },
-    async loadDemo() {
-      if (!(await UI.confirm("데모 채우기", "지금 화면의 내용을 예시 자료로 바꿉니다. 계속할까요?", "채우기"))) return;
-      pushUndo();
-      const keepFile = S.file;
-      S.proj = M.demoProject(S.master);
-      S.file = keepFile;
-      render();
+    // 샘플 프로젝트 추가: 예시 자료로 새 프로젝트(저장 전)를 엶 — 지금 프로젝트 파일은 그대로
+    async addSample() {
+      if (!(await UI.confirm("샘플 프로젝트 추가", "예시 자료가 든 새 프로젝트를 엽니다. 지금 프로젝트 파일은 그대로이고, 샘플은 [저장]해야 파일로 남습니다.", "추가"))) return;
+      if (!(await guardDirty())) return;
+      setProject(M.sampleProject(S.master), null, null);
+      UI.toast("샘플 프로젝트를 열었습니다 — 저장 전입니다.");
     },
     // 마스터를 이 프로젝트에 반영: 무엇이 바뀌는지 보여 주고 (항목 더하기 · 같은 이름은 마스터 값으로)
     async applyMaster() {
       const changes = M.masterChanges(S.proj.settings, S.master).filter(x => !x.startsWith("(마스터에 없음)"));
       if (!changes.length) return UI.toast("이 프로젝트의 기준정보가 이미 마스터와 같습니다.");
-      if (!(await UI.confirm("마스터 반영", `${changes.length}가지가 바뀝니다 (이미 있는 항목의 금액 · 프로젝트에서 더한 항목 · 외주업체 단가 · 대표 시스템은 그대로):\n\n${changes.slice(0, 15).join("\n")}${changes.length > 15 ? `\n… 외 ${changes.length - 15}가지` : ""}`, "반영"))) return;
+      if (!(await UI.confirm("마스터 반영", `${changes.length}가지가 바뀝니다 (이미 있는 항목의 금액 · 프로젝트에서 더한 항목 · 외주업체 단가 · 시스템은 그대로):\n\n${changes.slice(0, 15).join("\n")}${changes.length > 15 ? `\n… 외 ${changes.length - 15}가지` : ""}`, "반영"))) return;
       pushUndo();
       S.proj.settings = M.mergeMaster(S.proj.settings, S.master);
       render();
@@ -388,7 +387,7 @@
     async saveDefaults() {
       if (!(await needFolder())) return;
       const today = new Date().toISOString().slice(0, 10);
-      const f = await UI.form("마스터로 저장", "이 프로젝트의 마스터 목록(직급 · 기술등급 · 제안 직무/등급 · 영역 · 경비 계정 · 부서 · 결재자)을 폴더의 마스터(master_rates.xlsx)로 저장합니다. 금액 · 외주업체 · 대표 시스템은 넣지 않습니다. 이전 마스터는 backups 폴더에 남습니다.",
+      const f = await UI.form("마스터로 저장", "이 프로젝트의 마스터 목록(직급 · 기술등급 · 제안 직무/등급 · 영역 · 경비 계정 · 부서 · 결재자)을 폴더의 마스터(master_rates.xlsx)로 저장합니다. 금액 · 외주업체 · 시스템은 넣지 않습니다. 이전 마스터는 backups 폴더에 남습니다.",
         [{ key: "name", label: "마스터 이름 (배포 구분용)", value: ((S.master || {}).master_version || {}).name || `${today.slice(0, 7)} 전사 기준정보` }], "저장");
       if (!f) return;
       const st = M.masterOf(S.proj.settings);

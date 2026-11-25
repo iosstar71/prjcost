@@ -305,3 +305,5 @@ table.grid td.ro { padding: 0 10px; color: var(--text); font-weight: 600; }
 /* 표 첫 칸: 위 · 아래 · 아래에 넣기 · 지우기 */
 table.grid td.c.nowrap .btn.ins { padding: 2px; min-width: 0; border: 0; background: transparent; color: var(--muted); }
 table.grid td.c.nowrap .btn.ins:hover { color: var(--primary); background: var(--primary-tint); }
+.tbl-wrap:has(> table.est-sum) { max-width: 760px; }
+table.est-sum td.c { white-space: nowrap; }

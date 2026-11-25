@@ -90,7 +90,7 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     // 데모 채우기는 기준정보 > 기본값 · 데모
     await page.click('[data-act="showTab"][data-args*="settings"]');
     await page.evaluate(id => PC.App.A.showSettings(id), "forms");
-    await page.click('[data-act="loadDemo"]'); await page.click('.dialog button[data-id="ok"]');
+    await page.click('[data-act="addSample"]'); await page.click('.dialog button[data-id="ok"]');
     await page.click('[data-act="showTab"][data-args*="info"]');
     const demo = await page.evaluate(() => PC.App.S.calc.summary);
     check("Demo project: same figures as the v4 demo (revenue 240,000,000)", demo.revenue === 240000000 && demo.total_cost > 0, JSON.stringify(demo));
@@ -244,6 +244,13 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     await page.click('[data-act="estimateFromPlan"]'); await page.click('.dialog button[data-id="ok"]');
     await page.waitForFunction(() => PC.App.S.proj.estimate.labor.length === 3 && PC.App.S.proj.estimate.labor[1].mm === 4.5, null, { timeout: 3000 }).catch(() => {});
     const est = await page.evaluate(() => ({ lines: PC.App.S.calc.estimate.labor.map(l => [l.role, l.level, l.mm, l.amount]), total: PC.App.S.calc.estimate.labor_total, cols: document.querySelectorAll('th.prop').length }));
+    // 견적 할인 · 절사: 화면에서 할인율 · 절사 단위를 넣으면 공급가액이 바뀜
+    await page.fill(B("estimate.discount_rate"), "3.5"); await page.keyboard.press("Tab");
+    await page.selectOption(B("estimate.round_unit"), "100000");
+    await page.waitForFunction(() => PC.App.S.calc.estimate.truncation > 0, null, { timeout: 3000 }).catch(() => {});
+    const disc = await page.evaluate(() => { const e = PC.App.S.calc.estimate; return [e.discount_rate, e.round_unit, e.supply_total % 100000, e.supply_total < e.subtotal]; });
+    check("Estimate: discount rate and truncation unit applied to the supply amount", disc.join() === "3.5,100000,0,true", JSON.stringify(disc));
+    await page.keyboard.press("Control+z"); await page.keyboard.press("Control+z");
     check("Proposal role x level rates in settings; estimate labor built from the plan's proposal role/level (estimate MM editable)",
       pHeads.join() === "제안 직무,Lvl1,Lvl2,Lvl3,Lvl4,Lvl5" && JSON.stringify(est.lines) === JSON.stringify([["프로젝트관리", "Lvl1", 6, 78000000], ["컨설팅", "Lvl2", 4.5, 54000000], ["개발", "Lvl3", 4, 34000000]]) && est.total === 166000000, JSON.stringify({ pHeads, est }));
     await page.keyboard.press("Control+z"); await page.keyboard.press("Control+z");

@@ -91,8 +91,8 @@
   }
 
   // ---------------- 인력 표 (내부 · 외주 공통) ----------------
-  // 대표 시스템(프로젝트 기준정보) · 고객 제안 직무 · 등급(마스터 — 견적서에 씀, 인력 표에서는 부가정보)
-  const systemCol = p => ({ b: "system", t: "text", l: "대표 시스템", th: `<th>대표 시스템</th>`, cell: (r, base) => `<td>${sel(`${base}.system`, r.system || "", [{ v: "", t: "-" }].concat(p.settings.systems || []), { label: "대표 시스템", cls: "s-md" })}</td>` });
+  // 시스템(프로젝트 기준정보) · 고객 제안 직무 · 등급(마스터 — 견적서에 씀, 인력 표에서는 부가정보)
+  const systemCol = p => ({ b: "system", t: "text", l: "시스템", th: `<th>시스템</th>`, cell: (r, base) => `<td>${sel(`${base}.system`, r.system || "", [{ v: "", t: "-" }].concat(p.settings.systems || []), { label: "시스템", cls: "s-md" })}</td>` });
   const siteCol = p => ({ b: "site", t: "text", l: "근무지", th: `<th>근무지</th>`, cell: (r, base) => `<td>${sel(`${base}.site`, r.site || "", [{ v: "", t: "-" }].concat(p.settings.work_sites || []), { label: "근무지", cls: "s-sm" })}</td>` });
   const propCols = p => [
     { b: "prop_role", t: "text", l: "제안직무", th: `<th class="prop" title="고객 제안 직무 — 견적서의 인건비를 만들 때 씀">제안 직무</th>`, cell: (r, base) => `<td class="prop">${sel(`${base}.prop_role`, r.prop_role || "", [{ v: "", t: "-" }].concat((p.settings.proposal_roles || []).map(x => x.role)), { label: "제안 직무", cls: "s-md" })}</td>` },
@@ -225,6 +225,7 @@
   }
 
   // ---------------- 견적서 ----------------
+  const ROUND_UNITS = [{ v: "1", t: "절사 안 함" }, { v: "10", t: "10원 단위" }, { v: "100", t: "100원 단위" }, { v: "1000", t: "1,000원 단위" }, { v: "10000", t: "10,000원 단위" }, { v: "100000", t: "100,000원 단위" }, { v: "1000000", t: "1,000,000원 단위" }];
   function estimate(p, c) {
     const est = c.estimate, st = p.settings;
     const roles = (st.proposal_roles || []).map(x => x.role), levels = st.proposal_levels || [];
@@ -257,21 +258,27 @@
       <div class="tbl-wrap"><table class="fill est"><thead><tr><th class="w-del"></th><th class="l" colspan="2">항목명</th><th>수량</th><th>단가(원)</th><th>금액(원)</th><th class="l">비고</th></tr></thead><tbody>
         ${items || empty(7, "등록된 품목이 없습니다.")}
         <tr class="total"><td></td><td colspan="4" class="l">기타 항목 소계</td><td class="num">${won(est.items_total)}</td><td></td></tr>
-        <tr class="total"><td></td><td colspan="4" class="l">공급가액</td><td class="num">${won(est.supply_total)}</td><td></td></tr>
-        <tr class="auto"><td></td><td colspan="4" class="l">부가세 (10%)</td><td class="num">${won(est.vat)}</td><td></td></tr>
-        <tr class="total"><td></td><td colspan="4" class="l">견적 총액 (VAT 포함)</td><td class="num">${won(est.grand_total)}</td><td></td></tr>
+      </tbody></table></div></section>
+      <section class="mt">${subHead("견적 금액", "합계 → 할인 → 절사 → 공급가액 (VAT 별도)")}
+      <div class="tbl-wrap"><table class="est-sum"><tbody>
+        <tr><td class="l">합계 (인건비 + 기타 항목)</td><td></td><td class="num">${won(est.subtotal)}</td></tr>
+        <tr><td class="l">할인</td><td class="c nowrap">${inp("estimate.discount_rate", p.estimate.discount_rate || "", { type: "number", step: "0.1", kind: "num", cls: "w-xs", ph: "0", label: "할인율(%)" })} %</td><td class="num">${est.discount ? `− ${won(est.discount)}` : "-"}</td></tr>
+        <tr><td class="l">절사</td><td class="c">${sel("estimate.round_unit", String(p.estimate.round_unit || 1), ROUND_UNITS, { kind: "num", label: "절사 단위", cls: "s-md" })}</td><td class="num">${est.truncation ? `− ${won(est.truncation)}` : "-"}</td></tr>
+        <tr class="total"><td class="l">공급가액 (VAT 별도)</td><td></td><td class="num">${won(est.supply_total)}</td></tr>
+        <tr class="auto"><td class="l">부가세 (10%)</td><td></td><td class="num">${won(est.vat)}</td></tr>
+        <tr class="total"><td class="l">견적 총액 (VAT 포함)</td><td></td><td class="num">${won(est.grand_total)}</td></tr>
       </tbody></table></div></section>`;
   }
 
   // ---------------- 기준정보: 작은 탭으로 한 번에 한 목록 (목록 길이가 달라도 화면이 어긋나지 않게) ----------------
   // 기준정보 = 프로젝트 설정(단가 · 금액 · 프로젝트마다 다른 것) + 마스터(전사 공통 목록 — 금액 없음, master_rates.xlsx 로 배포)
   const SETTING_GROUPS = [
-    { id: "project", label: "프로젝트 설정", desc: "이 프로젝트에만 적용 — 단가 · 금액 · 대표 시스템", tabs: [
+    { id: "project", label: "프로젝트 설정", desc: "이 프로젝트에만 적용 — 단가 · 금액 · 시스템", tabs: [
       { id: "rates", label: "인건비 단가" },
       { id: "vendors", label: "외주업체 단가", count: st => (st.vendor_rates || []).length },
       { id: "proposal_rates", label: "제안 단가" },
-      { id: "systems", label: "대표 시스템", count: st => (st.systems || []).length },
-      { id: "forms", label: "보고서 양식 · 데모" }] },
+      { id: "systems", label: "시스템", count: st => (st.systems || []).length },
+      { id: "forms", label: "보고서 양식 · 샘플" }] },
     { id: "master", label: "마스터 (전사 공통)", desc: "전사가 같이 쓰는 목록 — 금액 없음. 고친 뒤 [마스터 파일 > 마스터로 저장]으로 배포", tabs: [
       { id: "grades", label: "직급 · 기술등급", count: st => (st.internal_grades || []).length + (st.external_grades || []).length },
       { id: "proposal", label: "제안 직무 · 등급", count: st => (st.proposal_roles || []).length },
@@ -315,11 +322,11 @@
           ...levels.map(l => ({ b: `rates.${l}`, t: "blank-num", l, th: `<th>${esc(l)}</th>`, cell: (r, base) => `<td>${inp(`${base}.rates.${l}`, (r.rates || {})[l], { money: true, kind: "blank-num", cls: "w-md", label: `${r.role} ${l}` })}</td>` }))] })
         + fromMaster("제안 직무 · 등급");
     }
-    else if (sub === "systems") body = narrow(subHead("대표 시스템", "인력마다 대표 시스템 하나 — [투입 현황]에서 시스템별로 봅니다")
-      + gridTable({ order: true, list: "settings.systems", rows: st.systems || [], newLabel: "시스템 입력", cols: [text("", "대표 시스템")] }));
+    else if (sub === "systems") body = narrow(subHead("시스템", "인력마다 시스템 하나 — [투입 현황]에서 시스템별로 봅니다")
+      + gridTable({ order: true, list: "settings.systems", rows: st.systems || [], newLabel: "시스템 입력", cols: [text("", "시스템")] }));
     else if (sub === "forms") body = narrow(`<section class="sub-card">${subHead("보고서 양식", "머리줄 [사업검토서]")}<p class="muted">자료 폴더의 templates 에 있는 엑셀 양식(xlsx)의 {{자리표시}} 칸에 값을 넣어 새 파일로 만듭니다. 양식은 Excel 에서 직접 고치고, 값이 들어갈 칸에 아래 이름을 {{이름}} 으로 적으면 됩니다. 칸에 자리표시 하나만 있으면 숫자는 숫자로 들어가 양식의 통화 · % 서식이 적용됩니다(비율은 0.4667 같은 소수).</p>
         <div class="tbl-wrap flat"><table class="keys fit"><thead><tr><th class="l">자리표시</th><th class="l">값</th><th class="l">이 프로젝트에서</th></tr></thead><tbody>${(() => { const v = PC.Template.values(p, c, {}); return PC.Template.KEYS.map(([k, t]) => `<tr><td class="l"><code>{{${esc(k)}}}</code></td><td class="l">${esc(t)}</td><td class="l">${esc(typeof v[k] === "number" ? (Math.abs(v[k]) < 1 && v[k] !== 0 ? `${(v[k] * 100).toFixed(2)}%` : won(v[k])) : v[k])}</td></tr>`).join(""); })()}</tbody></table></div></section>
-      <section class="sub-card">${subHead("데모")}<p class="muted">화면을 익히거나 시연할 때 — 지금 프로젝트의 내용을 예시 자료로 바꿉니다.</p>${btn("데모 채우기", "loadDemo", [], "", "예시 자료로 채우기")}</section>`);
+      <section class="sub-card">${subHead("샘플 프로젝트")}<p class="muted">화면을 익히거나 시연할 때 — 예시 자료가 든 새 프로젝트를 엽니다 (지금 프로젝트는 그대로).</p>${btn("샘플 프로젝트 추가", "addSample", [], "", "예시 자료로 새 프로젝트", "plus")}</section>`);
     // ---- 마스터 (전사 공통 목록) ----
     else if (sub === "grades") body = `<div class="split-2 even"><div>${subHead("내부 직급", "단가는 [프로젝트 설정 > 인건비 단가]")}${gridTable({ order: true, list: "settings.internal_grades", rows: st.internal_grades || [], newLabel: "직급 입력", cols: [text("grade", "직급", "w-md")] })}</div>
       <div>${subHead("기술등급", "내부 · 외주 인력이 같이 씀 — 외주 업체별 단가는 [프로젝트 설정 > 외주업체 단가]")}${gridTable({ order: true, list: "settings.external_grades", rows: st.external_grades || [], newLabel: "기술등급 입력", cols: [text("", "기술등급", "w-md")] })}</div></div>`;
@@ -340,7 +347,7 @@
       const mv = (ctx.master && ctx.master.master_version) || {}, pv = st.master_version || {};
       const mvText = v => (v && (v.name || v.date) ? `${v.name || "이름 없음"}${v.date ? ` (${v.date})` : ""}` : "이름 없음");
       body = narrow(`<section class="sub-card">${subHead("마스터 파일 (master/master_rates.xlsx)", "직급 · 기술등급 · 제안 직무/등급 · 영역 · 근무지 · 경비 계정 · 부서 · 결재자 — 금액은 넣지 않음")}
-        <p class="muted">마스터는 전사가 같이 쓰는 목록을 배포하는 기본값입니다. 새 프로젝트는 마스터의 목록으로 시작하고, 프로젝트에서 항목을 더 넣을 수 있습니다. 단가 · 금액 · 외주업체 · 대표 시스템은 프로젝트마다 [프로젝트 설정]에서 넣습니다.</p>
+        <p class="muted">마스터는 전사가 같이 쓰는 목록을 배포하는 기본값입니다. 새 프로젝트는 마스터의 목록으로 시작하고, 프로젝트에서 항목을 더 넣을 수 있습니다. 단가 · 금액 · 외주업체 · 시스템은 프로젝트마다 [프로젝트 설정]에서 넣습니다.</p>
         <div class="mini-kpis"><div class="mini-kpi"><span>폴더의 마스터</span><b>${esc(mvText(mv))}</b></div><div class="mini-kpi"><span>이 프로젝트가 쓴 마스터</span><b>${esc(mvText(pv))}</b></div></div>
         <div class="bar-group">${btn("마스터를 이 프로젝트에 반영", "applyMaster", [], "primary", "마스터에만 있는 항목을 이 프로젝트에 더함 (이미 있는 항목 · 금액은 그대로)", "download")}
           <label class="btn file-btn" title="본사에서 받은 master_rates.xlsx 로 폴더의 마스터를 바꿉니다">${icon("upload")}마스터 파일 올리기<input type="file" accept=".xlsx" id="masterInput"></label>
@@ -350,7 +357,7 @@
   }
 
   // ---------------- 투입 현황: 영역 · 등급 · 역할 · 업체별 MM · 금액 (분할계약 기간만도) ----------------
-  const STAT_BY = [{ v: "area", t: "영역" }, { v: "system", t: "대표 시스템" }, { v: "grade", t: "직급 · 기술등급" }, { v: "proposal", t: "제안 직무 · 등급" }, { v: "role", t: "역할" }, { v: "vendor", t: "업체 (내부 / 외주업체)" }, { v: "kind", t: "내부 · 외주" }];
+  const STAT_BY = [{ v: "area", t: "영역" }, { v: "system", t: "시스템" }, { v: "grade", t: "직급 · 기술등급" }, { v: "proposal", t: "제안 직무 · 등급" }, { v: "role", t: "역할" }, { v: "vendor", t: "업체 (내부 / 외주업체)" }, { v: "kind", t: "내부 · 외주" }];
   const STAT_SCOPE = [{ v: "all", t: "전체 인력" }, { v: "internal", t: "내부만" }, { v: "external", t: "외주만" }];
   function stats(p, c, ctx) {
     const o = ctx.stats || {}, by = o.by === "dept" && !M.multiDept(p) ? "area" : o.by || "area", scope = o.scope || "all", ph = c.phases[o.phase - 1];
@@ -364,7 +371,7 @@
     const rows = r.rows.map(g => `<tr><td class="l"><b>${esc(g.key)}</b></td><td class="c">${g.people}</td>${r.months.map(m => `<td class="num${g.mm[m] ? "" : " muted"}">${g.mm[m] ? g.mm[m] : "-"}</td>`).join("")}
       <td class="num"><b>${g.total_mm}</b></td><td class="bar-cell"><span class="bar"><i class="k-internal_labor" style="width:${Math.min(100, g.mm_share)}%"></i></span></td><td class="num">${g.mm_share.toFixed(1)}%</td><td class="num">${won(g.cost)}</td><td class="num">${g.share.toFixed(1)}%</td></tr>`).join("");
     const kpi = (lbl, v) => `<div class="mini-kpi"><span>${esc(lbl)}</span><b>${v}</b></div>`;
-    return head("chart", "투입 현황", "인력 계획을 영역 · 대표 시스템 · 직급 · 제안 직무 · 역할 · 업체별로 모아 봅니다", "")
+    return head("chart", "투입 현황", "인력 계획을 영역 · 시스템 · 직급 · 제안 직무 · 역할 · 업체별로 모아 봅니다", "")
       + `<div class="stat-bar"><label class="field"><span>모아 볼 기준</span>${seg("by", byList, by)}</label><label class="field"><span>인력</span>${seg("scope", STAT_SCOPE, scope)}</label><label class="field"><span>기간 (분할계약)</span>${phaseSel}</label></div>
       <div class="mini-kpis">${kpi("기간", `${r.months.length}개월${ph ? ` · ${esc(ph.title)}` : ""}`)}${kpi("투입 인원", `${r.total.people}명`)}${kpi("총 MM", r.total.total_mm)}${kpi("인건비", `${won(r.total.cost)}원`)}</div>
       <div class="tbl-wrap"><table><thead><tr><th class="l">${esc(label)}</th><th>인원</th>${mh}<th>총 MM</th><th class="bar-cell">MM 비중</th><th></th><th>인건비(원)</th><th>금액 비중</th></tr></thead>

@@ -1,5 +1,5 @@
 // =============================================================================
-// 자료 모양 — 기본 기준정보 · 새 프로젝트 · 데모 · 예전 자료 채우기 · 업로드 양식 읽기
+// 자료 모양 — 기본 기준정보 · 새 프로젝트 · 샘플 · 예전 자료 채우기 · 업로드 양식 읽기
 //  자료 정의는 docs/DATA_MODEL.md. 필드를 바꾸면 그 문서와 normalize() 를 함께 고친다
 // =============================================================================
 (function (root) {
@@ -22,7 +22,7 @@
       dept_common_basis: "cost", // 공통경비(부서를 정하지 않은 경비)를 나누는 기준
       approvers: ["", "", "", "", ""],   // 보고서 결재자 (기안(PM) · 검토 · 사업팀장 · 영업팀장 · 본부장) — 인사이동이 있을 때만 바꿈
       areas: ["PMO", "분석 · 설계", "개발", "테스트", "인프라"],   // 인력의 영역 (마스터)
-      systems: [],                // 대표 시스템 (프로젝트마다) — 인력마다 하나
+      systems: [],                // 시스템 (프로젝트마다) — 인력마다 하나
       work_sites: ["본사", "고객사", "원격"],   // 근무지 (마스터) — 인력마다 고름
       // 고객 제안 직무 × 등급 → 제안 단가 (견적서). 등급 체계는 모든 직무가 같음
       proposal_levels: ["Lvl1", "Lvl2", "Lvl3", "Lvl4", "Lvl5"],
@@ -52,7 +52,7 @@
   }
 
   // ---------- 마스터 (전사에서 같이 쓰는 기준정보 — master/master_rates.xlsx 로 배포) ----------
-  //  마스터 = 전사 공통 목록(이름)뿐 — 금액(직급 단가 · 인상단가 · 제안 단가 · 인비례 기준금액)과 프로젝트마다 다른 것(외주업체 단가 · 대표 시스템 · 연봉 인상월 · 공통경비 기준)은 넣지 않음
+  //  마스터 = 전사 공통 목록(이름)뿐 — 금액(직급 단가 · 인상단가 · 제안 단가 · 인비례 기준금액)과 프로젝트마다 다른 것(외주업체 단가 · 시스템 · 연봉 인상월 · 공통경비 기준)은 넣지 않음
   const PROJECT_ONLY = ["vendor_rates", "external_rates", "systems", "dept_common_basis", "raise_month"];
   function masterOf(settings) {
     const m = clone(settings || {});
@@ -116,7 +116,7 @@
     return settings;
   }
 
-  const emptyEstimate = () => ({ estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, labor: [], items: [] });
+  const emptyEstimate = () => ({ estimate_no: "", estimate_date: "", note: "", applied_to_revenue: false, labor: [], items: [], discount_rate: 0, round_unit: 1 });   // 할인율(%) · 절사 단위(원)
 
   function newProject(settings, id) {
     const y = new Date().getFullYear();
@@ -132,14 +132,14 @@
     };
   }
 
-  // 화면 확인 · 교육용 예시 (원본의 [데모 채우기]와 같은 자료)
-  function demoProject(settings) {
+  // 샘플 프로젝트: 화면 확인 · 교육용 예시
+  function sampleProject(settings) {
     const p = newProject(settings, "PRJ-2026-01");
-    // 데모: 3월 연봉 인상(수석 · 선임), 외주 파트너A 고급은 4월부터 협상 단가
+    // 샘플: 3월 연봉 인상(수석 · 선임), 외주 파트너A 고급은 4월부터 협상 단가
     p.settings.raise_month = "03";
     p.settings.internal_grades.forEach(g => { if (g.grade === "수석") g.raise_rate = 8800000; if (g.grade === "선임") g.raise_rate = 6200000; });
     p.settings.vendor_rates.forEach(v => { if (v.vendor === "파트너A" && v.grade === "고급") Object.assign(v, { raise_ym: "2026-04", raise_rate: 8000000 }); });
-    // 데모는 인비례 기준금액을 채워 자동 계산이 보이게
+    // 샘플은 인비례 기준금액을 채워 자동 계산이 보이게
     p.settings.expense_accounts.forEach(a => { if (a.category === "mm_internal" && !num(a.unit_amount)) a.unit_amount = 300000; if (a.category === "mm_external" && !num(a.unit_amount)) a.unit_amount = 100000; });
     p.settings.systems = ["원가관리", "공정관리"];
     Object.assign(p, {
@@ -259,6 +259,6 @@
     return p;
   }
 
-  PC.Model = { PROJECT_ONLY, masterOf, masterChanges, mergeMaster, multiDept, VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, demoProject, normalize, fromTemplateRows, emptyEstimate, legacyNote };
+  PC.Model = { PROJECT_ONLY, masterOf, masterChanges, mergeMaster, multiDept, VERSION_NAMES, snapshot, nextVersionName, restoreVersion, CATEGORIES, isMmCategory, defaultSettings, newProject, sampleProject, normalize, fromTemplateRows, emptyEstimate, legacyNote };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Model;
 })(typeof window !== "undefined" ? window : globalThis);

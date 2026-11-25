@@ -22,6 +22,7 @@
     ["노무비율", "노무비 ÷ 총 원가 (소수)"], ["외주비율", "외주비 ÷ 총 원가"], ["경비율", "경비 ÷ 총 원가"], ["AI예비비율", "AI예비비 ÷ 총 원가"], ["총원가율", "1 (100%)"],
     ["매출마진", "매출 − 총 원가"], ["수주마진율", "매출마진 ÷ 매출 (소수)"], ["허들", "목표 허들 이익률 (소수)"], ["Gap", "수주마진율 − 허들 (소수)"],
     ["최근버전이름", "가장 최근 저장한 버전 이름"], ["최근버전매출", "그 버전의 계약 매출"], ["최근버전마진율", "그 버전의 수주마진율 (소수)"],
+    ["견적합계", "견적 합계 (인건비 + 기타, 할인 전)"], ["견적할인율", "견적 할인율 (소수)"], ["견적할인액", "할인 금액"], ["견적절사액", "절사 금액"], ["견적공급가", "견적 공급가액 (할인 · 절사 후, VAT 별도)"],
     ["작성일", "출력한 날 YYYY.MM.DD"], ["최종작성일", "프로젝트를 마지막으로 저장한 날 YYYY.MM.DD"],
     // 원가상세 (달은 첫 달부터 M1 … M12 — 1년까지, 넘는 달은 빠짐)
     ["월1 … 월12", "달 머리글 (예: 26.01) — 기간 밖은 빈칸"],
@@ -69,6 +70,7 @@
       노무비율: ratio(b.internal_labor), 외주비율: ratio(b.external_labor), 경비율: ratio(expense), AI예비비율: ai ? ratio(ai) : "", 총원가율: total > 0 ? 1 : 0,
       매출마진: margin, 수주마진율: mRate, 허들: hurdle, Gap: mRate - hurdle,
       최근버전이름: last ? last.name || "" : "", 최근버전매출: lastRev, 최근버전마진율: lastRate,
+      견적합계: calc.estimate.subtotal, 견적할인율: calc.estimate.discount_rate / 100, 견적할인액: calc.estimate.discount, 견적절사액: calc.estimate.truncation, 견적공급가: calc.estimate.supply_total,
       작성일: dot(ymd(today)), 최종작성일: dot(ymd(saved)),
       ...detailValues(project, calc)
     };
@@ -121,6 +123,28 @@
   };
   const CELL = /<c\b[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g;
   const ROW = /<row\b[^>]*\/>|<row\b[^>]*>[\s\S]*?<\/row>/g;
+  const colNo = ref => [...ref].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
+  // 열 숨기기: <cols> 의 범위를 열 하나씩 나눠 hidden 을 붙임 (없는 열은 새로)
+  function hideCols(xml, set) {
+    const m = /<cols>([\s\S]*?)<\/cols>/.exec(xml);
+    const entries = m ? m[1].match(/<col\b[^>]*\/>/g) || [] : [];
+    const out = [], covered = new Set();
+    const attrOf = (t, a) => Number((new RegExp(`\\b${a}="(\\d+)"`).exec(t) || [])[1]);
+    entries.forEach(t => {
+      const a = attrOf(t, "min"), b = attrOf(t, "max");
+      let overlap = false;
+      for (let c = a; c <= b; c++) { covered.add(c); if (set.has(c)) overlap = true; }
+      if (!overlap) return out.push([a, t]);
+      for (let c = a; c <= b; c++) {
+        let one = t.replace(/\bmin="\d+"/, `min="${c}"`).replace(/\bmax="\d+"/, `max="${c}"`);
+        if (set.has(c)) one = one.replace(/\s+hidden="[^"]*"/, "").replace(/\/>$/, ' hidden="1"/>');
+        out.push([c, one]);
+      }
+    });
+    set.forEach(c => { if (!covered.has(c)) out.push([c, `<col min="${c}" max="${c}" width="9" customWidth="1" hidden="1"/>`]); });
+    const cols = `<cols>${out.sort((x, y) => x[0] - y[0]).map(x => x[1]).join("")}</cols>`;
+    return m ? xml.replace(m[0], cols) : xml.replace("<sheetData", `${cols}<sheetData`);
+  }
   const rowNo = rowXml => Number((/^<row\b[^>]*\br="(\d+)"/.exec(rowXml) || [])[1] || 0);
   // 줄 번호 바꾸기: 줄 · 칸의 r 속성 (A5 → A7)
   const renumber = (rowXml, n) => rowXml.replace(/^<row\b([^>]*?)\br="\d+"/, `<row$1r="${n}"`).replace(/(<c\b[^>]*?\br=")([A-Z]+)\d+"/g, `$1$2${n}"`);
@@ -190,6 +214,14 @@
     names.filter(n => /^xl\/worksheets\/[^/]+\.xml$/i.test(n)).forEach(n => {
       let xml = text(n);
       if (!xml.includes("{{") && !shared.some(t => t && t.includes("{{"))) return;
+      // 기간 밖의 달: 머리글 칸이 {{월N}} 이고 값이 없으면 그 열을 숨김 (열을 지우면 수식 · 병합이 어긋나므로 숨기기로)
+      const hide = new Set();
+      (xml.match(CELL) || []).forEach(cXml => {
+        const tag = /^<c\b[^>]*?\/?>/.exec(cXml)[0], t = cellText(cXml, (/\st="([^"]*)"/.exec(tag) || [])[1], shared);
+        const m = t && /^\s*\{\{\s*(월\d+)\s*\}\}\s*$/.exec(t), ref = (/\br="([A-Z]+)\d+"/.exec(tag) || [])[1];
+        if (m && ref && has(vals, m[1]) && (vals[m[1]] === "" || vals[m[1]] === null)) hide.add(colNo(ref));
+      });
+      if (hide.size) xml = hideCols(xml, hide);
       const grow = [];   // [템플릿 줄, 늘어난 줄 수]
       let offset = 0;
       xml = xml.replace(/<sheetData>([\s\S]*?)<\/sheetData>/, (m, body) => `<sheetData>${body.replace(ROW, rowXml => {

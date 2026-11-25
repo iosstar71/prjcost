@@ -69,7 +69,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
 
   // 기본 프로젝트 · 데모: 계산이 돌고 이익률이 나옴
   const M = PC.Model;
-  const demo = M.demoProject(M.defaultSettings());
+  const demo = M.sampleProject(M.defaultSettings());
   const c = PC.Calc.calculateProjectCost(demo, M.defaultSettings());
   eq("demo project calculates (6 months, revenue 240,000,000)", [c.months.length, c.summary.revenue], [6, 240000000]);
   eq("normalize fills missing parts of an old project", Object.keys(M.normalize({ project_id: "A" }, M.defaultSettings())).sort(), Object.keys(M.newProject(M.defaultSettings())).sort());
@@ -114,7 +114,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("phase cost = internal + external + expense", c.phases.map(ph => PC.pyRound(ph.internal_labor + ph.external_labor + ph.expense, 2) === ph.cost), c.phases.map(() => true));
 
   // 버전(기준선): 남긴 자료와 지금을 비교, 불러오기는 ID · 버전 목록을 지킴
-  const vp = M.demoProject(M.defaultSettings());
+  const vp = M.sampleProject(M.defaultSettings());
   vp.versions = [{ no: 1, name: "초기 계획", data: M.snapshot(vp) }];
   eq("snapshot leaves out the version list", vp.versions[0].data.versions, undefined);
   vp.external_labor = []; vp.contract_revenue = 250000000;
@@ -127,7 +127,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("restore brings back the data, keeps ID and versions", [rv.external_labor.length, rv.contract_revenue, rv.project_id, rv.versions.length], [1, 240000000, "KEEP", 1]);
 
   // 부서별 손익: 인력 · 인비례는 사람의 부서, 경비는 항목의 부서(공통은 기준대로), 매출은 입력 — 합계 = 통합
-  const dp = M.demoProject(M.defaultSettings());
+  const dp = M.sampleProject(M.defaultSettings());
   eq("one department or none = no department screens", [M.multiDept(dp), M.multiDept(Object.assign({}, dp, { settings: Object.assign({}, dp.settings, { departments: ["SI"] }) }))], [false, false]);
   dp.settings.departments = ["SI", "AI"];
   dp.internal_labor[0].dept = "SI"; dp.internal_labor[1].dept = "AI"; dp.external_labor[0].dept = "SI";
@@ -157,7 +157,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("phase x dept: override cost scaled to the dept ratio", [po.overridden, po.total.cost], [true, 50000000]);
 
   // 보고서 양식: 자리표시 칸에만 값 (숫자는 숫자로 → 양식 서식), 섞인 글은 글자로, 모르는 이름은 알림
-  const T = PC.Template, tp = M.demoProject(M.defaultSettings());
+  const T = PC.Template, tp = M.sampleProject(M.defaultSettings());
   tp.project_type = "SI-AD"; tp.settings.approvers = ["김철수", "", "", "", "정본부"]; tp.approvers = ["옛이름"]; tp.settings.departments = ["SI사업부", "AI사업부"];
   tp.custom_costs.push({ name: "AI예비비", dist_mode: "equal_total", total_input: 3000000, unit_input: 0, monthly: {}, memo: "" });
   tp.versions = [{ no: 1, name: "수주협 3차", saved_at: "2026-01-02 10:00:00", data: Object.assign(M.snapshot(tp), { contract_revenue: 200000000 }) },
@@ -190,7 +190,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("report: sheets and the total cost shown on the summary", [rs.map(x => x.name).join(), flat.includes("총 원가"), flat.includes(PC.Calc.calculateProjectCost(dp, dp.settings).summary.total_cost)], ["01_통합보고,02_항목별상세,03_투입현황,04_부서별손익", true, true]);
 
   // 제안 직무 · 등급 → 견적 인건비, 마스터 (전사 기준정보) 반영 · 비교
-  const ep = M.demoProject(M.defaultSettings()), ec = PC.Calc.calculateProjectCost(ep, ep.settings).estimate;
+  const ep = M.sampleProject(M.defaultSettings()), ec = PC.Calc.calculateProjectCost(ep, ep.settings).estimate;
   eq("estimate: labor lines = MM x proposal rate (role x level), plus other items", [ec.labor.map(l => l.amount), ec.labor_total, ec.items_total, ec.supply_total], [[78000000, 60000000, 64000000], 202000000, 30000000, 232000000]);
   ep.estimate.labor[0].unit_price = 12000000; ep.estimate.labor.push({ role: "", level: "Lvl1", mm: 1 });
   const ec2 = PC.Calc.calculateProjectCost(ep, ep.settings).estimate;
@@ -208,7 +208,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("new project from a master starts with empty amounts and project-only lists", (() => { const np = M.newProject(mst); return [np.settings.internal_grades[0].rate, np.settings.vendor_rates.length, np.settings.systems.length]; })(), [undefined, 0, 0]);
 
   // OT비용(프로젝트 전체 · 내부 인건비) · 재료비(총 원가): 합계 · 원가 구성 · 부서 합계 = 통합
-  const op = M.demoProject(M.defaultSettings()), oc0 = PC.Calc.calculateProjectCost(op, op.settings);
+  const op = M.sampleProject(M.defaultSettings()), oc0 = PC.Calc.calculateProjectCost(op, op.settings);
   op.ot_cost = 6000000; op.materials = [{ category: "HW", content: "서버", amount: 12000000 }];
   const oc = PC.Calc.calculateProjectCost(op, op.settings), ob = oc.summary.breakdown;
   eq("OT is internal labor, materials add to total cost; month and composition follow", [ob.internal_labor - oc0.summary.breakdown.internal_labor, ob.ot_cost, ob.material, oc.summary.total_cost - oc0.summary.total_cost, oc.summary.composition.map(g => g.key).join(), oc.summary.composition[0].items.map(x => x.name).join()],
@@ -216,6 +216,18 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   op.settings.departments = ["SI", "AI"]; op.internal_labor[0].dept = "SI"; op.internal_labor[1].dept = "AI"; op.external_labor[0].dept = "AI";
   const od = PC.Calc.deptSummary(op, PC.Calc.calculateProjectCost(op, op.settings));
   eq("departments: OT split by internal labor, materials as common — totals reconcile", [od.total.cost, od.total.internal_labor], [oc.summary.total_cost, ob.internal_labor]);
+
+  // 견적: 합계 → 할인(%) → 절사(단위 아래 버림) → 공급가액 · VAT
+  const xp = M.sampleProject(M.defaultSettings());
+  xp.estimate.discount_rate = 3.5; xp.estimate.round_unit = 100000;
+  const xe = PC.Calc.calculateProjectCost(xp, xp.settings).estimate;
+  eq("estimate discount and truncation (232,000,000 → −8,120,000 → 223,880,000 → 223,800,000)", [xe.subtotal, xe.discount, xe.truncation, xe.supply_total, xe.vat], [232000000, 8120000, 80000, 223800000, 22380000]);
+  xp.estimate.discount_rate = 0; xp.estimate.round_unit = 100; xp.estimate.items[0].unit_price = 30009999;
+  eq("truncation by 100 won (…9,999 → …9,900)", PC.Calc.calculateProjectCost(xp, xp.settings).estimate.supply_total, 232009900);
+  // 양식: 기간 밖의 달 열은 숨김 (샘플 6개월 → 5Tier 의 7~12월 열 N~S 숨김, H~M 보임)
+  const t5x = new TextDecoder().decode((await X.unzip(await filled.blob.arrayBuffer()))[Object.keys(await X.unzip(await filled.blob.arrayBuffer())).find(n => /sheet3\.xml$/.test(n))]);
+  const hidden = [...t5x.matchAll(/<col\b[^>]*hidden="1"[^>]*\/>/g)].map(m => Number(/min="(\d+)"/.exec(m[0])[1]));
+  eq("template: month columns outside the period are hidden", [8, 13, 14, 19].map(c => hidden.includes(c)), [false, false, true, true]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

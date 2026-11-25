@@ -90,13 +90,22 @@
       supply = pyRound(supply + amount, 2);
       return Object.assign({}, it, { qty, unit_price: unit, amount });
     });
+    // 할인(합계 × 할인율 %) → 절사(남은 금액을 절사 단위 아래로 버림, 예: 100원 단위면 9,999 → 9,900) → 공급가액
+    const subtotal = supply;
+    const rate = Math.min(100, Math.max(0, num(estimate.discount_rate)));
+    const discount = pyRound((subtotal * rate) / 100, 2);
+    const afterDiscount = pyRound(subtotal - discount, 2);
+    const unit = num(estimate.round_unit) > 1 ? num(estimate.round_unit) : 0;
+    supply = unit ? Math.floor(afterDiscount / unit) * unit : afterDiscount;
+    const truncation = pyRound(afterDiscount - supply, 2);
     const vat = pyRound(supply * 0.1, 2);
     return {
       estimate_no: String(estimate.estimate_no || ""),
       estimate_date: String(estimate.estimate_date || ""),
       note: String(estimate.note || ""),
       applied_to_revenue: !!estimate.applied_to_revenue,
-      labor, labor_total: laborTotal, items, items_total: pyRound(supply - laborTotal, 2), supply_total: supply, vat, grand_total: pyRound(supply + vat, 2)
+      labor, labor_total: laborTotal, items, items_total: pyRound(subtotal - laborTotal, 2), subtotal, discount_rate: rate, discount, round_unit: unit || 1, truncation,
+      supply_total: supply, vat, grand_total: pyRound(supply + vat, 2)
     };
   }
 

@@ -713,6 +713,11 @@
      }
     ],
     "items_total": 249999999.5,
+    "subtotal": 249999999.5,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 249999999.5,
     "vat": 24999999.95,
     "grand_total": 274999999.45
@@ -1413,6 +1418,11 @@
      }
     ],
     "items_total": 143833333.33,
+    "subtotal": 143833333.33,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 143833333.33,
     "vat": 14383333.33,
     "grand_total": 158216666.66
@@ -2672,6 +2682,11 @@
      }
     ],
     "items_total": 190166666.67,
+    "subtotal": 190166666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 190166666.67,
     "vat": 19016666.67,
     "grand_total": 209183333.34
@@ -3609,6 +3624,11 @@
      }
     ],
     "items_total": 204541666.66,
+    "subtotal": 204541666.66,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 204541666.66,
     "vat": 20454166.67,
     "grand_total": 224995833.33
@@ -4936,6 +4956,11 @@
      }
     ],
     "items_total": 665000000,
+    "subtotal": 665000000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 665000000,
     "vat": 66500000,
     "grand_total": 731500000
@@ -6679,6 +6704,11 @@
     "labor_total": 0,
     "items": [],
     "items_total": 0,
+    "subtotal": 0,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -8422,6 +8452,11 @@
      }
     ],
     "items_total": 125000,
+    "subtotal": 125000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 125000,
     "vat": 12500,
     "grand_total": 137500
@@ -9801,6 +9836,11 @@
      }
     ],
     "items_total": 97499999.99,
+    "subtotal": 97499999.99,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 97499999.99,
     "vat": 9750000,
     "grand_total": 107249999.99
@@ -10970,6 +11010,11 @@
      }
     ],
     "items_total": 237541666.67,
+    "subtotal": 237541666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 237541666.67,
     "vat": 23754166.67,
     "grand_total": 261295833.34
@@ -12793,6 +12838,11 @@
     "labor_total": 0,
     "items": [],
     "items_total": 0,
+    "subtotal": 0,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -13868,6 +13918,11 @@
      }
     ],
     "items_total": 238333333.33,
+    "subtotal": 238333333.33,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 238333333.33,
     "vat": 23833333.33,
     "grand_total": 262166666.66
@@ -14744,6 +14799,11 @@
      }
     ],
     "items_total": 166666.67,
+    "subtotal": 166666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 166666.67,
     "vat": 16666.67,
     "grand_total": 183333.34
@@ -17206,6 +17266,11 @@
      }
     ],
     "items_total": 125000,
+    "subtotal": 125000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 125000,
     "vat": 12500,
     "grand_total": 137500
@@ -17828,6 +17893,11 @@
      }
     ],
     "items_total": 237500000,
+    "subtotal": 237500000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 237500000,
     "vat": 23750000,
     "grand_total": 261250000
@@ -18862,6 +18932,11 @@
      }
     ],
     "items_total": 59916666.67,
+    "subtotal": 59916666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 59916666.67,
     "vat": 5991666.67,
     "grand_total": 65908333.34
@@ -19688,6 +19763,11 @@
      }
     ],
     "items_total": 50500000,
+    "subtotal": 50500000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 50500000,
     "vat": 5050000,
     "grand_total": 55550000
@@ -20585,6 +20665,11 @@
     "labor_total": 0,
     "items": [],
     "items_total": 0,
+    "subtotal": 0,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -21178,6 +21263,11 @@
      }
     ],
     "items_total": 2000000,
+    "subtotal": 2000000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 2000000,
     "vat": 200000,
     "grand_total": 2200000
@@ -22252,6 +22342,11 @@
      }
     ],
     "items_total": 12541666.66,
+    "subtotal": 12541666.66,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 12541666.66,
     "vat": 1254166.67,
     "grand_total": 13795833.33
@@ -23016,6 +23111,11 @@
      }
     ],
     "items_total": 1833333.32,
+    "subtotal": 1833333.32,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 1833333.32,
     "vat": 183333.33,
     "grand_total": 2016666.65
@@ -24020,6 +24120,11 @@
      }
     ],
     "items_total": 499999.99,
+    "subtotal": 499999.99,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 499999.99,
     "vat": 50000,
     "grand_total": 549999.99
@@ -25391,6 +25496,11 @@
      }
     ],
     "items_total": 47541666.67,
+    "subtotal": 47541666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 47541666.67,
     "vat": 4754166.67,
     "grand_total": 52295833.34
@@ -26115,6 +26225,11 @@
      }
     ],
     "items_total": 142625000,
+    "subtotal": 142625000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 142625000,
     "vat": 14262500,
     "grand_total": 156887500
@@ -26988,6 +27103,11 @@
     "labor_total": 0,
     "items": [],
     "items_total": 0,
+    "subtotal": 0,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -28798,6 +28918,11 @@
      }
     ],
     "items_total": 1166666.66,
+    "subtotal": 1166666.66,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 1166666.66,
     "vat": 116666.67,
     "grand_total": 1283333.33
@@ -29893,6 +30018,11 @@
      }
     ],
     "items_total": 97666666.67,
+    "subtotal": 97666666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 97666666.67,
     "vat": 9766666.67,
     "grand_total": 107433333.34
@@ -31099,6 +31229,11 @@
      }
     ],
     "items_total": 2958333.33,
+    "subtotal": 2958333.33,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 2958333.33,
     "vat": 295833.33,
     "grand_total": 3254166.66
@@ -32782,6 +32917,11 @@
      }
     ],
     "items_total": 166666.67,
+    "subtotal": 166666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 166666.67,
     "vat": 16666.67,
     "grand_total": 183333.34
@@ -34731,6 +34871,11 @@
      }
     ],
     "items_total": 95166666.67,
+    "subtotal": 95166666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 95166666.67,
     "vat": 9516666.67,
     "grand_total": 104683333.34
@@ -36098,6 +36243,11 @@
      }
     ],
     "items_total": 125000.01,
+    "subtotal": 125000.01,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 125000.01,
     "vat": 12500,
     "grand_total": 137500.01
@@ -36862,6 +37012,11 @@
      }
     ],
     "items_total": 190666666.67,
+    "subtotal": 190666666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 190666666.67,
     "vat": 19066666.67,
     "grand_total": 209733333.34
@@ -38124,6 +38279,11 @@
      }
     ],
     "items_total": 2958333.33,
+    "subtotal": 2958333.33,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 2958333.33,
     "vat": 295833.33,
     "grand_total": 3254166.66
@@ -40887,6 +41047,11 @@
     "labor_total": 0,
     "items": [],
     "items_total": 0,
+    "subtotal": 0,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -42077,6 +42242,11 @@
      }
     ],
     "items_total": 2166666.67,
+    "subtotal": 2166666.67,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 2166666.67,
     "vat": 216666.67,
     "grand_total": 2383333.34
@@ -43513,6 +43683,11 @@
      }
     ],
     "items_total": 12541666.66,
+    "subtotal": 12541666.66,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 12541666.66,
     "vat": 1254166.67,
     "grand_total": 13795833.33
@@ -44599,6 +44774,11 @@
      }
     ],
     "items_total": 1000000,
+    "subtotal": 1000000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 1000000,
     "vat": 100000,
     "grand_total": 1100000
@@ -45651,6 +45831,11 @@
     "labor_total": 0,
     "items": [],
     "items_total": 0,
+    "subtotal": 0,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -46741,6 +46926,11 @@
      }
     ],
     "items_total": 47500000,
+    "subtotal": 47500000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 47500000,
     "vat": 4750000,
     "grand_total": 52250000
@@ -47727,6 +47917,11 @@
     "labor_total": 0,
     "items": [],
     "items_total": 0,
+    "subtotal": 0,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -49115,6 +49310,11 @@
     "labor_total": 0,
     "items": [],
     "items_total": 0,
+    "subtotal": 0,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 0,
     "vat": 0,
     "grand_total": 0
@@ -49717,6 +49917,11 @@
      }
     ],
     "items_total": 95000000,
+    "subtotal": 95000000,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 95000000,
     "vat": 9500000,
     "grand_total": 104500000
@@ -50356,6 +50561,11 @@
      }
     ],
     "items_total": 249999999.5,
+    "subtotal": 249999999.5,
+    "discount_rate": 0,
+    "discount": 0,
+    "round_unit": 1,
+    "truncation": 0,
     "supply_total": 249999999.5,
     "vat": 24999999.95,
     "grand_total": 274999999.45
