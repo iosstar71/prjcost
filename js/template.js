@@ -30,7 +30,7 @@
     ["월1 … 월12", "달 머리글 (예: 26.01) — 기간 밖은 빈칸"],
     ["내부인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 직급 · 제안직무 · 제안등급 · 단가 · 최초단가 · 변경단가 · 변경월 · MM최초 · MM변경 · 총MM · 금액 · M1 … M12(MM)"],
     ["외주인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 업체 · 기술등급 · 제안직무 · 제안등급 · 단가 · 최초단가 · 변경단가 · 변경월 · MM최초 · MM변경 · 총MM · 금액 · M1 … M12(MM)"],
-    ["경비항목.이름", "반복 줄: 구분 · 항목 · 방식 · 기준금액 · 금액 · M1 … M12(금액)"],
+    ["경비항목.이름", "반복 줄: 구분 · 항목 · 설명(기준정보 계정 설명) · 방식 · 기준금액 · 금액 · M1 … M12(금액)"],
     ["내부합계.이름 · 외주합계.이름 · 인건비합계.이름", "인원수 · 총MM · 표시MM(양식의 1년 MM) · 금액 · M1 … M12(MM) · C1 … C12(인건비) — 내부 · 전체 금액은 OT비용 포함"],
     ["재료비항목.이름", "반복 줄: 구분 · 내용 · 금액"],
     ["재료비합계.이름", "금액 · M1 … M12"],
@@ -106,12 +106,15 @@
     out.인건비합계 = Object.assign({ 인원수: people(all), 총MM: sum(all, r => r.total_mm), 표시MM: shownMM(all), 금액: pyRound(calc.summary.breakdown.internal_labor + calc.summary.breakdown.external_labor, 2) }, perMonth(m => sum(all, r => r.calc[m].mm)), perMonth(m => pyRound(sum(all, r => r.calc[m].cost) + num(ot[m]), 2), "C"));
     out.재료비항목 = (d.materials || []).map(x => ({ 구분: x.category || "", 내용: x.content || "", 금액: x.total_cost }));
     out.재료비합계 = Object.assign({ 금액: calc.summary.breakdown.material || 0 }, perMonth(m => num((d.material_monthly || {})[m])));
+    // 계정 설명: 기준정보(마스터)의 경비 계정 설명 — 같은 구분의 같은 이름, 없으면 이름만 같은 계정
+    const accs = (project.settings || {}).expense_accounts || [];
+    const descOf = (name, cat) => { const n = String(name || "").trim(), a = accs.find(x => x.account === n && x.category === cat) || accs.find(x => x.account === n); return (a && a.desc) || ""; };
     const exp = [
-      ...d.general_expenses.map(e => ({ 구분: "일반경비", 항목: e.name || "", 방식: MODE[e.dist_mode] || "", 기준금액: e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), 금액: e.total_cost, m: e.calc_monthly })),
-      ...(d.mm_overheads || []).map(o => ({ 구분: o.category === "mm_internal" ? "인비례(내부)" : "인비례(외주)", 항목: o.account, 방식: "MM × 기준금액", 기준금액: o.unit_amount, 금액: o.total_cost, m: o.calc_monthly })),
-      ...d.custom_costs.map(e => ({ 구분: "기타경비", 항목: e.name || "", 방식: MODE[e.dist_mode] || "", 기준금액: e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), 금액: e.total_cost, m: e.calc_monthly }))
+      ...d.general_expenses.map(e => ({ 구분: "일반경비", 항목: e.name || "", 설명: descOf(e.name, "general"), 방식: MODE[e.dist_mode] || "", 기준금액: e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), 금액: e.total_cost, m: e.calc_monthly })),
+      ...(d.mm_overheads || []).map(o => ({ 구분: o.category === "mm_internal" ? "인비례(내부)" : "인비례(외주)", 항목: o.account, 설명: descOf(o.account, o.category), 방식: "MM × 기준금액", 기준금액: o.unit_amount, 금액: o.total_cost, m: o.calc_monthly })),
+      ...d.custom_costs.map(e => ({ 구분: "기타경비", 항목: e.name || "", 설명: descOf(e.name, "custom"), 방식: MODE[e.dist_mode] || "", 기준금액: e.dist_mode === "fill_all" ? num(e.unit_input) : e.dist_mode === "manual" ? "" : num(e.total_input), 금액: e.total_cost, m: e.calc_monthly }))
     ];
-    out.경비항목 = exp.map(e => Object.assign({ 구분: e.구분, 항목: e.항목, 방식: e.방식, 기준금액: e.기준금액, 금액: e.금액 }, perMonth(m => num(e.m[m]))));
+    out.경비항목 = exp.map(e => Object.assign({ 구분: e.구분, 항목: e.항목, 설명: e.설명, 방식: e.방식, 기준금액: e.기준금액, 금액: e.금액 }, perMonth(m => num(e.m[m]))));
     const expM = m => sum(exp, e => e.m[m]);
     out.경비합계 = Object.assign({ 금액: sum(exp, e => e.금액) }, perMonth(expM));
     const monthCost = m => pyRound(sum(d.internal_labor, r => r.calc[m].cost) + num(ot[m]) + sum(d.external_labor, r => r.calc[m].cost) + num((d.material_monthly || {})[m]) + expM(m), 2);
