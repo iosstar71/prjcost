@@ -12,7 +12,7 @@ names = sorted(n for n in os.listdir(SRC) if n.lower().endswith(".xlsx") and not
 items = {n: base64.b64encode(open(os.path.join(SRC, n), "rb").read()).decode() for n in names}
 out = os.path.join(ROOT, "js", "builtin-templates.js")
 with open(out, "w", encoding="utf-8") as f:
-    f.write("// 기본 보고서 양식 (tools/make_templates.py 가 만듦 — 고치지 말 것). 자료 폴더 templates 에 없으면 처음 연결할 때 넣어 줌\n")
+    f.write("// 기본 보고서 양식 (tools/make_templates.py 또는 [배포용 기본 양식 만들기]가 만듦 — 고치지 말 것). 자료 폴더 templates 에 없으면 처음 연결할 때 넣어 줌\n")
     f.write("(function (root) {\n  \"use strict\";\n  const PC = root.PC || (root.PC = {});\n  PC.BUILTIN_TEMPLATES = {\n")
     f.write(",\n".join("    %s: \"%s\"" % (json.dumps(n, ensure_ascii=False), b) for n, b in items.items()))
     f.write("\n  };\n})(typeof window !== \"undefined\" ? window : globalThis);\n")

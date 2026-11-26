@@ -385,6 +385,20 @@ const b64 = f => fs.readFileSync(f).toString("base64");
     check("Template output: built-in 사업검토서 seeded in templates/, values filled with the template's formats kept, file named 양식_ID_이름_최종작성일",
       tplList.includes("Offline사업검토서_단가고정.xlsx") && tplList.includes("Offline사업검토서_단가변경.xlsx") && /^Offline사업검토서_단가고정_PRJ-2026-01_차세대 원가·공정 시스템 구축_\d{8}\.xlsx$/.test(tname) && /^240000000\|"₩"#,##0\|SI-AD\|김철수\|(FF|00)D9D9D9\|2026\.01\.01 ~ 2026\.06\.30 \(6개월\)\|0\.\d+\|0\.00%\|\d+\|True\|=SUM\(D13:D18\)\|125000000$/.test(tchk), JSON.stringify({ tplList, tname, tchk }));
     const ttoast = await page.evaluate(() => [...document.querySelectorAll(".toast")].map(t => t.textContent).join(" / "));
+    // [관리자용] 배포용 기본 양식: 연결한 폴더의 templates 양식을 담은 builtin-templates.js (같은 형식, 같은 내용)
+    await page.click('[data-act="showTab"][data-args*="settings"]');
+    await page.evaluate(() => { PC.App.A.showSettings("forms"); const o = PC.UI.download; PC.UI.download = (b, n) => { window.__builtinJs = b; PC.UI.download = o; return o(b, n); }; });
+    await page.click('[data-act="buildBuiltinTemplates"]'); await page.click('.dialog button[data-id="ok"]');
+    await page.waitForFunction(() => window.__builtinJs, null, { timeout: 5000 }).catch(() => {});
+    const bt = await page.evaluate(async () => {
+      const js = await window.__builtinJs.text(), box = {}; new Function("window", js)(box);
+      const all = box.PC.BUILTIN_TEMPLATES, names = Object.keys(all);
+      const f = await PC.Store.templateFile(names[0]), u = new Uint8Array(await f.arrayBuffer()); let s = ""; u.forEach(x => { s += String.fromCharCode(x); });
+      return { names, same: all[names[0]] === btoa(s), admin: !!document.querySelector(".admin-card .admin-tag"), name: window.__lastDownload };
+    });
+    check("[Admin] Build default templates: downloads builtin-templates.js holding the folder's templates (same bytes), shown as admin-only",
+      bt.names.includes("Offline사업검토서_단가고정.xlsx") && bt.names.includes("Offline사업검토서_단가변경.xlsx") && bt.same && bt.admin && bt.name === "builtin-templates.js", JSON.stringify(bt));
+    await page.click('[data-act="showTab"][data-args*="info"]');
     check("Template output: totals are formulas with values, and the check against the program passes", /합계 수식 검증 40개 항목 일치/.test(ttoast) && !(await page.$(".overlay")), ttoast);
     await page.keyboard.press("Control+z"); await page.keyboard.press("Control+z");
     check("Theme button says Dark in light mode", (await page.textContent("#btnTheme")).trim() === "Dark");

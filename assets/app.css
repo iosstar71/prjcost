@@ -319,3 +319,8 @@ table.est-sum td.c { white-space: nowrap; }
 /* 매입단가: 단가가 바뀌는 사람 (최초 / 변경) */
 .th-sub { display: block; font-size: var(--fs-xs); font-weight: 600; color: var(--muted); }
 .cell-cost.rate-change { color: var(--warn); }
+
+/* 관리자용 묶음 (배포용 기본 양식 등) */
+.admin-card { border-style: dashed; }
+.admin-tag { background: var(--warn-bg); color: var(--warn); font-weight: 700; margin-left: 8px; }
+.steps-list { margin: 6px 0 8px; padding-left: 20px; }

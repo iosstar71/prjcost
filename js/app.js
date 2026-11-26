@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.5";
+  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.6";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -494,6 +494,21 @@
           await UI.choose("사업검토서 수식 검증", `파일은 만들었지만, 양식의 수식으로 계산한 값이 프로그램 값과 다른 항목이 있습니다. 양식(templates 폴더)의 합계 수식 범위 · 참조를 확인해 주세요.\n\n${ck.failed.slice(0, 10).map(x => `· ${x.name}: 양식 ${show(x.sheet)} / 프로그램 ${show(x.program)}`).join("\n")}${ck.failed.length > 10 ? `\n… 외 ${ck.failed.length - 10}개` : ""}`, [{ id: "ok", label: "확인", cls: "primary" }]);
         }
       } catch (e) { console.error(e); UI.toast(`양식을 채우지 못했습니다: ${e.message}`, "error"); }
+    },
+    // [관리자용] 배포용 기본 양식: 연결한 폴더의 templates 양식을 담은 js/builtin-templates.js 를 내려받음
+    //  → 프로그램 폴더의 같은 파일과 바꿔 배포하면 폴더 연결 전 · 새 자료 폴더에서도 그 양식이 기본 양식 (tools/make_templates.py 와 같은 형식)
+    async buildBuiltinTemplates() {
+      if (!Store.dir) return UI.toast("먼저 [폴더 연결]로 고친 양식이 든 자료 폴더를 연결하세요.", "error");
+      const names = await Store.listTemplates();
+      if (!names.length) return UI.toast("templates 폴더에 보고서 양식(xlsx)이 없습니다.", "error");
+      if (!(await UI.confirm("배포용 기본 양식 만들기 (관리자용)", `연결한 폴더(${Store.label}/templates)의 양식 ${names.length}개를 프로그램 기본 양식으로 담은 builtin-templates.js 를 내려받습니다.\n\n${names.join("\n")}\n\n받은 파일로 프로그램 폴더의 js/builtin-templates.js 를 바꾼 뒤 배포하세요. 폴더를 연결하기 전이나 새 자료 폴더에서도 이 양식들이 기본 양식이 됩니다 (이미 같은 이름의 양식이 있는 자료 폴더는 그대로).`, "내려받기"))) return;
+      const b64 = async f => { const u = new Uint8Array(await f.arrayBuffer()); let s = ""; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+      const items = [];
+      for (const n of names) items.push(`    ${JSON.stringify(n)}: "${await b64(await Store.templateFile(n))}"`);
+      const js = "// 기본 보고서 양식 (tools/make_templates.py 또는 [배포용 기본 양식 만들기]가 만듦 — 고치지 말 것). 자료 폴더 templates 에 없으면 처음 연결할 때 넣어 줌\n"
+        + "(function (root) {\n  \"use strict\";\n  const PC = root.PC || (root.PC = {});\n  PC.BUILTIN_TEMPLATES = {\n" + items.join(",\n") + "\n  };\n})(typeof window !== \"undefined\" ? window : globalThis);\n";
+      UI.download(new Blob([js], { type: "text/javascript;charset=utf-8" }), "builtin-templates.js");
+      UI.toast(`builtin-templates.js 를 내려받았습니다 (양식 ${names.length}개) — 프로그램 폴더의 js/ 에 있는 같은 파일과 바꾸세요.`, "ok");
     },
     // 보고서: 통합보고 · 항목별 상세 2시트 엑셀 — 내려받고, 폴더가 연결돼 있으면 reports 폴더에도 남김
     async exportReport() {

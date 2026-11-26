@@ -65,7 +65,7 @@
 <div class="layout">
   <nav class="toc" aria-label="목차">
     <div class="title">PM Hub Cost</div>
-    <div class="ver">사용자 매뉴얼 · v1.0.5</div>
+    <div class="ver">사용자 매뉴얼 · v1.0.6</div>
     <a href="#start">1. 시작하기</a>
     <a href="#screen">2. 화면 구성</a>
     <a href="#project">3. 프로젝트 만들기 · 개요</a>
@@ -325,7 +325,14 @@
         <li>숨긴 시트 <b>검증</b>은 출력할 때 양식 수식 값과 프로그램 값을 비교합니다. 다르면 항목별 차이를 창으로 알려 줍니다 (파일은 만들어짐). 합계 칸 위치를 바꿨다면 검증 시트(Excel 에서 숨기기 취소)의 B열 참조도 맞춰 주세요.</li>
         <li>모르는 자리표시(오타)는 빈칸으로 두고 알림으로 알려 줍니다.</li>
       </ul>
-      <figure><img src="img/14_set_forms.png" alt="보고서 양식 · 샘플" loading="lazy"><figcaption>프로젝트 설정 &gt; 보고서 양식 · 샘플 — 자리표시 목록은 접혀 있음 (눌러서 펼치기)</figcaption></figure>
+      <h3>(관리자용) 배포 전에 기본 양식 바꾸기</h3>
+      <ol class="steps">
+        <li>고친 양식(xlsx)을 연결한 자료 폴더의 <code>templates/</code> 에 넣습니다 (같은 이름이면 기본 양식을 바꾸고, 새 이름이면 더해짐).</li>
+        <li>[기준정보 &gt; 프로젝트 설정 &gt; 보고서 양식 · 샘플] 의 <span class="btn">배포용 기본 양식 만들기</span> 를 눌러 <code>builtin-templates.js</code> 를 내려받습니다.</li>
+        <li>프로그램 폴더의 <code>js/builtin-templates.js</code> 를 이 파일로 바꾼 뒤 압축해 배포합니다. 폴더를 연결하기 전이나 새 자료 폴더에서도 고친 양식이 기본 양식이 됩니다.</li>
+      </ol>
+      <div class="tip"><b>참고</b>폴더를 연결하기 전에는 프로그램 안에 담긴 기본 양식으로 출력하므로, 프로그램 폴더의 <code>data/templates</code> 엑셀만 고쳐서는 바뀌지 않습니다.</div>
+      <figure><img src="img/14_set_forms.png" alt="보고서 양식 · 샘플" loading="lazy"><figcaption>프로젝트 설정 &gt; 보고서 양식 · 샘플 — 자리표시 목록(접혀 있음) · 샘플 · 관리자용 배포용 기본 양식</figcaption></figure>
       <div class="warn"><b>주의</b>기본 양식은 자료 폴더에 같은 이름의 양식이 없을 때만 들어갑니다 (폴더를 연결할 때). 기본 양식을 새 판으로 바꾸려면 <code>templates/</code> 의 그 파일을 지우고 폴더를 다시 연결하세요 (회사에서 고친 양식이면 먼저 따로 보관). 예전 이름 <code>Offline사업검토서.xlsx</code> 는 그대로 남아 계속 고를 수 있습니다.</div>
     </section>
 

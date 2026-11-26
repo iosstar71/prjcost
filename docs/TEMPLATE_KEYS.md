@@ -69,5 +69,11 @@
 | 내부합계 · 외주합계 · 인건비합계 | 인원수 · 총MM · 표시MM(양식에 보이는 1년의 MM) · 금액 · M1 … M12(MM) · C1 … C12(인건비) |
 | 경비합계 · 월원가 · 누적원가 | 금액 · M1 … M12 |
 
+## 배포 전에 기본 양식 바꾸기 (관리자용, 화면에서)
+1. 고친 양식(xlsx)을 연결한 자료 폴더의 `templates/` 에 넣음 (같은 이름이면 기본 양식을 바꾸고, 새 이름이면 더해짐)
+2. [기준정보 > 프로젝트 설정 > 보고서 양식 · 샘플] → **[배포용 기본 양식 만들기]** → `builtin-templates.js` 내려받기
+3. 프로그램 폴더의 `js/builtin-templates.js` 를 이 파일로 바꾼 뒤 압축해 배포
+- 폴더를 연결하기 전에는 프로그램 안에 담긴 기본 양식(`js/builtin-templates.js`)으로 출력하므로 `data/templates` 의 엑셀만 고쳐서는 바뀌지 않음
+
 ## 기본 양식 고치기 (개발)
 `data/templates/Offline사업검토서.xlsx` 를 Excel 로 고친 뒤 `python3 tools/make_templates.py` → `js/builtin-templates.js`(같은 파일 base64). 그다음 `node tests/run.js` · `node tests/excel_recalc.js`.
