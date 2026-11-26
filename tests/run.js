@@ -248,6 +248,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("template formulas: ranges grow with rows, cells below and other-sheet refs move, row formulas per copy",
     [fOf(s2, "O11"), fOf(s2, "H11"), fOf(s2, "O17"), fOf(s2, "O18"), fOf(s1, "D13"), fOf(s1, "D14"), fOf(s1, "D17"), fOf(s3, "G7"), fOf(s3, "G12"), fOf(s3, "H13")],
     ["SUM(O5:O10)", 'COUNTIF(M5:M9,">0")', "SUM(O14:O16)", "O11+O17", "원가상세!O11", "원가상세!O17", 'SUMIF(원가상세!D28:D31,"AI예비비",원가상세!O28:O31)', "SUM(H7:S7)", "SUM(H12:S12)", "SUM(H5:H12)"]);
+  eq("5Tier: project type merge runs to the last external row; external rows keep a bottom border", [/<mergeCell ref="B5:B12"\/>/.test(s3), ["C10", "C11", "C12", "D12", "F12", "G12"].map(c => new RegExp(`<c r="${c}" s="(\\d+)"`).exec(s3)[1]).every((v, i, l) => v === l[0] || i > 2)], [true, true]);
   eq("template check: every check row matches the program (cost, ratios, margin, gap, subtotals, 5Tier)", [bf.check.items.length, bf.check.failed.map(x => x.name), bf.check.problems.length], [40, [], 0]);
   eq("template: formula cells carry the computed value (for viewers that do not recalc)", /<c r="D19"[^>]*><f>[^<]*<\/f><v>([\d.]+)<\/v>/.exec(s1)[1], String(PC.Calc.calculateProjectCost(fbig, fbig.settings).summary.total_cost));
   // 양식 수식이 틀리면 검증에서 잡힘 (내부 소계가 OT 줄을 빠뜨림)
@@ -258,6 +259,16 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   // 사용자 매뉴얼: 머리줄 링크 · 그림 파일이 모두 있는지
   const man = fs.readFileSync(path.join(__dirname, "..", "manual", "index.html"), "utf8"), imgs = [...man.matchAll(/<img src="([^"]+)"/g)].map(m => m[1]);
   eq("manual: linked from the header, every picture exists", [/href="manual\/index.html"/.test(fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8")), imgs.length > 20, imgs.filter(f => !fs.existsSync(path.join(__dirname, "..", "manual", f)))], [true, true, []]);
+  // 샘플 = 이 PC 의 마스터 목록 + 예시 금액 (숫자로 끝나는 등급은 같은 금액, 그 밖은 위가 높음), 결재자는 가짜
+  const cm = M.masterOf(M.defaultSettings());
+  Object.assign(cm, { internal_grades: [{ grade: "부장" }, { grade: "차장" }, { grade: "과장" }], external_grades: ["S", "A", "B"], proposal_levels: ["1등급", "2등급", "3등급"], proposal_roles: [{ role: "PMO" }, { role: "설계" }],
+    areas: ["기획"], departments: ["DX본부", "SI본부"], approvers: ["실명1", "실명2", "", "", ""] });
+  const sm = M.sampleProject(Object.assign(M.defaultSettings(), cm)), sc = PC.Calc.calculateProjectCost(sm, sm.settings), ss = sm.settings;
+  eq("sample from the company master: names from the master lists, example rates (top = highest, numbered = same), fake approvers, departments split",
+    [sm.internal_labor.map(r => r.grade).join(), ss.internal_grades.map(g => g.rate).join(), new Set(Object.values(ss.proposal_roles[0].rates)).size, sm.external_labor[0].grade,
+      sm.estimate.labor.every(l => ss.proposal_roles.some(r => r.role === l.role && r.rates[l.level] > 0)), sc.estimate.labor_total > 0, sc.summary.breakdown.external_labor > 0,
+      ss.approvers.includes("실명1"), sm.internal_labor.map(r => r.dept).join(), sm.dept_revenue["DX본부"], sm.internal_labor[0].area],
+    ["부장,과장", "9000000,8000000,7000000", 1, "A", true, true, true, false, "DX본부,SI본부", 140000000, "기획"]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

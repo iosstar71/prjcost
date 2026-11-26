@@ -132,37 +132,87 @@
     };
   }
 
-  // 샘플 프로젝트: 화면 확인 · 교육용 예시
+  // 샘플 프로젝트: 화면 확인 · 교육용 예시 — 이 PC 의 마스터 목록(직급 · 기술등급 · 제안 직무/등급 · 영역 · 근무지 · 경비 계정 · 부서)으로 만듦
+  //  마스터에는 금액이 없으므로 금액이 비어 있으면 예시 금액을 넣음 (SAMPLE_RATE):
+  //   - 번호로만 다른 이름의 목록(Lvl1 … Lvl5 · 1등급 …)은 모두 같은 금액 (높고 낮음을 정하지 않음)
+  //   - 그 밖의 목록은 위쪽이 높은 등급 — 내려갈수록 낮은 금액
+  //  결재자는 개인정보라 가짜 이름. 목록이 비면 기본값을 씀. 표시 순서는 마스터에 등록한 순서 그대로
+  const SAMPLE_RATE = {
+    grade: { top: 9000000, step: 1000000, min: 3000000, flat: 6000000 },
+    vendor: { top: 9500000, step: 1600000, min: 3000000, flat: 7000000 },
+    level: { top: 13000000, step: 1500000, min: 4000000, flat: 10000000 }
+  };
+  const SAMPLE_APPROVERS = ["김기안", "이검토", "박사업", "최영업", "정본부"];
+  // 번호로만 다른 이름들 (Lvl1 … Lvl5 · 1등급 … 5등급) — 높고 낮음을 정하지 않고 같은 금액
+  const numbered = list => list.length > 0 && list.every(x => /\d/.test(String(x))) && new Set(list.map(x => String(x).replace(/\d+/g, "#").trim())).size === 1;
+  const sampleRate = (kind, names, i) => { const r = SAMPLE_RATE[kind]; return numbered(names) ? r.flat : Math.max(r.min, r.top - i * r.step); };
+  const raised = (v, f) => Math.round((v * (f || 1.035)) / 100000) * 100000;   // 예시 인상단가 (직급 +3.5% · 외주 +2.5%, 10만 원 단위)
+  const at = (list, i) => list[Math.min(i, list.length - 1)];
+
   function sampleProject(settings) {
     const p = newProject(settings, "PRJ-2026-01");
-    // 샘플: 3월 연봉 인상(수석 · 선임), 외주 파트너A 고급은 4월부터 협상 단가
-    p.settings.raise_month = "03";
-    p.settings.internal_grades.forEach(g => { if (g.grade === "수석") g.raise_rate = 8800000; if (g.grade === "선임") g.raise_rate = 6200000; });
-    p.settings.vendor_rates.forEach(v => { if (v.vendor === "파트너A" && v.grade === "고급") Object.assign(v, { raise_ym: "2026-04", raise_rate: 8000000 }); });
-    // 샘플은 인비례 기준금액을 채워 자동 계산이 보이게
-    p.settings.expense_accounts.forEach(a => { if (a.category === "mm_internal" && !num(a.unit_amount)) a.unit_amount = 300000; if (a.category === "mm_external" && !num(a.unit_amount)) a.unit_amount = 100000; });
-    p.settings.systems = ["원가관리", "공정관리"];
+    const st = p.settings, D = defaultSettings();
+    const names = (k, key) => { const l = (st[k] || []).map(x => (key ? x[key] : x)).filter(x => String(x || "").trim()); return l.length ? l : D[k].map(x => (key ? x[key] : x)); };
+    // 직급: 마스터 목록 (금액이 없으면 예시) — 인력 1 = 첫째, 인력 2 = 셋째 직급, 둘 다 3월 연봉 인상
+    const gn = names("internal_grades", "grade");
+    st.internal_grades = gn.map((g, i) => { const y = (st.internal_grades || []).find(x => x.grade === g) || {}; return Object.assign({}, y, { grade: g, rate: num(y.rate) || sampleRate("grade", gn, i) }); });
+    st.raise_month = "03";
+    const g1 = st.internal_grades[0], g2 = at(st.internal_grades, 2);
+    [g1, g2].forEach(g => { if (isBlank(g.raise_rate)) g.raise_rate = raised(g.rate); });
+    // 기술등급 · 외주업체 단가 (업체 2곳 × 기술등급 앞 3개). 첫 업체의 둘째 등급은 4월부터 협상 단가
+    const xn = names("external_grades");
+    st.external_grades = xn;
+    const vendors = [...new Set((st.vendor_rates || []).map(v => v.vendor).filter(Boolean))].slice(0, 2);
+    while (vendors.length < 2) vendors.push(`샘플협력사${"AB"[vendors.length]}`);
+    const vr = [];
+    vendors.forEach((v, k) => xn.slice(0, 3).forEach((g, i) => {
+      const y = (st.vendor_rates || []).find(x => x.vendor === v && x.grade === g);
+      vr.push(y ? Object.assign({}, y) : { vendor: v, grade: g, rate: sampleRate("vendor", xn, i) - (numbered(xn) ? 0 : k * 300000) });
+    }));
+    st.vendor_rates = vr;
+    const v2 = vr.find(x => x.vendor === vendors[0] && x.grade === at(xn, 1));
+    if (v2 && isBlank(v2.raise_rate)) Object.assign(v2, { raise_ym: "2026-04", raise_rate: raised(v2.rate, 1.025) });
+    // 제안 직무 × 등급 → 제안 단가 (비어 있으면 예시)
+    const ln = names("proposal_levels"), rn = names("proposal_roles", "role");
+    st.proposal_levels = ln;
+    st.proposal_roles = rn.map(r => { const y = (st.proposal_roles || []).find(x => x.role === r) || {}; const rates = Object.assign({}, y.rates);
+      ln.forEach((l, i) => { if (!num(rates[l])) rates[l] = sampleRate("level", ln, i); }); return Object.assign({}, y, { role: r, rates }); });
+    const area = names("areas"), site = names("work_sites");
+    st.areas = area; st.work_sites = site;
+    // 인비례 기준금액은 채워 자동 계산이 보이게
+    st.expense_accounts.forEach(a => { if (a.category === "mm_internal" && !num(a.unit_amount)) a.unit_amount = 300000; if (a.category === "mm_external" && !num(a.unit_amount)) a.unit_amount = 100000; });
+    const acc = c => (st.expense_accounts.find(a => a.category === c) || {}).account;
+    st.systems = ["원가관리", "공정관리"];
+    st.approvers = SAMPLE_APPROVERS.slice();
+    const depts = (st.departments || []).filter(x => String(x || "").trim());
+    const dept = i => (depts.length > 1 ? depts[i % depts.length] : "");
     Object.assign(p, {
-      project_name: "차세대 원가·공정 시스템 구축", client_name: "대한정밀(주)", pm_name: "김철수 PM", sales_rep: "박영희 매니저",
-      description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행",
+      project_name: "차세대 원가·공정 시스템 구축", client_name: "대한정밀(주)", pm_name: "김철수 PM", sales_rep: "박영희 매니저", project_type: "SI",
+      description: "1) 착수 전 원가 산정 및 수익성 검토\n2) 1차 선행 분석/설계 후 2차 본 구축 진행\n※ 샘플 — 기준정보 이름은 이 PC 의 마스터, 단가 · 금액은 예시 값입니다",
       start_date: "2026-01", end_date: "2026-06", contract_revenue: 240000000, target_hurdle_rate: 18.0,
       internal_labor: [
-        { name: "김철수", role: "PM", area: "PMO", system: "원가관리", prop_role: "프로젝트관리", prop_level: "Lvl1", site: "본사", tech_grade: "특급", grade: "수석", base_rate: 8500000, overhead_eligible: true, target_mm: 6,
+        { name: "김철수", role: "PM", area: at(area, 0), system: "원가관리", dept: dept(0), prop_role: at(rn, 0), prop_level: at(ln, 0), site: at(site, 0), tech_grade: at(xn, 0), grade: g1.grade, base_rate: g1.rate, overhead_eligible: true, target_mm: 6,
           mm: { "2026-01": 1, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 1 } },
-        { name: "이민지", role: "PL/아키텍트", area: "분석 · 설계", system: "공정관리", prop_role: "컨설팅", prop_level: "Lvl2", site: "고객사", tech_grade: "고급", grade: "선임", base_rate: 6000000, overhead_eligible: false, target_mm: 4.5,
+        { name: "이민지", role: "PL/아키텍트", area: at(area, 1), system: "공정관리", dept: dept(1), prop_role: at(rn, 1), prop_level: at(ln, 1), site: at(site, 1), tech_grade: at(xn, 1), grade: g2.grade, base_rate: g2.rate, overhead_eligible: false, target_mm: 4.5,
           mm: { "2026-01": 0.5, "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1, "2026-06": 0 } }
       ],
-      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: "개발", system: "공정관리", prop_role: "개발", prop_level: "Lvl3", site: "고객사", vendor: "파트너A", grade: "고급", custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
-      general_expenses: [{ name: "출장비", dist_mode: "equal_total", total_input: 9000000, unit_input: 0, monthly: {}, memo: "지방 사업장 방문" }],
-      custom_costs: [{ name: "사전심의·인증비", dist_mode: "fill_all", total_input: 0, unit_input: 400000, monthly: {}, memo: "보안 점검" }],
+      external_labor: [{ name: "외주개발1", role: "백엔드 개발", area: at(area, 2), system: "공정관리", dept: dept(1), prop_role: at(rn, 2), prop_level: at(ln, 2), site: at(site, 1), vendor: vendors[0], grade: at(xn, 1), custom_rate: "", target_mm: 4, mm: { "2026-02": 1, "2026-03": 1, "2026-04": 1, "2026-05": 1 } }],
+      general_expenses: [{ name: acc("general") || "출장비", dist_mode: "equal_total", total_input: 9000000, unit_input: 0, monthly: {}, memo: "지방 사업장 방문" }],
+      custom_costs: [{ name: acc("custom") || "사전심의·인증비", dist_mode: "fill_all", total_input: 0, unit_input: 400000, monthly: {}, memo: "보안 점검" }],
       phases: [
         { title: "1차 선행계약", start_ym: "2026-01", end_ym: "2026-03", revenue: 110000000, override_cost: "" },
         { title: "2차 본계약", start_ym: "2026-04", end_ym: "2026-06", revenue: 130000000, override_cost: "" }
       ],
-      estimate: { estimate_no: "EST-2026-0101", estimate_date: "2026-01-05", note: "공급가액 기준", applied_to_revenue: false,
-        labor: [{ role: "프로젝트관리", level: "Lvl1", mm: 6, unit_price: "", memo: "" }, { role: "컨설팅", level: "Lvl2", mm: 5, unit_price: "", memo: "분석 · 설계" }, { role: "개발", level: "Lvl3", mm: 8, unit_price: "", memo: "" }],
+      estimate: { estimate_no: "EST-2026-0101", estimate_date: "2026-01-05", note: "공급가액 기준", applied_to_revenue: false, discount_rate: 0, round_unit: 1,
+        labor: [{ role: at(rn, 0), level: at(ln, 0), mm: 6, unit_price: "", memo: "" }, { role: at(rn, 1), level: at(ln, 1), mm: 5, unit_price: "", memo: "분석 · 설계" }, { role: at(rn, 2), level: at(ln, 2), mm: 8, unit_price: "", memo: "" }],
         items: [{ item_name: "원가관리 SW 라이선스", spec: "1식", qty: 1, unit_price: 30000000, memo: "" }] }
     });
+    // 부서가 2개 이상이면 부서별 매출도 (첫 두 부서)
+    if (depts.length > 1) {
+      p.dept_revenue = { [depts[0]]: 140000000, [depts[1]]: 100000000 };
+      p.phases[0].dept_revenue = { [depts[0]]: 70000000, [depts[1]]: 40000000 };
+      p.phases[1].dept_revenue = { [depts[0]]: 70000000, [depts[1]]: 60000000 };
+    }
     return p;
   }
 

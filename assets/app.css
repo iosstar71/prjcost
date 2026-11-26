@@ -310,3 +310,8 @@ table.grid td.c.nowrap .btn.ins { padding: 2px; min-width: 0; border: 0; backgro
 table.grid td.c.nowrap .btn.ins:hover { color: var(--primary); background: var(--primary-tint); }
 .tbl-wrap:has(> table.est-sum) { max-width: 760px; }
 table.est-sum td.c { white-space: nowrap; }
+
+/* 접기 · 펼치기 (보고서 양식의 자리표시 목록 등) */
+.fold > summary { cursor: pointer; font-weight: 700; color: var(--text-sub); padding: 6px 0; }
+.fold > summary:hover { color: var(--text); }
+.fold[open] > summary { margin-bottom: 8px; }

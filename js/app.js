@@ -6,7 +6,7 @@
   "use strict";
   const PC = root.PC;
   const { Calc, Model: M, Store, UI, Views, Xlsx: X, Workbook: W, clone, won, esc, num, safeId } = PC;
-  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.2";
+  const APP_NAME = "PM Hub Cost", VERSION = "v1.0.3";
 
   const S = {
     master: M.defaultSettings(),   // 폴더의 기준정보 (새 프로젝트 기본값)
@@ -41,7 +41,8 @@
   const renderTimes = [];
   function render(focusBind) {
     const now = Date.now();
-    while (renderTimes.length && now - renderTimes[0] > 1000) renderTimes.shift();
+    // 그리기가 그리기를 부르는 반복(몇 ms 간격)만 잡음 — 빠른 입력 · 자동 시험(20ms 간격)은 해당 없음
+    while (renderTimes.length && now - renderTimes[0] > 400) renderTimes.shift();
     renderTimes.push(now);
     const storm = renderTimes.length > 40;
     if (storm && !render.warned) { render.warned = true; console.error("[App] render storm — focus restore paused"); UI.toast("화면이 너무 자주 다시 그려져 커서 되돌리기를 잠시 멈췄습니다. 칸을 다시 눌러 주세요.", "error"); setTimeout(() => { render.warned = false; }, 3000); }

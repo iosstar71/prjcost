@@ -325,7 +325,11 @@
             const [a, b] = ref.split(":"), ra = Number(/\d+/.exec(a)[0]), rb = Number(/\d+/.exec(b || a)[0]);
             const g = grow.find(([r]) => r === ra && ra === rb);
             if (g) for (let j = 0; j <= g[1]; j++) out.push(`${a.replace(/\d+/, newRow(ra) + j)}:${(b || a).replace(/\d+/, newRow(ra) + j)}`);
-            else out.push(shiftRef(ref));
+            else {
+              // 여러 줄 병합의 끝이 반복 줄이면 늘어난 줄까지 (예: 5Tier B5:B6 → 마지막 외주 줄까지)
+              const end = grow.find(([r]) => r === rb && ra !== rb);
+              out.push(`${a.replace(/\d+/, newRow(ra))}:${(b || a).replace(/\d+/, newRow(rb) + (end ? end[1] : 0))}`);
+            }
           });
           return `<mergeCells count="${out.length}">${out.map(r => `<mergeCell ref="${r}"/>`).join("")}</mergeCells>`;
         });
