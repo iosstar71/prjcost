@@ -28,8 +28,8 @@
     ["작성일", "출력한 날 YYYY.MM.DD"], ["최종작성일", "프로젝트를 마지막으로 저장한 날 YYYY.MM.DD"],
     // 원가상세 (달은 첫 달부터 M1 … M12 — 1년까지, 넘는 달은 빠짐)
     ["월1 … 월12", "달 머리글 (예: 26.01) — 기간 밖은 빈칸"],
-    ["내부인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 직급 · 제안직무 · 제안등급 · 단가 · 총MM · 금액 · M1 … M12(MM)"],
-    ["외주인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 업체 · 기술등급 · 제안직무 · 제안등급 · 단가 · 총MM · 금액 · M1 … M12(MM)"],
+    ["내부인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 직급 · 제안직무 · 제안등급 · 단가 · 최초단가 · 변경단가 · 변경월 · MM최초 · MM변경 · 총MM · 금액 · M1 … M12(MM)"],
+    ["외주인력.이름", "반복 줄: 성명 · 역할 · 영역 · 시스템 · 부서 · 업체 · 기술등급 · 제안직무 · 제안등급 · 단가 · 최초단가 · 변경단가 · 변경월 · MM최초 · MM변경 · 총MM · 금액 · M1 … M12(MM)"],
     ["경비항목.이름", "반복 줄: 구분 · 항목 · 방식 · 기준금액 · 금액 · M1 … M12(금액)"],
     ["내부합계.이름 · 외주합계.이름 · 인건비합계.이름", "인원수 · 총MM · 표시MM(양식의 1년 MM) · 금액 · M1 … M12(MM) · C1 … C12(인건비) — 내부 · 전체 금액은 OT비용 포함"],
     ["재료비항목.이름", "반복 줄: 구분 · 내용 · 금액"],
@@ -83,10 +83,19 @@
     const d = calc.details, months = calc.months.slice(0, MAX_MONTHS), out = {};
     for (let i = 1; i <= MAX_MONTHS; i++) out[`월${i}`] = months[i - 1] ? `${months[i - 1].slice(2, 4)}.${months[i - 1].slice(5)}` : "";
     const perMonth = (f, prefix) => Object.fromEntries(Array.from({ length: MAX_MONTHS }, (_, i) => [`${prefix || "M"}${i + 1}`, months[i] ? f(months[i]) : ""]));
+    // 최초 · 변경 단가: 투입한 첫 달의 단가와, 그 뒤 처음 달라진 단가(연봉 인상 · 협상 단가) — MM 도 단가별로 나눔
+    const rateSplit = r => {
+      const used = months.filter(m => num(r.calc[m].mm)), list = used.length ? used : months.slice(0, 1);
+      if (!list.length) return { 최초단가: "", 변경단가: "", 변경월: "", MM최초: "", MM변경: "" };
+      const first = r.calc[list[0]].rate, chg = list.find(m => r.calc[m].rate !== first);
+      const mmOf = f => pyRound(used.filter(f).reduce((a, m) => a + num(r.calc[m].mm), 0), 2);
+      return { 최초단가: first, 변경단가: chg ? r.calc[chg].rate : "", 변경월: chg ? `${chg.slice(2, 4)}.${chg.slice(5)}` : "",
+        MM최초: mmOf(m => r.calc[m].rate === first) || "", MM변경: chg ? mmOf(m => r.calc[m].rate !== first) : "" };
+    };
     const person = (r, kind) => Object.assign({
       성명: r.name || "", 역할: r.role || "", 영역: r.area || "", 시스템: r.system || "", 부서: r.dept || "", 제안직무: r.prop_role || "", 제안등급: r.prop_level || "",
       단가: months.length ? r.calc[months[0]].rate : "", 총MM: r.total_mm, 금액: r.total_cost, 근무지: r.site || ""
-    }, kind === "internal" ? { 직급: r.grade || "", 기술등급: r.tech_grade || "" } : { 업체: r.vendor || "", 기술등급: r.grade || "" }, perMonth(m => r.calc[m].mm || ""));
+    }, rateSplit(r), kind === "internal" ? { 직급: r.grade || "", 기술등급: r.tech_grade || "" } : { 업체: r.vendor || "", 기술등급: r.grade || "" }, perMonth(m => r.calc[m].mm || ""));
     out.내부인력 = d.internal_labor.map(r => person(r, "internal"));
     out.외주인력 = d.external_labor.map(r => person(r, "external"));
     const sum = (rows, f) => pyRound(rows.reduce((a, r) => a + num(f(r)), 0), 2);
