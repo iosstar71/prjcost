@@ -166,7 +166,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   const tc = PC.Calc.calculateProjectCost(tp, tp.settings), tv = T.values(tp, tc, { lastSaved: new Date(2026, 10, 25) });
   eq("template values: cost split (AI reserve apart), margin, hurdle, gap, latest version", [tv.노무비, tv.외주비, tv.경비, tv.AI예비비, tv.총원가, PC.pyRound(tv.수주마진율, 4), tv.허들, PC.pyRound(tv.Gap, 4), tv.최근버전이름, tv.최근버전매출, tv.시작일, tv.종료일, tv.귀속부서],
     [79800000, 31600000, 13600000, 3000000, 128000000, 0.4667, 0.18, 0.2867, "수주협 4차", 230000000, "2026.01.01", "2026.06.30", "SI사업부"]);
-  const tf = fs.readFileSync(path.join(__dirname, "..", "data", "templates", "Offline사업검토서.xlsx"));
+  const tf = fs.readFileSync(path.join(__dirname, "..", "data", "templates", "Offline사업검토서_단가고정.xlsx"));
   const filled = await T.fill(tf, tv);
   const fwb = await X.read(Buffer.from(await filled.blob.arrayBuffer())), sh = fwb.sheet("사업개요").rows;
   const at = ref => { const m = /^([A-Z]+)(\d+)$/.exec(ref); const col = m[1].charCodeAt(0) - 65; return (sh[Number(m[2]) - 1] || [])[col]; };
@@ -175,7 +175,7 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
   eq("template fill: empty values reported", filled.empty.includes("결재2"), true);
   // 원가상세: 사람마다 한 줄(반복), OT비용은 프로젝트 전체 한 줄, 소계 · 인원수 · 근무지 · 내부 기술등급
   const dsh = fwb.sheet("원가상세").rows, cellAt = (sh, r, c) => (sh[r - 1] || [])[c - 1];
-  eq("detail sheet: one row per person, project OT row, subtotals with head count, external row shifted", [cellAt(dsh, 5, 8), cellAt(dsh, 6, 8), cellAt(dsh, 5, 16), cellAt(dsh, 5, 10), cellAt(dsh, 7, 5), cellAt(dsh, 8, 8), cellAt(dsh, 8, 13), cellAt(dsh, 11, 8), cellAt(dsh, 11, 11), cellAt(dsh, 13, 8)],
+  eq("detail sheet: one row per person, project OT row, subtotals with head count, external row shifted", [cellAt(dsh, 5, 8), cellAt(dsh, 6, 8), cellAt(dsh, 5, 7), cellAt(dsh, 5, 10), cellAt(dsh, 7, 5), cellAt(dsh, 8, 8), cellAt(dsh, 8, 13), cellAt(dsh, 11, 8), cellAt(dsh, 11, 11), cellAt(dsh, 13, 8)],
     ["김철수", "이민지", "본사", "특급", "OT비용", 2, 10.5, "외주개발1", "개발", 3]);
   const t5 = fwb.sheet("인력투입계획 점검(5Tier)").rows;
   eq("5Tier sheet: 자사 ○ for internal rows, BP ○ for external, totals by month", [cellAt(t5, 5, 23), cellAt(t5, 6, 23), cellAt(t5, 7, 24), cellAt(t5, 7, 23), cellAt(t5, 8, 7), cellAt(t5, 8, 9)], ["○", "○", "○", "", 14.5, 3]);
@@ -269,6 +269,15 @@ eq("monthRange reversed → start month only", PC.monthRange("2026-05", "2026-02
       sm.estimate.labor.every(l => ss.proposal_roles.some(r => r.role === l.role && r.rates[l.level] > 0)), sc.estimate.labor_total > 0, sc.summary.breakdown.external_labor > 0,
       ss.approvers.includes("실명1"), sm.internal_labor.map(r => r.dept).join(), sm.dept_revenue["DX본부"], sm.internal_labor[0].area],
     ["부장,과장", "9000000,8000000,7000000", 1, "A", true, true, true, false, "DX본부,SI본부", 140000000, "기획"]);
+  // 사업검토서 _단가변경: 최초 · 변경 단가와 MM, 통합 MM(수식), 근무지는 G, 재료비 · 경비 금액은 투입원가와 같은 S 열
+  const cv = M.sampleProject(M.defaultSettings());
+  cv.materials = [{ category: "HW", content: "서버", amount: 5000000 }];
+  const cvf = await T.fill(fs.readFileSync(path.join(__dirname, "..", "data", "templates", "Offline사업검토서_단가변경.xlsx")), T.values(cv, PC.Calc.calculateProjectCost(cv, cv.settings), {}));
+  const cvb = await X.read(Buffer.from(await cvf.blob.arrayBuffer())), cd = cvb.sheet("원가상세").rows;
+  eq("단가변경 template: initial / changed rate and month, MM per rate, site in G, amounts in S, all checks pass",
+    [cellAt(cd, 5, 8), cellAt(cd, 5, 13), cellAt(cd, 5, 14), cellAt(cd, 5, 15), cellAt(cd, 5, 16), cellAt(cd, 5, 17), cellAt(cd, 5, 18), cellAt(cd, 5, 7), cellAt(cd, 5, 19), cellAt(cd, 13, 19), cellAt(cd, 16, 19), cvf.check.failed.length, cvf.check.items.length],
+    ["김철수", 2, 4, 6, 8500000, 8800000, "26.03", "본사", 52200000, 111400000, "금액", 0, 40]);
+  eq("rate change: none when the rate stays (first rate, all MM at it)", (() => { const r = PC.Calc.rateChange({ calc: { a: { mm: 1, rate: 5 }, b: { mm: 2, rate: 5 } } }, ["a", "b"]); return [r.first, r.changed, r.mmFirst, r.mmChanged]; })(), [5, null, 3, 0]);
   console.log(`\nUnit: ${pass} / ${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

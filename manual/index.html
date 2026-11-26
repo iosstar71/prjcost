@@ -65,7 +65,7 @@
 <div class="layout">
   <nav class="toc" aria-label="목차">
     <div class="title">PM Hub Cost</div>
-    <div class="ver">사용자 매뉴얼 · v1.0.3</div>
+    <div class="ver">사용자 매뉴얼 · v1.0.4</div>
     <a href="#start">1. 시작하기</a>
     <a href="#screen">2. 화면 구성</a>
     <a href="#project">3. 프로젝트 만들기 · 개요</a>
@@ -153,6 +153,11 @@
       <div class="pair">
         <figure class="small"><img src="img/05_distribute.png" alt="기간 배분 창" loading="lazy"><figcaption>기간 배분: 시작월 · 종료월 · MM, 기간 밖의 달은 0 으로 비우거나 그대로</figcaption></figure>
         <div>
+          <h3>합계 · 매입단가</h3>
+          <ul>
+            <li>사람마다 <b>합계(금액 · MM)</b> 는 달별 MM 칸 왼쪽에 있습니다.</li>
+            <li>연봉 인상 · 협상 단가로 단가가 바뀌는 사람이 있으면 매입단가 제목이 <b>최초 / 변경</b> 이 되고, 칸 아래에 → 변경 단가 (변경월~) 가 보입니다. 없으면 단가 하나만 보입니다.</li>
+          </ul>
           <h3>총 MM 과 달별 MM</h3>
           <ul>
             <li>총 MM 은 직접 넣을 수 있고, 달별 MM 을 고치면 그 합으로 바뀝니다.</li>
@@ -294,7 +299,7 @@
     <section id="review">
       <h2><span class="no">12</span>사업검토서 (회사 양식 출력)</h2>
       <ol class="steps">
-        <li>머리줄 <span class="btn">사업검토서</span> 를 누르고 양식을 고른 뒤 <span class="btn">출력</span>. 기본 양식은 <b>Offline사업검토서</b> (사업개요 · 원가상세 · 인력투입계획 점검(5Tier)).</li>
+        <li>머리줄 <span class="btn">사업검토서</span> 를 누르고 양식을 고른 뒤 <span class="btn">출력</span>. 기본 양식은 두 가지 — <b>_단가고정</b>(원가상세에 투입공수 · 매입단가 · 투입원가) · <b>_단가변경</b>(최초 · 변경 MM, 통합 MM, 최초 · 변경 단가 · 변경월 — 연봉 인상 · 협상 단가가 있는 프로젝트). 세 시트(사업개요 · 원가상세 · 인력투입계획 점검(5Tier)).</li>
         <li>파일 <code>양식이름_프로젝트ID_프로젝트명_최종작성일.xlsx</code> 를 내려받고, 폴더가 연결돼 있으면 <code>reports/</code> 에도 남깁니다.</li>
         <li>알림에 <b>"합계 수식 검증 40개 항목 일치"</b> 가 나오면 양식의 합계 수식이 프로그램 계산과 같다는 뜻입니다.</li>
       </ol>
@@ -321,7 +326,7 @@
         <li>모르는 자리표시(오타)는 빈칸으로 두고 알림으로 알려 줍니다.</li>
       </ul>
       <figure><img src="img/14_set_forms.png" alt="보고서 양식 · 샘플" loading="lazy"><figcaption>프로젝트 설정 &gt; 보고서 양식 · 샘플 — 자리표시 목록은 접혀 있음 (눌러서 펼치기)</figcaption></figure>
-      <div class="warn"><b>주의</b>새 버전의 기본 양식은 자료 폴더에 양식이 없을 때만 들어갑니다. 예전 양식을 새 양식으로 바꾸려면 <code>templates/Offline사업검토서.xlsx</code> 를 지우고 폴더를 다시 연결하세요 (회사에서 고친 양식이면 먼저 따로 보관).</div>
+      <div class="warn"><b>주의</b>기본 양식은 자료 폴더에 같은 이름의 양식이 없을 때만 들어갑니다 (폴더를 연결할 때). 기본 양식을 새 판으로 바꾸려면 <code>templates/</code> 의 그 파일을 지우고 폴더를 다시 연결하세요 (회사에서 고친 양식이면 먼저 따로 보관). 예전 이름 <code>Offline사업검토서.xlsx</code> 는 그대로 남아 계속 고를 수 있습니다.</div>
     </section>
 
     <!-- 13 -->

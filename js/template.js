@@ -85,12 +85,9 @@
     const perMonth = (f, prefix) => Object.fromEntries(Array.from({ length: MAX_MONTHS }, (_, i) => [`${prefix || "M"}${i + 1}`, months[i] ? f(months[i]) : ""]));
     // 최초 · 변경 단가: 투입한 첫 달의 단가와, 그 뒤 처음 달라진 단가(연봉 인상 · 협상 단가) — MM 도 단가별로 나눔
     const rateSplit = r => {
-      const used = months.filter(m => num(r.calc[m].mm)), list = used.length ? used : months.slice(0, 1);
-      if (!list.length) return { 최초단가: "", 변경단가: "", 변경월: "", MM최초: "", MM변경: "" };
-      const first = r.calc[list[0]].rate, chg = list.find(m => r.calc[m].rate !== first);
-      const mmOf = f => pyRound(used.filter(f).reduce((a, m) => a + num(r.calc[m].mm), 0), 2);
-      return { 최초단가: first, 변경단가: chg ? r.calc[chg].rate : "", 변경월: chg ? `${chg.slice(2, 4)}.${chg.slice(5)}` : "",
-        MM최초: mmOf(m => r.calc[m].rate === first) || "", MM변경: chg ? mmOf(m => r.calc[m].rate !== first) : "" };
+      const x = PC.Calc.rateChange(r, calc.months), has = !!months.length;   // 기간 전체 (양식의 달 열은 1년까지지만 MM · 단가는 전체)
+      return { 최초단가: has ? x.first : "", 변경단가: x.changed === null ? "" : x.changed, 변경월: x.changeYm ? `${x.changeYm.slice(2, 4)}.${x.changeYm.slice(5)}` : "",
+        MM최초: x.mmFirst || "", MM변경: x.mmChanged || "" };
     };
     const person = (r, kind) => Object.assign({
       성명: r.name || "", 역할: r.role || "", 영역: r.area || "", 시스템: r.system || "", 부서: r.dept || "", 제안직무: r.prop_role || "", 제안등급: r.prop_level || "",

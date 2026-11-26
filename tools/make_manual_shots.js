@@ -127,6 +127,7 @@ const has = c => { try { execFileSync("which", [c], { stdio: "ignore" }); return
     await tab("info");
     await page.click('[data-act="exportTemplate"]');
     await page.waitForSelector(".dialog-form");
+    await page.selectOption(".dialog-form select", "Offline사업검토서_단가변경.xlsx");   // 샘플은 단가가 바뀌는 사람이 있어 _단가변경 양식으로
     await shot("15_template_dialog", { el: ".dialog" });
     const [dl] = await Promise.all([page.waitForEvent("download"), page.click('.dialog button[data-id="ok"]')]);
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "manual-"));

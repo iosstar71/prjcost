@@ -26,6 +26,16 @@
     return pyRound(rate, 2);
   }
 
+  // 인력 한 줄의 단가 변경: 투입한 첫 달의 단가(최초)와, 그 뒤 처음 달라진 단가 · 달(연봉 인상 · 협상 단가) · 단가별 MM
+  //  → { first, changed(없으면 null), changeYm, mmFirst, mmChanged } — 사업검토서 원가상세 · 인력 표가 같이 씀
+  function rateChange(row, months) {
+    const used = months.filter(m => num(row.calc[m].mm)), list = used.length ? used : months.slice(0, 1);
+    if (!list.length) return { first: 0, changed: null, changeYm: "", mmFirst: 0, mmChanged: 0 };
+    const first = row.calc[list[0]].rate, chg = list.find(m => row.calc[m].rate !== first);
+    const mmOf = f => pyRound(used.filter(f).reduce((a, m) => a + num(row.calc[m].mm), 0), 2);
+    return { first, changed: chg ? row.calc[chg].rate : null, changeYm: chg || "", mmFirst: mmOf(m => row.calc[m].rate === first), mmChanged: chg ? mmOf(m => row.calc[m].rate !== first) : 0 };
+  }
+
   // ---------- 기준정보 순서 ----------
   //  목록에 있는 값은 그 순서, 없는 값은 뒤(나온 순서대로), 빈 값 · (미지정)은 맨 뒤
   function rankOf(list) {
@@ -464,6 +474,6 @@
     return { summary, staff };
   }
 
-  PC.Calc = { proposalRate, estimateFromPlan, DEPT_BASIS, deptSummary, phaseDeptSummary, orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
+  PC.Calc = { rateChange, proposalRate, estimateFromPlan, DEPT_BASIS, deptSummary, phaseDeptSummary, orderRows, rankOf, compareVersions, calculateProjectCost, calculateEstimate, resolveInternalRate, raiseMonth, distributeMonthly, staffStats };
   if (typeof module !== "undefined" && module.exports) module.exports = PC.Calc;
 })(typeof window !== "undefined" ? window : globalThis);

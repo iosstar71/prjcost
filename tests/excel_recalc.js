@@ -57,10 +57,11 @@ function cases() {
 
 (async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "prjcost-recalc-"));
-  const src = fs.readFileSync(path.join(__dirname, "..", "data", "templates", "Offline사업검토서.xlsx"));
   let fail = 0;
-  const list = cases();
-  for (const [name, p] of list) {
+  const list = [];
+  for (const tpl of ["단가고정", "단가변경"]) cases().forEach(([n, p]) => list.push([`${tpl}-${n}`, p, tpl]));
+  for (const [name, p, tpl] of list) {
+    const src = fs.readFileSync(path.join(__dirname, "..", "data", "templates", `Offline사업검토서_${tpl}.xlsx`));
     const r = await T.fill(src, T.values(p, PC.Calc.calculateProjectCost(p, p.settings), {}));
     if (r.check.failed.length || r.check.problems.length) { fail++; console.log(`  [FAIL] ${name}: built-in check`, JSON.stringify(r.check.failed), JSON.stringify(r.check.problems)); }
     const ours = path.join(dir, `${name}.xlsx`);

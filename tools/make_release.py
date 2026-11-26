@@ -20,7 +20,7 @@ def main():
     zpath = out_dir / f"{top}.zip"
     files = [ROOT / "index.html", ROOT / "README.md", ROOT / "RELEASE_NOTES.md"]
     files += sorted((ROOT / "assets").rglob("*")) + sorted((ROOT / "js").rglob("*.js")) + sorted((ROOT / "manual").rglob("*"))
-    files += [ROOT / "data" / "master" / "master_rates.xlsx", ROOT / "data" / "templates" / "project_upload_template.xlsx", ROOT / "data" / "templates" / "Offline사업검토서.xlsx"]
+    files += [ROOT / "data" / "master" / "master_rates.xlsx", ROOT / "data" / "templates" / "project_upload_template.xlsx"] + sorted((ROOT / "data" / "templates").glob("Offline사업검토서*.xlsx"))
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
         for f in files:
             if f.is_file():

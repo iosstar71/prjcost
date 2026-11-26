@@ -315,3 +315,7 @@ table.est-sum td.c { white-space: nowrap; }
 .fold > summary { cursor: pointer; font-weight: 700; color: var(--text-sub); padding: 6px 0; }
 .fold > summary:hover { color: var(--text); }
 .fold[open] > summary { margin-bottom: 8px; }
+
+/* 매입단가: 단가가 바뀌는 사람 (최초 / 변경) */
+.th-sub { display: block; font-size: var(--fs-xs); font-weight: 600; color: var(--muted); }
+.cell-cost.rate-change { color: var(--warn); }
